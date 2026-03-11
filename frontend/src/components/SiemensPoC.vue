@@ -499,7 +499,7 @@ function createTurbineData() {
       vibrationHistory: generateInitialHistory(7.234, 1.0, 60),
       documentation: [
         { title: 'CRITICAL ALERT — Vibration', content: 'Bearing #2 vibration spiked to 7.2 mm/s at 2026-03-11 08:15 UTC. Trip threshold: 8.0 mm/s. Immediate inspection required.' },
-        { title: 'Overhaul Overdue', content: 'Unit at 31,200 hrs — 1,200 hrs past recommended major overhaul interval of 30,000 hrs. Deferred due to grid demand constraints.' },
+        { title: 'Overhaul Overdue', content: 'Unit at 31,200 hours — 1,200 hours past recommended major overhaul interval of 30,000 hours. Deferred due to grid demand constraints.' },
         { title: 'Previous Incidents', content: '2025-08-14: Compressor blade tip rub event. Repaired in-situ. 2025-11-02: Fuel nozzle #4 replaced due to carbon buildup.' },
       ],
       aiSuggestion: 'URGENT: Vibration at 7.2 mm/s on bearing #2 approaching trip threshold. Initiate controlled shutdown and perform emergency bearing inspection to prevent catastrophic rotor damage.',
@@ -571,8 +571,11 @@ function updateTelemetry() {
 
     // Generate dynamic alerts
     if (t.status === 'Critical') {
-      t.alert = `CRITICAL: ${t.vibration > thresholds.vibration.critical ? 'Vibration at ' + t.vibration.toFixed(1) + ' mm/s exceeds critical threshold.' : 'Exhaust temp at ' + t.exhaustTemp.toFixed(0) + '°C exceeds critical threshold.'} Immediate action required.`
-      t.aiSuggestion = t.vibration > thresholds.vibration.critical
+      const isVibrationCritical = t.vibration > thresholds.vibration.critical
+      t.alert = isVibrationCritical
+        ? `CRITICAL: Vibration at ${t.vibration.toFixed(1)} mm/s exceeds critical threshold. Immediate action required.`
+        : `CRITICAL: Exhaust temp at ${t.exhaustTemp.toFixed(0)}°C exceeds critical threshold. Immediate action required.`
+      t.aiSuggestion = isVibrationCritical
         ? `URGENT: Vibration at ${t.vibration.toFixed(1)} mm/s approaching trip threshold. Initiate controlled shutdown and perform emergency bearing inspection.`
         : `URGENT: Exhaust temperature at ${t.exhaustTemp.toFixed(0)}°C exceeds limits. Reduce load immediately and inspect combustion system.`
     } else if (t.status === 'Warning') {
@@ -603,13 +606,24 @@ function updateTelemetry() {
   })
 }
 
-function showAlertBalloon(turbine) {
+function buildBalloonMessage(turbine) {
   const isCritical = turbine.status === 'Critical'
+  if (isCritical) {
+    const detail = turbine.vibration > thresholds.vibration.critical
+      ? `vibration at ${turbine.vibration.toFixed(1)} mm/s`
+      : `exhaust temp at ${turbine.exhaustTemp.toFixed(0)}°C`
+    return `Immediate attention required: ${detail}. Click card for details.`
+  }
+  const detail = turbine.vibrationAlert
+    ? `Vibration trending high at ${turbine.vibration.toFixed(1)} mm/s.`
+    : `Exhaust temp elevated at ${turbine.exhaustTemp.toFixed(0)}°C.`
+  return `${detail} Review recommended.`
+}
+
+function showAlertBalloon(turbine) {
   alertBalloon.value = {
     title: `${turbine.id} — ${turbine.status}`,
-    message: isCritical
-      ? `Immediate attention required: ${turbine.vibration > thresholds.vibration.critical ? 'vibration at ' + turbine.vibration.toFixed(1) + ' mm/s' : 'exhaust temp at ' + turbine.exhaustTemp.toFixed(0) + '°C'}. Click card for details.`
-      : `${turbine.vibrationAlert ? 'Vibration trending high at ' + turbine.vibration.toFixed(1) + ' mm/s.' : 'Exhaust temp elevated at ' + turbine.exhaustTemp.toFixed(0) + '°C.'} Review recommended.`,
+    message: buildBalloonMessage(turbine),
   }
   // Auto-dismiss after 8 seconds
   setTimeout(() => {
