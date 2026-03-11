@@ -1,0 +1,21 @@
+# Backend SAM build artifacts
+backend/.aws-sam/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.venv/
+venv/
+
+# Environment files (never commit secrets)
+.env
+.env.local
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
