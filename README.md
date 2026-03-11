@@ -2,6 +2,9 @@
 
 A Proof of Concept for the **Siemens Energy Distributed AI Factory** demonstrating an industrial RAG (Retrieval-Augmented Generation) pipeline for gas turbine maintenance.
 
+> **Live demo:** [angelorscoelho.dev/siemens](https://www.angelorscoelho.dev/siemens)  
+> This repository is a Git submodule of [angelorscoelho/angelorscoelho.dev](https://github.com/angelorscoelho/angelorscoelho.dev) and is served as the `/siemens` sub-page of that portfolio.
+
 ## Architecture
 
 ```
@@ -60,7 +63,8 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) to see the app.
+Open [http://localhost:5173/siemens/](http://localhost:5173/siemens/) to see the app
+(the `/siemens/` base path is set in `vite.config.js`).
 
 ---
 
@@ -87,7 +91,7 @@ When prompted, provide:
 | AWS Region | e.g. `us-east-1` |
 | `OpenAIApiKey` | Your OpenAI key (`sk-...`) — **marked NoEcho** |
 | `OpenAIModel` | `gpt-4o-mini` (default) or `gpt-4o` |
-| `AllowedOrigin` | `*` for testing, or `https://your-app.vercel.app` for production |
+| `AllowedOrigin` | `*` for testing, or `https://www.angelorscoelho.dev` for production |
 | Confirm changeset | `y` |
 | Save config | `y` |
 
@@ -118,18 +122,62 @@ npm run build   # verify build still works
 
 ---
 
-## Step 4 — Deploy Frontend to Vercel
+## Step 4 — Integrate with the Main Portfolio (submodule)
+
+This repository is designed to be consumed as a Git submodule by
+[angelorscoelho/angelorscoelho.dev](https://github.com/angelorscoelho/angelorscoelho.dev)
+and served at `https://www.angelorscoelho.dev/siemens`.
+
+To add it to the main site:
+
+```bash
+# In the angelorscoelho.dev repo root:
+git submodule add https://github.com/angelorscoelho/siemens.git siemens
+git submodule update --init --remote siemens
+```
+
+Then, in the main site's build pipeline, build the siemens frontend and copy the output:
+
+```bash
+cd siemens/frontend
+npm ci
+VITE_API_URL=<api-url> npm run build
+# dist/ now contains assets prefixed with /siemens/
+cp -r dist/* ../../dist/siemens/
+```
+
+The main site's `vercel.json` should then rewrite `/siemens/(.*)` to the siemens
+`index.html`:
+
+```json
+{ "source": "/siemens/(.*)", "destination": "/siemens/index.html" }
+```
+
+### Why keep this as a separate repository?
+
+- **Standalone reviewability** — Interviewers can inspect `github.com/angelorscoelho/siemens`
+  as a self-contained project with its own README, commit history, and infrastructure.
+- **Backend isolation** — The AWS SAM backend (`template.yaml`, Lambda) has no place
+  inside a React portfolio repo.
+- **Best of both worlds** — The submodule approach means this project is independently
+  linkable *and* appears as a live demo on the portfolio.
+
+---
+
+## Step 5 — Deploy Frontend Standalone (optional)
+
+If you want to deploy the siemens frontend by itself (e.g. for isolated testing):
 
 1. Push this repository to GitHub.
-2. Import the repository in [Vercel](https://vercel.com/new).
+2. Import the **`frontend/`** directory in [Vercel](https://vercel.com/new).
 3. Set **Root Directory** to `frontend`.
 4. Add Environment Variable: `VITE_API_URL` → your API Gateway URL.
 5. Deploy.
 
 > **CORS note:** After the Vercel URL is assigned, redeploy the backend with
-> `AllowedOrigin` set to your exact Vercel URL for production security:
+> `AllowedOrigin` set to your exact domain for production security:
 > ```bash
-> sam deploy --parameter-overrides AllowedOrigin="https://your-app.vercel.app"
+> sam deploy --parameter-overrides AllowedOrigin="https://www.angelorscoelho.dev"
 > ```
 
 ---
