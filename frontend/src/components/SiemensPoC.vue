@@ -3,6 +3,16 @@
     <!-- Header -->
     <header class="bg-gray-900 border-b border-teal-700 shadow-lg">
       <div class="max-w-7xl mx-auto px-6 py-5 flex items-center gap-4">
+        <!-- Back link to main portfolio -->
+        <a href="https://www.angelorscoelho.dev"
+           class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-teal-400 transition-colors shrink-0 mr-2"
+           title="Back to portfolio">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          angelorscoelho.dev
+        </a>
+
         <div class="flex items-center gap-3">
           <svg class="w-9 h-9 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -193,7 +203,8 @@
     </main>
 
     <footer class="mt-10 border-t border-gray-800 py-5 text-center text-xs text-gray-600">
-      Siemens Energy · Gas Turbine AI Maintenance Assistant · PoC · Built with Vue.js + AWS Lambda + OpenAI
+      Siemens Energy · Gas Turbine AI Maintenance Assistant · PoC · Built with Vue.js + AWS Lambda + OpenAI ·
+      <a href="https://www.angelorscoelho.dev" class="hover:text-teal-500 transition-colors">angelorscoelho.dev</a>
     </footer>
   </div>
 </template>
