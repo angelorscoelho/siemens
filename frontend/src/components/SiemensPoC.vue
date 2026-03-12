@@ -1135,8 +1135,11 @@ async function openHistoryModal(turbine) {
         historyModalLoading.value = false
         return
       }
-    } catch {
-      // Fall through to local data
+    } catch (err) {
+      // Network or parse error — silently fall through to local data below.
+      // This is expected when VITE_API_URL is set but the Lambda is unreachable
+      // (e.g. during local development without AWS).
+      console.warn('[maintenance-history] API fetch failed, using local data:', err?.message)
     }
   }
 
