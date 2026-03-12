@@ -1,0 +1,52 @@
+name: Build frontend
+
+# Verify the frontend builds successfully on every push and pull request.
+# On pushes to main the build also validates that VITE_API_URL is available
+# as a repository secret so the deployed bundle is fully wired to the backend.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+  pull_request:
+    paths:
+      - 'frontend/**'
+
+jobs:
+  build:
+    name: Build Vite app
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build
+        working-directory: frontend
+        env:
+          # VITE_API_URL must be added as a repository secret:
+          # Settings → Secrets and variables → Actions → New repository secret
+          # Name: VITE_API_URL  Value: https://<api-id>.execute-api.<region>.amazonaws.com
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7
