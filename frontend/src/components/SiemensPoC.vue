@@ -129,10 +129,11 @@
             <div class="flex items-start gap-3 mb-4">
               <!-- Equipment Image -->
               <img
-                :src="selectedTurbine.imageUrl"
+                :src="detailDisplayImageSrc"
                 :alt="selectedTurbine.name"
                 class="w-14 h-14 rounded-xl border-2 object-cover shrink-0 hidden md:block"
                 :class="statusBorderClass(selectedTurbine)"
+                @error="onDetailImageError"
               />
               <div class="flex-1 min-w-0">
                 <p class="text-xs text-gray-400 uppercase tracking-widest font-medium">{{ selectedTurbine.location }}</p>
@@ -924,6 +925,24 @@ function clearFilters() {
   statusFilters.OK = false
   statusFilters.RISK = false
   statusFilters.NOK = false
+}
+
+// ── Detail view image fallback ───────────────────────────────────────────────
+const detailImageHasError = ref(false)
+watch(selectedTurbine, (newVal) => { if (newVal) detailImageHasError.value = false })
+const detailDisplayImageSrc = computed(() => {
+  const t = selectedTurbine.value
+  if (!t) return ''
+  if (detailImageHasError.value) {
+    const color = t.status === 'NOK' ? '#f87171' : t.status === 'RISK' ? '#fbbf24' : '#2dd4bf'
+    return `data:image/svg+xml,${encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="#1e293b" width="200" height="200"/><text fill="${color}" font-family="monospace" font-size="16" text-anchor="middle" x="100" y="105">${t.name}</text></svg>`
+    )}`
+  }
+  return t.imageUrl
+})
+function onDetailImageError() {
+  detailImageHasError.value = true
 }
 
 // ── Fleet Status Computed ─────────────────────────────────────────────────────

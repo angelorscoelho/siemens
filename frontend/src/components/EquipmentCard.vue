@@ -12,7 +12,7 @@
         <!-- Equipment Image (first item) -->
         <div class="shrink-0">
           <img
-            :src="turbine.imageUrl"
+            :src="displayImageSrc"
             :alt="turbine.name + ' ' + turbine.type"
             class="w-10 h-10 rounded-lg border-2 object-cover"
             :class="photoBorderClass"
@@ -142,6 +142,20 @@ const props = defineProps({
 })
 
 defineEmits(['select', 'show-history'])
+
+// ── Equipment image with reactive fallback ────────────────────────────────────
+// Use a ref so the fallback SVG survives Vue re-renders triggered by telemetry
+// updates (direct e.target.src mutations get reset when Vue patches the DOM).
+const imageHasError = ref(false)
+watch(() => props.turbine.imageUrl, () => { imageHasError.value = false })
+const displayImageSrc = computed(() => {
+  if (imageHasError.value) {
+    return `data:image/svg+xml,${encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="#1e293b" width="200" height="200"/><text fill="#2dd4bf" font-family="monospace" font-size="16" text-anchor="middle" x="100" y="105">${props.turbine.name}</text></svg>`
+    )}`
+  }
+  return props.turbine.imageUrl
+})
 
 // ── Focus / Glow / Vibrate animation ─────────────────────────────────────────
 const cardRef = ref(null)
@@ -402,10 +416,8 @@ function formatValue(value, decimals) {
   return value.toFixed(decimals)
 }
 
-function onImageError(e) {
-  e.target.src = `data:image/svg+xml,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="#1e293b" width="200" height="200"/><text fill="#2dd4bf" font-family="monospace" font-size="16" text-anchor="middle" x="100" y="105">${props.turbine.name}</text></svg>`
-  )}`
+function onImageError() {
+  imageHasError.value = true
 }
 </script>
 
