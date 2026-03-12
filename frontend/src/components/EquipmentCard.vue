@@ -6,26 +6,10 @@
     ref="cardRef"
   >
     <div class="p-4">
-      <!-- ── Card Header: Doc Icon | Img | Name+Location | Status Badge ── -->
+      <!-- ── Card Header: Img | Name+Location | Manual | History | Status ── -->
       <div class="flex items-start gap-2 mb-3">
 
-        <!-- Document Icon (leftmost — links to manufacturer manual) -->
-        <a
-          :href="turbine.manualUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-          @click.stop
-          class="shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
-          :title="`Open the ${turbine.name} equipment manual`"
-          :aria-label="`Open the ${turbine.name} equipment manual`"
-        >
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </a>
-
-        <!-- Equipment Image (small picture frame) -->
+        <!-- Equipment Image (first item) -->
         <div class="shrink-0">
           <img
             :src="turbine.imageUrl"
@@ -46,6 +30,36 @@
           </h3>
           <p class="text-xs text-gray-400 mt-0.5 leading-snug truncate">{{ turbine.type }}</p>
         </div>
+
+        <!-- Manual Icon (links to manufacturer manual) -->
+        <a
+          :href="turbine.manualUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          @click.stop
+          class="shrink-0 mt-0.5 p-1 rounded-md bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
+          :title="`Open the ${turbine.name} equipment manual`"
+          :aria-label="`Open the ${turbine.name} equipment manual`"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </a>
+
+        <!-- Maintenance History Icon (opens history modal) -->
+        <button
+          @click.stop="$emit('show-history', turbine)"
+          class="shrink-0 mt-0.5 p-1 rounded-md bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
+          :title="`View maintenance history for ${turbine.name}`"
+          :aria-label="`View maintenance history for ${turbine.name}`"
+        >
+          <!-- Anticlockwise clock / history icon -->
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
 
         <!-- Status Badge -->
         <span
@@ -127,7 +141,7 @@ const props = defineProps({
   focused: { type: Boolean, default: false },
 })
 
-defineEmits(['select'])
+defineEmits(['select', 'show-history'])
 
 // ── Focus / Glow / Vibrate animation ─────────────────────────────────────────
 const cardRef = ref(null)
