@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   Siemens Energy — Gas Turbine AI Maintenance Assistant
-  Serverless backend: HTTP API Gateway + Python Lambda (RAG mock via OpenAI)
+  Serverless backend: HTTP API Gateway + Python Lambda (RAG via Google Gemini)
 
 Globals:
   Function:
@@ -11,28 +11,29 @@ Globals:
     Runtime: python3.11
     Environment:
       Variables:
-        OPENAI_API_KEY: !Ref OpenAIApiKey
-        OPENAI_MODEL: !Ref OpenAIModel
-    Layers:
-      - !Ref DependenciesLayer
+        GEMINI_API_KEY: !Ref GeminiApiKey
+        GEMINI_MODEL: !Ref GeminiModel
 
 Parameters:
-  OpenAIApiKey:
+  GeminiApiKey:
     Type: String
     NoEcho: true
     Description: >
-      Your OpenAI API key (sk-...). This is stored as a CloudFormation parameter
-      and injected into Lambda as an environment variable. For production use
-      AWS Secrets Manager instead.
+      Your Google AI Studio (Gemini) API key. This is stored as a CloudFormation
+      parameter and injected into Lambda as an environment variable. For production
+      use AWS Secrets Manager instead.
 
-  OpenAIModel:
+  GeminiModel:
     Type: String
-    Default: gpt-4o-mini
+    Default: gemini-2.0-flash
     AllowedValues:
-      - gpt-4o-mini
-      - gpt-4o
-      - gpt-3.5-turbo
-    Description: OpenAI model to use for the maintenance assistant.
+      - gemini-2.0-flash
+      - gemini-1.5-pro
+      - gemini-2.0-flash-thinking-exp
+    Description: >
+      Gemini model to use. gemini-2.0-flash is recommended for speed and quality
+      balance. gemini-1.5-pro offers the highest reasoning quality for complex
+      maintenance queries.
 
   AllowedOrigin:
     Type: String
@@ -42,19 +43,6 @@ Parameters:
       in production. Defaults to '*' for ease of PoC testing.
 
 Resources:
-
-  # ── Dependencies Lambda Layer ──────────────────────────────────────────────
-  DependenciesLayer:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      LayerName: siemens-poc-dependencies
-      Description: openai SDK and dependencies for the maintenance assistant
-      ContentUri: layer/
-      CompatibleRuntimes:
-        - python3.11
-      RetentionPolicy: Delete
-    Metadata:
-      BuildMethod: python3.11
 
   # ── HTTP API Gateway ───────────────────────────────────────────────────────
   GasTurbineApi:
@@ -81,7 +69,7 @@ Resources:
       Handler: app.lambda_handler
       Description: >
         RAG-mock maintenance assistant: retrieves hardcoded turbine manual
-        context and queries OpenAI to produce grounded answers.
+        context and queries Google Gemini to produce grounded answers.
       Events:
         AskPost:
           Type: HttpApi
@@ -95,10 +83,6 @@ Resources:
             ApiId: !Ref GasTurbineApi
             Path: /ask-assistant
             Method: OPTIONS
-
-  # ── IAM Role is auto-created by SAM when no explicit Role is provided ──────
-  # SAM attaches AWSLambdaBasicExecutionRole by default; no extra permissions
-  # are needed since the function only calls the OpenAI external API.
 
 Outputs:
   ApiBaseUrl:
