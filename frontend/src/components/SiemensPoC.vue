@@ -76,7 +76,8 @@
     ═══════════════════════════════════════════════════════════════ -->
     <transition name="balloon">
       <div v-if="alertBalloon"
-        class="fixed top-[3.5rem] right-3 md:top-16 md:right-6 z-50 max-w-[calc(100vw-1.5rem)] md:max-w-sm">
+        class="fixed top-[3.5rem] z-50 max-w-[calc(100vw-1.5rem)] md:max-w-sm"
+        :style="{ right: assistantOpen ? 'calc(clamp(300px, 25%, 400px) + 1.5rem)' : '1.5rem' }">
         <div
           class="bg-red-900 border border-red-500 rounded-xl px-4 py-3 shadow-2xl flex items-start gap-3 cursor-pointer hover:bg-red-800 transition-colors animate-pulse-once"
           @click="focusAlertCard"
@@ -238,6 +239,16 @@
               <p class="text-[10px] text-gray-600 text-center mt-1">Click any metric above to change chart ↑</p>
             </div>
 
+            <!-- AI Maintenance Suggestion -->
+            <div v-if="selectedTurbine.status !== 'OK'" class="mt-4 bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-xl p-4">
+              <p class="text-xs text-yellow-400 font-semibold mb-2">🤖 AI Maintenance Suggestion</p>
+              <p class="text-xs md:text-sm text-yellow-200">{{ selectedTurbine.aiSuggestion }}</p>
+              <button @click="askAboutTurbineMobile(selectedTurbine)"
+                class="mt-3 px-4 py-2 text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer">
+                Ask Assistant for Detailed Analysis
+              </button>
+            </div>
+
             <!-- Maintenance Documentation -->
             <div class="bg-gray-800 border border-gray-600 rounded-xl p-4">
               <h4 class="text-xs font-semibold text-teal-400 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -253,16 +264,6 @@
                   <p class="text-xs text-gray-400 mt-0.5">{{ doc.content }}</p>
                 </div>
               </div>
-            </div>
-
-            <!-- AI Maintenance Suggestion -->
-            <div v-if="selectedTurbine.status !== 'OK'" class="mt-4 bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-xl p-4">
-              <p class="text-xs text-yellow-400 font-semibold mb-2">🤖 AI Maintenance Suggestion</p>
-              <p class="text-xs md:text-sm text-yellow-200">{{ selectedTurbine.aiSuggestion }}</p>
-              <button @click="askAboutTurbineMobile(selectedTurbine)"
-                class="mt-3 px-4 py-2 text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer">
-                Ask Assistant for Detailed Analysis
-              </button>
             </div>
           </div>
         </div>
