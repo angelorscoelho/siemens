@@ -31,6 +31,15 @@
           <span class="px-2 py-0.5 text-xs bg-teal-900 text-teal-300 rounded-full border border-teal-700 font-semibold uppercase tracking-wider">
             v2.0
           </span>
+          <button @click="archOpen = true"
+            class="px-2.5 py-1 text-xs bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5"
+            title="Explore the system architecture">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            </svg>
+            Architecture
+          </button>
           <button @click="toggleAssistant"
             class="px-2.5 py-1 text-xs bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,6 +76,14 @@
             <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse"></span>
             OK
           </span>
+          <button @click="archOpen = true"
+            class="p-1.5 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 hover:text-teal-300 hover:border-teal-600 transition-colors cursor-pointer"
+            title="View Architecture">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            </svg>
+          </button>
         </div>
       </div>
     </header>
@@ -871,6 +888,286 @@
       </transition>
     </Teleport>
 
+    <!-- ═══════════════════════════════════════════════════════════════
+         ARCHITECTURE DIAGRAM MODAL
+    ═══════════════════════════════════════════════════════════════ -->
+    <Teleport to="body">
+      <transition name="arch-fade">
+        <div v-if="archOpen"
+          ref="archModalRef"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          @click.self="archOpen = false"
+          @keydown.esc="archOpen = false"
+          tabindex="-1"
+        >
+          <div class="relative bg-gray-950 border border-teal-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+
+            <!-- Modal Header -->
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-800 bg-gray-900 shrink-0">
+              <svg class="w-5 h-5 text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+              </svg>
+              <div class="flex-1 min-w-0">
+                <h2 class="text-sm font-bold text-white">System Architecture</h2>
+                <p class="text-xs text-gray-400">Siemens Energy · AI Maintenance Dashboard · PoC</p>
+              </div>
+              <button
+                @click="archOpen = false"
+                class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer p-1 rounded-lg hover:bg-gray-800"
+                aria-label="Close architecture diagram"
+              >
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Scrollable content -->
+            <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+              <!-- Architecture description -->
+              <p class="text-sm text-gray-300 leading-relaxed">
+                This proof-of-concept is a full-stack cloud-native application. The <span class="text-teal-400 font-semibold">Vue 3 + Vite</span> single-page application is deployed on <span class="text-teal-400 font-semibold">Vercel</span> and communicates with a <span class="text-teal-400 font-semibold">Vercel Serverless Function</span> that proxies requests to the <span class="text-teal-400 font-semibold">Google Gemini API</span>. The maintenance knowledge base is stored as vector embeddings in an <span class="text-teal-400 font-semibold">AWS S3</span> bucket, retrieved at query time via <span class="text-teal-400 font-semibold">AWS Lambda</span> functions exposed through <span class="text-teal-400 font-semibold">Amazon API Gateway</span>, forming a lightweight Retrieval-Augmented Generation (RAG) pipeline that grounds every AI response with real equipment data.
+              </p>
+
+              <!-- Architecture SVG Diagram -->
+              <div class="w-full overflow-x-auto">
+                <svg viewBox="0 0 880 520" xmlns="http://www.w3.org/2000/svg"
+                  class="w-full min-w-[640px] rounded-xl border border-gray-800 bg-gray-900"
+                  font-family="ui-monospace, monospace" font-size="11"
+                  role="img" aria-labelledby="arch-svg-title">
+                  <title id="arch-svg-title">System architecture diagram showing the user's browser connecting to Vercel CDN (Vue 3 SPA), which calls a Vercel Serverless Function that proxies to Google Gemini. The browser also calls AWS API Gateway, which routes to two AWS Lambda functions: one for RAG retrieval (reading from Amazon S3) and one for maintenance history. Infrastructure is deployed via AWS SAM with CI/CD through GitHub Actions.</title>
+
+                  <!-- Background regions -->
+                  <!-- User zone -->
+                  <rect x="10" y="10" width="140" height="500" rx="10" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+                  <text x="80" y="28" text-anchor="middle" fill="#64748b" font-size="9" font-weight="bold" text-transform="uppercase">USER</text>
+
+                  <!-- Frontend zone (Vercel) -->
+                  <rect x="168" y="10" width="200" height="500" rx="10" fill="#0f172a" stroke="#0d9488" stroke-width="1" stroke-dasharray="4,3"/>
+                  <text x="268" y="28" text-anchor="middle" fill="#0d9488" font-size="9" font-weight="bold">VERCEL (Frontend + API)</text>
+
+                  <!-- AWS zone -->
+                  <rect x="386" y="10" width="484" height="500" rx="10" fill="#0f172a" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3"/>
+                  <text x="628" y="28" text-anchor="middle" fill="#f59e0b" font-size="9" font-weight="bold">AMAZON WEB SERVICES</text>
+
+                  <!-- ── Browser box ── -->
+                  <rect x="22" y="55" width="116" height="60" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.2"/>
+                  <!-- Browser icon -->
+                  <rect x="32" y="63" width="30" height="22" rx="3" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+                  <line x1="32" y1="69" x2="62" y2="69" stroke="#94a3b8" stroke-width="1.2"/>
+                  <circle cx="35" cy="66" r="1.5" fill="#ef4444"/>
+                  <circle cx="40" cy="66" r="1.5" fill="#f59e0b"/>
+                  <circle cx="45" cy="66" r="1.5" fill="#22c55e"/>
+                  <text x="80" y="74" fill="#e2e8f0" font-size="9.5" font-weight="bold">Browser</text>
+                  <text x="80" y="86" fill="#94a3b8" font-size="8">Vue 3 / Vite</text>
+                  <text x="80" y="97" fill="#94a3b8" font-size="8">Tailwind CSS</text>
+                  <text x="80" y="108" fill="#94a3b8" font-size="8">Chart.js</text>
+
+                  <!-- ── Vercel SPA box ── -->
+                  <rect x="180" y="55" width="176" height="60" rx="8" fill="#1e293b" stroke="#0d9488" stroke-width="1.2"/>
+                  <!-- Vercel triangle icon -->
+                  <polygon points="191,85 204,65 217,85" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-linejoin="round"/>
+                  <text x="224" y="74" fill="#e2e8f0" font-size="9.5" font-weight="bold">Vercel CDN</text>
+                  <text x="224" y="86" fill="#94a3b8" font-size="8">Static SPA hosting</text>
+                  <text x="224" y="97" fill="#94a3b8" font-size="8">Global edge network</text>
+                  <text x="224" y="108" fill="#94a3b8" font-size="8">angelorscoelho.dev</text>
+
+                  <!-- ── Vercel Serverless Function box ── -->
+                  <rect x="180" y="155" width="176" height="60" rx="8" fill="#1e293b" stroke="#0d9488" stroke-width="1.2"/>
+                  <!-- Lambda-like icon for serverless -->
+                  <text x="191" y="182" fill="#0d9488" font-size="16" font-weight="bold">λ</text>
+                  <text x="212" y="174" fill="#e2e8f0" font-size="9.5" font-weight="bold">Serverless Function</text>
+                  <text x="212" y="186" fill="#94a3b8" font-size="8">/api/ask-assistant</text>
+                  <text x="212" y="197" fill="#94a3b8" font-size="8">Node.js (TypeScript)</text>
+                  <text x="212" y="208" fill="#94a3b8" font-size="8">Vercel runtime</text>
+
+                  <!-- ── Google Gemini box ── -->
+                  <rect x="180" y="270" width="176" height="60" rx="8" fill="#1e293b" stroke="#818cf8" stroke-width="1.2"/>
+                  <!-- Gemini star-like icon -->
+                  <circle cx="195" cy="299" r="10" fill="none" stroke="#818cf8" stroke-width="1.5"/>
+                  <line x1="195" y1="289" x2="195" y2="309" stroke="#818cf8" stroke-width="1.5"/>
+                  <line x1="185" y1="299" x2="205" y2="299" stroke="#818cf8" stroke-width="1.5"/>
+                  <text x="212" y="291" fill="#e2e8f0" font-size="9.5" font-weight="bold">Google Gemini</text>
+                  <text x="212" y="303" fill="#94a3b8" font-size="8">gemini-1.5-flash</text>
+                  <text x="212" y="314" fill="#94a3b8" font-size="8">LLM inference</text>
+                  <text x="212" y="325" fill="#94a3b8" font-size="8">GOOGLE_API_KEY (server)</text>
+
+                  <!-- ── AWS API Gateway box ── -->
+                  <rect x="398" y="55" width="152" height="60" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.2"/>
+                  <!-- API Gateway official-style icon: purple rectangle with arrows -->
+                  <rect x="408" y="65" width="28" height="20" rx="3" fill="#8b5cf6"/>
+                  <polyline points="415,71 411,75 415,79" fill="none" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
+                  <polyline points="428,71 432,75 428,79" fill="none" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
+                  <line x1="415" y1="75" x2="428" y2="75" stroke="white" stroke-width="1.2"/>
+                  <text x="443" y="74" fill="#e2e8f0" font-size="9.5" font-weight="bold">API Gateway</text>
+                  <text x="443" y="86" fill="#94a3b8" font-size="8">Amazon API Gateway</text>
+                  <text x="443" y="97" fill="#94a3b8" font-size="8">REST — CORS enabled</text>
+                  <text x="443" y="108" fill="#94a3b8" font-size="8">POST /ask · GET /history</text>
+
+                  <!-- ── AWS Lambda (RAG) box ── -->
+                  <rect x="398" y="155" width="152" height="60" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.2"/>
+                  <!-- Lambda official-style icon: orange square with λ -->
+                  <rect x="408" y="163" width="24" height="24" rx="3" fill="#f59e0b"/>
+                  <text x="420" y="180" text-anchor="middle" fill="#1e293b" font-size="14" font-weight="bold">λ</text>
+                  <text x="440" y="174" fill="#e2e8f0" font-size="9.5" font-weight="bold">AWS Lambda</text>
+                  <text x="440" y="186" fill="#94a3b8" font-size="8">ask_assistant/app.py</text>
+                  <text x="440" y="197" fill="#94a3b8" font-size="8">Python 3.11 · RAG logic</text>
+                  <text x="440" y="208" fill="#94a3b8" font-size="8">OpenAI embeddings</text>
+
+                  <!-- ── AWS Lambda (Maintenance) box ── -->
+                  <rect x="398" y="255" width="152" height="60" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.2"/>
+                  <rect x="408" y="263" width="24" height="24" rx="3" fill="#f59e0b"/>
+                  <text x="420" y="280" text-anchor="middle" fill="#1e293b" font-size="14" font-weight="bold">λ</text>
+                  <text x="440" y="274" fill="#e2e8f0" font-size="9.5" font-weight="bold">AWS Lambda</text>
+                  <text x="440" y="286" fill="#94a3b8" font-size="8">maintenance_history</text>
+                  <text x="440" y="297" fill="#94a3b8" font-size="8">app.py · Python 3.11</text>
+                  <text x="440" y="308" fill="#94a3b8" font-size="8">GET /maintenance-history</text>
+
+                  <!-- ── AWS S3 (Knowledge Base) box ── -->
+                  <rect x="590" y="115" width="148" height="60" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.2"/>
+                  <!-- S3 official-style icon: green bucket shape -->
+                  <rect x="600" y="124" width="26" height="20" rx="2" fill="#22c55e"/>
+                  <ellipse cx="613" cy="124" rx="13" ry="4" fill="#16a34a"/>
+                  <ellipse cx="613" cy="144" rx="13" ry="4" fill="#16a34a"/>
+                  <text x="634" y="133" fill="#e2e8f0" font-size="9.5" font-weight="bold">Amazon S3</text>
+                  <text x="634" y="145" fill="#94a3b8" font-size="8">Knowledge base</text>
+                  <text x="634" y="156" fill="#94a3b8" font-size="8">Equipment manuals</text>
+                  <text x="634" y="167" fill="#94a3b8" font-size="8">Vector embeddings</text>
+
+                  <!-- ── AWS SAM / CloudFormation box ── -->
+                  <rect x="590" y="220" width="148" height="60" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.2"/>
+                  <!-- CloudFormation icon: teal stack -->
+                  <rect x="600" y="232" width="26" height="6" rx="2" fill="#0d9488"/>
+                  <rect x="600" y="241" width="26" height="6" rx="2" fill="#0d9488"/>
+                  <rect x="600" y="250" width="26" height="6" rx="2" fill="#0d9488"/>
+                  <text x="634" y="237" fill="#e2e8f0" font-size="9.5" font-weight="bold">AWS SAM</text>
+                  <text x="634" y="249" fill="#94a3b8" font-size="8">template.yaml</text>
+                  <text x="634" y="260" fill="#94a3b8" font-size="8">IaC — Lambda + APIGW</text>
+                  <text x="634" y="271" fill="#94a3b8" font-size="8">samconfig.toml</text>
+
+                  <!-- ── GitHub Actions / CI box ── -->
+                  <rect x="590" y="325" width="148" height="60" rx="8" fill="#1e293b" stroke="#6b7280" stroke-width="1.2"/>
+                  <!-- GitHub icon (simplified octocat) -->
+                  <circle cx="613" cy="353" r="11" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
+                  <circle cx="613" cy="350" r="5" fill="#e2e8f0"/>
+                  <path d="M604,364 Q613,358 622,364" fill="#e2e8f0"/>
+                  <text x="634" y="344" fill="#e2e8f0" font-size="9.5" font-weight="bold">GitHub Actions</text>
+                  <text x="634" y="356" fill="#94a3b8" font-size="8">build.yml</text>
+                  <text x="634" y="367" fill="#94a3b8" font-size="8">update-main-site.yml</text>
+                  <text x="634" y="378" fill="#94a3b8" font-size="8">CI/CD automation</text>
+
+                  <!-- ═══════════ ARROWS ═══════════ -->
+
+                  <!-- Browser → Vercel CDN (HTTPS) -->
+                  <line x1="138" y1="85" x2="178" y2="85" stroke="#0d9488" stroke-width="1.5" marker-end="url(#arr-teal)"/>
+                  <text x="158" y="80" text-anchor="middle" fill="#64748b" font-size="7.5">HTTPS</text>
+
+                  <!-- Vercel CDN → Serverless fn -->
+                  <line x1="268" y1="115" x2="268" y2="153" stroke="#0d9488" stroke-width="1.5" marker-end="url(#arr-teal)"/>
+                  <text x="280" y="138" fill="#64748b" font-size="7.5">POST /ask</text>
+
+                  <!-- Serverless fn → Gemini -->
+                  <line x1="268" y1="215" x2="268" y2="268" stroke="#818cf8" stroke-width="1.5" marker-end="url(#arr-indigo)"/>
+                  <text x="280" y="247" fill="#64748b" font-size="7.5">Gemini API</text>
+
+                  <!-- Browser → API Gateway (REST) -->
+                  <path d="M138,100 Q310,100 396,85" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
+                  <text x="280" y="94" text-anchor="middle" fill="#64748b" font-size="7.5">REST (history)</text>
+
+                  <!-- API Gateway → Lambda RAG -->
+                  <line x1="474" y1="115" x2="474" y2="153" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+
+                  <!-- API Gateway → Lambda History -->
+                  <path d="M550,85 Q580,85 580,255 Q580,285 552,285" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
+
+                  <!-- Lambda RAG → S3 -->
+                  <line x1="550" y1="185" x2="588" y2="155" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-green)"/>
+                  <text x="575" y="168" fill="#64748b" font-size="7.5">GetObject</text>
+
+                  <!-- SAM deploys Lambdas -->
+                  <line x1="590" y1="262" x2="552" y2="220" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arr-teal)"/>
+                  <text x="560" y="240" fill="#64748b" font-size="7.5">deploys</text>
+
+                  <!-- GitHub Actions → SAM -->
+                  <line x1="664" y1="325" x2="664" y2="282" stroke="#6b7280" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arr-gray)"/>
+                  <text x="676" y="308" fill="#64748b" font-size="7.5">triggers</text>
+
+                  <!-- Arrow markers -->
+                  <defs>
+                    <marker id="arr-teal" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                      <path d="M0,0 L0,6 L6,3 z" fill="#0d9488"/>
+                    </marker>
+                    <marker id="arr-amber" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                      <path d="M0,0 L0,6 L6,3 z" fill="#f59e0b"/>
+                    </marker>
+                    <marker id="arr-indigo" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                      <path d="M0,0 L0,6 L6,3 z" fill="#818cf8"/>
+                    </marker>
+                    <marker id="arr-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                      <path d="M0,0 L0,6 L6,3 z" fill="#22c55e"/>
+                    </marker>
+                    <marker id="arr-gray" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                      <path d="M0,0 L0,6 L6,3 z" fill="#6b7280"/>
+                    </marker>
+                  </defs>
+
+                  <!-- ── Legend ── -->
+                  <rect x="22" y="420" width="836" height="78" rx="8" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+                  <text x="40" y="438" fill="#94a3b8" font-size="9" font-weight="bold" text-transform="uppercase">LEGEND</text>
+                  <!-- Teal -->
+                  <line x1="40" y1="452" x2="60" y2="452" stroke="#0d9488" stroke-width="1.8"/>
+                  <polygon points="60,448 60,456 67,452" fill="#0d9488"/>
+                  <text x="72" y="455" fill="#94a3b8" font-size="9">Vercel / HTTPS request</text>
+                  <!-- Amber -->
+                  <line x1="40" y1="466" x2="60" y2="466" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="4,3"/>
+                  <polygon points="60,462 60,470 67,466" fill="#f59e0b"/>
+                  <text x="72" y="469" fill="#94a3b8" font-size="9">AWS REST / invocation</text>
+                  <!-- Indigo -->
+                  <line x1="200" y1="452" x2="220" y2="452" stroke="#818cf8" stroke-width="1.8"/>
+                  <polygon points="220,448 220,456 227,452" fill="#818cf8"/>
+                  <text x="232" y="455" fill="#94a3b8" font-size="9">Gemini LLM API call</text>
+                  <!-- Green -->
+                  <line x1="200" y1="466" x2="220" y2="466" stroke="#22c55e" stroke-width="1.8" stroke-dasharray="4,3"/>
+                  <polygon points="220,462 220,470 227,466" fill="#22c55e"/>
+                  <text x="232" y="469" fill="#94a3b8" font-size="9">S3 object retrieval (RAG)</text>
+                  <!-- Gray -->
+                  <line x1="380" y1="452" x2="400" y2="452" stroke="#6b7280" stroke-width="1.8" stroke-dasharray="4,3"/>
+                  <polygon points="400,448 400,456 407,452" fill="#6b7280"/>
+                  <text x="412" y="455" fill="#94a3b8" font-size="9">CI/CD pipeline trigger</text>
+                  <!-- AWS zone label -->
+                  <rect x="580" y="443" width="12" height="12" rx="2" fill="none" stroke="#f59e0b" stroke-width="1"/>
+                  <text x="598" y="453" fill="#94a3b8" font-size="9">AWS cloud boundary</text>
+                  <!-- Vercel zone label -->
+                  <rect x="580" y="460" width="12" height="12" rx="2" fill="none" stroke="#0d9488" stroke-width="1" stroke-dasharray="3,2"/>
+                  <text x="598" y="470" fill="#94a3b8" font-size="9">Vercel cloud boundary</text>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="shrink-0 border-t border-gray-800 px-6 py-3 bg-gray-900 flex items-center justify-between gap-4">
+              <p class="text-[11px] text-gray-500 leading-relaxed">
+                Want to check out the code?
+              </p>
+              <a
+                href="https://github.com/angelorscoelho/siemens"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-2 px-4 py-1.5 text-xs font-semibold bg-gray-800 hover:bg-gray-700 border border-gray-600 hover:border-teal-600 text-gray-300 hover:text-teal-300 rounded-lg transition-colors"
+              >
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.929.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+                </svg>
+                Visit the GitHub repository — it's public!
+              </a>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </Teleport>
+
   </div>
 </template>
 
@@ -903,6 +1200,16 @@ const historyModalTurbine = ref(null)
 const historyModalLoading = ref(false)
 const historyModalData = ref([])
 const alertCooldown = {}
+
+// ── Architecture Modal ────────────────────────────────────────────────────────
+const archOpen = ref(false)
+const archModalRef = ref(null)
+watch(archOpen, async (val) => {
+  if (val) {
+    await nextTick()
+    archModalRef.value?.focus()
+  }
+})
 
 // ── Mobile Navigation State ───────────────────────────────────────────────────
 const mobileView = ref('fleet')
@@ -1658,5 +1965,14 @@ onUnmounted(() => {
 .history-slide-leave-to {
   opacity: 0;
   transform: translateY(-12px);
+}
+
+.arch-fade-enter-active,
+.arch-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.arch-fade-enter-from,
+.arch-fade-leave-to {
+  opacity: 0;
 }
 </style>
