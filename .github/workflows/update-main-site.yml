@@ -27,9 +27,9 @@ jobs:
           submodules: false
 
       # 2. Point the siemens submodule at the exact commit that just landed on
-      #    main. git add records the new SHA in the parent repo's index, which
-      #    is what tells Vercel (and any downstream CI) that the sub-project
-      #    changed and a new build is required.
+      #    main. git update-index records the new SHA in the parent repo's
+      #    index, which is what tells Vercel (and any downstream CI) that the
+      #    sub-project changed and a new build is required.
       - name: Advance siemens submodule pointer
         run: |
           SIEMENS_SHA="${{ github.sha }}"
@@ -38,15 +38,12 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Initialise the submodule entry so Git knows it exists, then fetch
-          # the main branch (fetching by raw SHA is not reliably supported by
-          # GitHub's upload-pack) and check out the exact commit.
-          git submodule init siemens
-          git -C siemens fetch origin main
-          git -C siemens checkout "$SIEMENS_SHA"
-
-          # Stage the updated submodule pointer.
-          git add siemens
+          # Directly update the gitlink entry in the index to the new commit.
+          # Mode 160000 is the gitlink (submodule) mode used by Git.
+          # This avoids cloning the submodule locally, which previously caused
+          # git to fall back to the parent repo's remote and fail with
+          # "fatal: unable to read tree".
+          git update-index --cacheinfo "160000,$SIEMENS_SHA,siemens"
 
           # Only commit if the pointer actually changed (idempotent).
           if git diff --staged --quiet; then
