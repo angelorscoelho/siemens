@@ -53,8 +53,41 @@ export function randomWalk(current, step, min, max) {
   return Math.max(min, Math.min(max, newVal))
 }
 
-// ── Equipment image generator (inline SVG data URIs — no external dependency) ─
-function makeEquipmentImage(name, color) {
+// ── Equipment image: use downloaded real photo, fall back to inline SVG ────────
+// Slot numbers match the catalogue in scripts/fetch-images.mjs (1-indexed).
+// The browser will try the downloaded image first; EquipmentCard.vue handles
+// load errors by showing the inline SVG fallback.
+const IMAGE_SLOTS = [
+  '/images/turbine-01.jpg',
+  '/images/turbine-02.jpg',
+  '/images/turbine-03.jpg',
+  '/images/turbine-04.jpg',
+  '/images/turbine-05.jpg',
+  '/images/turbine-06.jpg',
+  '/images/turbine-07.jpg',
+  '/images/turbine-08.jpg',
+  '/images/turbine-09.jpg',
+  '/images/turbine-10.jpg',
+  '/images/turbine-11.jpg',
+  '/images/turbine-12.jpg',
+  '/images/turbine-13.jpg',
+  '/images/turbine-14.jpg',
+  '/images/turbine-15.jpg',
+  '/images/turbine-16.jpg',
+  '/images/turbine-17.jpg',
+  '/images/turbine-18.jpg',
+]
+
+function makeEquipmentImage(name, color, slotIndex) {
+  // Prefer the real photo downloaded at build time; onError in EquipmentCard falls back to SVG
+  if (slotIndex >= 0 && slotIndex < IMAGE_SLOTS.length) {
+    return IMAGE_SLOTS[slotIndex]
+  }
+  return makeSvgImage(name, color)
+}
+
+// ── Inline SVG fallback (used when photo is unavailable) ─────────────────────
+function makeSvgImage(name, color) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
     <rect fill="#0f172a" width="200" height="200" rx="8"/>
     <rect x="40" y="30" width="120" height="100" rx="6" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.5"/>
@@ -88,7 +121,7 @@ export function createFleetData() {
       type: 'H-class Heavy-Duty Gas Turbine',
       description: '375 MW combined cycle flagship',
       location: 'Plant Alpha — Berlin, DE',
-      imageUrl: makeEquipmentImage('SGT5-8000H', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SGT5-8000H', '#2dd4bf', 0),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt5-8000h.html',
       status: 'OK',
       currentStatus: 'OK',
@@ -117,7 +150,7 @@ export function createFleetData() {
       type: 'Industrial Steam Turbine',
       description: '65 MW mechanical drive & power generation steam turbine',
       location: 'Plant Beta — Houston, TX',
-      imageUrl: makeEquipmentImage('SST-400', '#fbbf24'),
+      imageUrl: makeEquipmentImage('SST-400', '#fbbf24', 1),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/steam-turbines/sst-400.html',
       status: 'RISK',
       currentStatus: 'RISK',
@@ -146,7 +179,7 @@ export function createFleetData() {
       type: 'Industrial Gas Turbine',
       description: '53 MW high-efficiency mid-range unit',
       location: 'Plant Gamma — Riyadh, SA',
-      imageUrl: makeEquipmentImage('SGT-800', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SGT-800', '#2dd4bf', 2),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-800.html',
       status: 'OK',
       currentStatus: 'OK',
@@ -175,7 +208,7 @@ export function createFleetData() {
       type: 'Industrial Steam Turbine',
       description: '150 MW extraction/condensing steam turbine',
       location: 'Plant Delta — Rotterdam, NL',
-      imageUrl: makeEquipmentImage('SST-600', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SST-600', '#2dd4bf', 3),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/steam-turbines/sst-600.html',
       status: 'OK',
       currentStatus: 'OK',
@@ -204,7 +237,7 @@ export function createFleetData() {
       type: 'Aeroderivative Gas Turbine',
       description: '37 MW fast-start peaker unit',
       location: 'Plant Epsilon — Lagos, NG',
-      imageUrl: makeEquipmentImage('SGT-750', '#fbbf24'),
+      imageUrl: makeEquipmentImage('SGT-750', '#fbbf24', 4),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-750.html',
       status: 'RISK',
       currentStatus: 'RISK',
@@ -233,7 +266,7 @@ export function createFleetData() {
       type: 'Aeroderivative Gas Turbine',
       description: '67 MW fast-response grid stabilization',
       location: 'Plant Zeta — Yokohama, JP',
-      imageUrl: makeEquipmentImage('SGT-A65', '#f87171'),
+      imageUrl: makeEquipmentImage('SGT-A65', '#f87171', 5),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-a65.html',
       status: 'NOK',
       currentStatus: 'NOK',
@@ -262,7 +295,7 @@ export function createFleetData() {
       type: 'F-class Heavy-Duty Gas Turbine',
       description: '292 MW advanced F-class gas turbine',
       location: 'Plant Eta — Madrid, ES',
-      imageUrl: makeEquipmentImage('SGT5-4000F', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SGT5-4000F', '#2dd4bf', 6),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt5-4000f.html',
       status: 'OK',
       currentStatus: 'OK',
@@ -291,7 +324,7 @@ export function createFleetData() {
       type: 'F-class Gas Turbine (60 Hz)',
       description: '232 MW 60 Hz grid-connected gas turbine',
       location: 'Plant Theta — Chicago, IL',
-      imageUrl: makeEquipmentImage('SGT6-5000F', '#fbbf24'),
+      imageUrl: makeEquipmentImage('SGT6-5000F', '#fbbf24', 7),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt6-5000f.html',
       status: 'RISK',
       currentStatus: 'RISK',
@@ -320,7 +353,7 @@ export function createFleetData() {
       type: 'Industrial Gas Turbine',
       description: '32.8 MW mechanical drive and power generation',
       location: 'Plant Iota — Abu Dhabi, AE',
-      imageUrl: makeEquipmentImage('SGT-700', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SGT-700', '#2dd4bf', 8),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-700.html',
       status: 'OK',
       currentStatus: 'OK',
@@ -349,7 +382,7 @@ export function createFleetData() {
       type: 'Industrial Gas Turbine',
       description: '24.8 MW twin-shaft industrial gas turbine',
       location: 'Plant Kappa — Kuala Lumpur, MY',
-      imageUrl: makeEquipmentImage('SGT-600', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SGT-600', '#2dd4bf', 9),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-600.html',
       status: 'OK',
       currentStatus: 'OK',
@@ -378,7 +411,7 @@ export function createFleetData() {
       type: 'Industrial Gas Turbine',
       description: '13.4 MW compact industrial gas turbine',
       location: 'Plant Lambda — Oslo, NO',
-      imageUrl: makeEquipmentImage('SGT-400', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SGT-400', '#2dd4bf', 10),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-400.html',
       status: 'OK',
       currentStatus: 'OK',
@@ -407,7 +440,7 @@ export function createFleetData() {
       type: 'Industrial Steam Turbine',
       description: '250 MW high-pressure steam turbine',
       location: 'Plant Mu — Singapore, SG',
-      imageUrl: makeEquipmentImage('SST-800', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SST-800', '#2dd4bf', 11),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/steam-turbines/sst-800.html',
       status: 'OK',
       currentStatus: 'OK',
@@ -436,7 +469,7 @@ export function createFleetData() {
       type: 'Industrial Steam Turbine',
       description: '50 MW backpressure steam turbine for CHP',
       location: 'Plant Nu — Mumbai, IN',
-      imageUrl: makeEquipmentImage('SST-300', '#fbbf24'),
+      imageUrl: makeEquipmentImage('SST-300', '#fbbf24', 12),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/steam-turbines/sst-300.html',
       status: 'RISK',
       currentStatus: 'RISK',
@@ -465,7 +498,7 @@ export function createFleetData() {
       type: 'Hydrogen-Cooled Synchronous Generator',
       description: '1,500 MVA air/hydrogen cooled generator',
       location: 'Plant Xi — São Paulo, BR',
-      imageUrl: makeEquipmentImage('SGen-1000A', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SGen-1000A', '#2dd4bf', 13),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/generators/sgen-1000a.html',
       status: 'OK',
       currentStatus: 'OK',
@@ -494,7 +527,7 @@ export function createFleetData() {
       type: 'Small Industrial Gas Turbine',
       description: '5.1 MW compact single-shaft gas turbine',
       location: 'Plant Omicron — Cairo, EG',
-      imageUrl: makeEquipmentImage('SGT-100', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SGT-100', '#2dd4bf', 14),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-100.html',
       status: 'OK',
       currentStatus: 'OK',
@@ -523,7 +556,7 @@ export function createFleetData() {
       type: 'Small Industrial Gas Turbine',
       description: '8.9 MW twin-shaft industrial gas turbine',
       location: 'Plant Pi — Nairobi, KE',
-      imageUrl: makeEquipmentImage('SGT-300', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SGT-300', '#2dd4bf', 15),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-300.html',
       status: 'OK',
       currentStatus: 'OK',
@@ -552,7 +585,7 @@ export function createFleetData() {
       type: 'H-class Gas Turbine (60 Hz)',
       description: '274 MW 60 Hz H-class flagship unit',
       location: 'Plant Rho — Atlanta, GA',
-      imageUrl: makeEquipmentImage('SGT6-8000H', '#f87171'),
+      imageUrl: makeEquipmentImage('SGT6-8000H', '#f87171', 16),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt6-8000h.html',
       status: 'NOK',
       currentStatus: 'NOK',
@@ -581,7 +614,7 @@ export function createFleetData() {
       type: 'Air-Cooled Synchronous Generator',
       description: '130 MVA air-cooled two-pole generator',
       location: 'Plant Sigma — Paris, FR',
-      imageUrl: makeEquipmentImage('SGen-100A', '#2dd4bf'),
+      imageUrl: makeEquipmentImage('SGen-100A', '#2dd4bf', 17),
       manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/generators/sgen-100a.html',
       status: 'OK',
       currentStatus: 'OK',

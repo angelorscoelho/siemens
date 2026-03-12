@@ -15,7 +15,7 @@
           target="_blank"
           rel="noopener noreferrer"
           @click.stop
-          class="shrink-0 mt-0.5 p-1 rounded-md bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
+          class="shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
           :title="`Open the ${turbine.name} equipment manual`"
           :aria-label="`Open the ${turbine.name} equipment manual`"
         >

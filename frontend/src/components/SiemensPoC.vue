@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-950 text-gray-100 font-sans flex flex-col">
+  <div class="h-screen bg-gray-950 text-gray-100 font-sans flex flex-col overflow-hidden">
 
     <!-- ═══════════════════════════════════════════════════════════════
          HEADER — Compact
@@ -37,7 +37,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            {{ assistantOpen ? 'Hide' : 'Show' }} AI
+            {{ assistantOpen ? 'Hide' : 'Show' }} Assistant
           </button>
         </div>
       </div>
@@ -151,11 +151,28 @@
               </span>
             </div>
 
-            <!-- Detailed Metrics -->
+            <!-- Detailed Metrics (clickable to change trend chart) -->
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
               <div v-for="param in metricParams" :key="param.key"
-                class="bg-gray-800 rounded-lg p-3">
-                <p class="text-xs text-gray-400 mb-1 leading-tight">{{ param.label }}</p>
+                @click="selectDetailMetric(param.key)"
+                @keydown.enter.prevent="selectDetailMetric(param.key)"
+                @keydown.space.prevent="selectDetailMetric(param.key)"
+                tabindex="0"
+                role="button"
+                :aria-pressed="detailActiveMetricKey === param.key"
+                :aria-label="`Show ${param.label} trend`"
+                class="rounded-lg p-3 cursor-pointer transition-all"
+                :class="[
+                  detailActiveMetricKey === param.key
+                    ? 'bg-gray-700 ring-2 ' + (selectedTurbine.status === 'NOK' ? 'ring-red-600' : selectedTurbine.status === 'RISK' ? 'ring-yellow-600' : 'ring-teal-600')
+                    : 'bg-gray-800 hover:bg-gray-700/70'
+                ]"
+                :title="`Show ${param.label} trend`"
+              >
+                <p class="text-xs text-gray-400 mb-1 leading-tight flex items-center gap-1">
+                  {{ param.label }}
+                  <span v-if="detailActiveMetricKey === param.key" class="text-teal-400 text-[9px] font-bold uppercase tracking-wide">● shown</span>
+                </p>
                 <p class="text-base md:text-lg font-mono font-bold leading-tight"
                   :class="getMetricColorClass(selectedTurbine, param.key)">
                   {{ formatValue(selectedTurbine[param.key], param.decimals) }}
@@ -164,18 +181,40 @@
               </div>
             </div>
 
-            <!-- Vibration Sparkline -->
+            <!-- Dynamic Metric Sparkline (drill-in) -->
             <div class="bg-gray-800 rounded-lg p-3 mb-5">
-              <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Vibration Trend (Last 60 readings)</p>
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-semibold uppercase tracking-wider" :style="{ color: detailSparklineColor }">
+                  {{ detailActiveParam.label }} Trend
+                  <span class="text-gray-500 font-normal normal-case tracking-normal ml-1">(last 60 readings)</span>
+                </p>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] text-gray-600">
+                    ↓{{ detailActiveParam && selectedTurbine.metricHistory?.[detailActiveMetricKey]?.length
+                      ? Math.min(...(selectedTurbine.metricHistory[detailActiveMetricKey])).toFixed(detailActiveParam.decimals)
+                      : '—' }}
+                    · ↑{{ detailActiveParam && selectedTurbine.metricHistory?.[detailActiveMetricKey]?.length
+                      ? Math.max(...(selectedTurbine.metricHistory[detailActiveMetricKey])).toFixed(detailActiveParam.decimals)
+                      : '—' }}
+                    {{ detailActiveParam.unit }}
+                  </span>
+                  <button v-if="detailMetricKey"
+                    @click="detailMetricKey = null"
+                    class="text-[10px] text-teal-400 hover:text-teal-300 cursor-pointer transition-colors">
+                    Auto
+                  </button>
+                </div>
+              </div>
               <svg :viewBox="'0 0 300 80'" class="w-full h-16 md:h-20" preserveAspectRatio="none">
                 <polyline
-                  :points="getSparklinePoints(selectedTurbine.metricHistory?.vibration || [], 300, 80)"
+                  :points="getSparklinePoints(selectedTurbine.metricHistory?.[detailActiveMetricKey] || [], 300, 80)"
                   fill="none"
-                  :stroke="selectedTurbine.vibrationAlert ? '#f87171' : '#2dd4bf'"
+                  :stroke="detailSparklineColor"
                   stroke-width="1.5"
                   stroke-linejoin="round"
                 />
               </svg>
+              <p class="text-[10px] text-gray-600 text-center mt-1">Click any metric above to change chart ↑</p>
             </div>
 
             <!-- Maintenance Documentation -->
@@ -633,10 +672,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import {
   metricParams, thresholds, createFleetData, randomWalk,
-  generateActionPlan, historyMetricKeys,
+  generateActionPlan, historyMetricKeys, getMostCriticalMetricKey,
 } from '../fleetStore.js'
 import EquipmentCard from './EquipmentCard.vue'
 
@@ -677,6 +716,36 @@ function clearFilters() {
 // ── Fleet Status Computed ─────────────────────────────────────────────────────
 const criticalCount = computed(() => turbines.filter(t => t.status === 'NOK').length)
 const warningCount = computed(() => turbines.filter(t => t.status === 'RISK').length)
+
+// ── Detail View Metric Drill-In ───────────────────────────────────────────────
+const detailMetricKey = ref(null)
+
+const detailActiveMetricKey = computed(() => {
+  if (detailMetricKey.value) return detailMetricKey.value
+  return selectedTurbine.value ? getMostCriticalMetricKey(selectedTurbine.value) : 'exhaustTemp'
+})
+
+const detailActiveParam = computed(() => {
+  return metricParams.find(p => p.key === detailActiveMetricKey.value) || metricParams[0]
+})
+
+const detailSparklineColor = computed(() => {
+  if (!selectedTurbine.value) return '#2dd4bf'
+  if (selectedTurbine.value.status === 'NOK') return '#f87171'
+  const key = detailActiveMetricKey.value
+  if (key === 'vibration' && selectedTurbine.value.vibrationAlert) return '#fbbf24'
+  if (key === 'exhaustTemp' && selectedTurbine.value.tempAlert) return '#fbbf24'
+  return '#2dd4bf'
+})
+
+function selectDetailMetric(key) {
+  detailMetricKey.value = (detailMetricKey.value === key) ? null : key
+}
+
+// Reset detail metric selection when switching turbines
+watch(selectedTurbine, () => {
+  detailMetricKey.value = null
+})
 
 // ── Telemetry Simulation ──────────────────────────────────────────────────────
 function updateTelemetry() {
@@ -749,10 +818,87 @@ function updateTelemetry() {
       }
     }
   })
+
+  // Enforce max 30% NOK and 30% RISK to keep dashboard realistic
+  enforceStatusDistribution()
+}
+
+// ── Status Distribution Cap (max 30% NOK, max 30% RISK) ──────────────────────
+function enforceStatusDistribution() {
+  const total = turbines.length
+  const maxNOK = Math.floor(total * 0.3)
+  const maxRISK = Math.floor(total * 0.3)
+
+  // Get NOK turbines sorted by how far above critical threshold they are (least critical first)
+  const nokTurbines = turbines
+    .filter(t => t.status === 'NOK')
+    .sort((a, b) => {
+      const critA = Math.max(
+        (a.vibration - thresholds.vibration.critical) / thresholds.vibration.critical,
+        (a.exhaustTemp - thresholds.exhaustTemp.critical) / thresholds.exhaustTemp.critical,
+      )
+      const critB = Math.max(
+        (b.vibration - thresholds.vibration.critical) / thresholds.vibration.critical,
+        (b.exhaustTemp - thresholds.exhaustTemp.critical) / thresholds.exhaustTemp.critical,
+      )
+      return critA - critB
+    })
+
+  // Downgrade excess NOK to RISK
+  if (nokTurbines.length > maxNOK) {
+    nokTurbines.slice(0, nokTurbines.length - maxNOK).forEach(t => {
+      t.status = 'RISK'
+      // Clamp values just below the critical threshold so they stay RISK
+      if (t.vibration > thresholds.vibration.critical) {
+        t.vibration = thresholds.vibration.critical - 0.1 - Math.random() * 0.2
+      }
+      if (t.exhaustTemp > thresholds.exhaustTemp.critical) {
+        t.exhaustTemp = thresholds.exhaustTemp.critical - 1 - Math.random() * 2
+      }
+    })
+  }
+
+  // Get RISK turbines sorted by criticality (least critical first)
+  const riskTurbines = turbines
+    .filter(t => t.status === 'RISK')
+    .sort((a, b) => {
+      const critA = Math.max(
+        (a.vibration - thresholds.vibration.warning) / thresholds.vibration.warning,
+        (a.exhaustTemp - thresholds.exhaustTemp.warning) / thresholds.exhaustTemp.warning,
+      )
+      const critB = Math.max(
+        (b.vibration - thresholds.vibration.warning) / thresholds.vibration.warning,
+        (b.exhaustTemp - thresholds.exhaustTemp.warning) / thresholds.exhaustTemp.warning,
+      )
+      return critA - critB
+    })
+
+  // Downgrade excess RISK to OK
+  if (riskTurbines.length > maxRISK) {
+    riskTurbines.slice(0, riskTurbines.length - maxRISK).forEach(t => {
+      t.status = 'OK'
+      t.tempAlert = false
+      t.vibrationAlert = false
+      t.alert = null
+      t.aiSuggestion = ''
+      // Clamp values below warning thresholds
+      if (t.vibration > thresholds.vibration.warning) {
+        t.vibration = thresholds.vibration.warning - 0.1 - Math.random() * 0.3
+      }
+      if (t.exhaustTemp > thresholds.exhaustTemp.warning) {
+        t.exhaustTemp = thresholds.exhaustTemp.warning - 1 - Math.random() * 5
+      }
+    })
+  }
 }
 
 // ── Anomaly Trigger ────────────────────────────────────────────────────────────
 function triggerRandomAnomaly() {
+  const total = turbines.length
+  const maxNOK = Math.floor(total * 0.3)
+  const currentNOK = turbines.filter(t => t.status === 'NOK').length
+  if (currentNOK >= maxNOK) return
+
   const healthyAssets = turbines.filter(t => t.status === 'OK')
   if (healthyAssets.length === 0) return
   const target = healthyAssets[Math.floor(Math.random() * healthyAssets.length)]

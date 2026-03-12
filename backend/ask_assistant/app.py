@@ -50,11 +50,15 @@ Common causes of high vibration:
   - Bearing wear or lubrication failure
   - Thermal bow (transient at startup — typically resolves within 10 minutes)
   - Foreign object ingestion (FOD)
+  - Seal rub from differential thermal expansion
+  - Coupling misalignment
 Corrective actions:
   1. Reduce load to < 70% rated capacity.
   2. Monitor trend for 15 minutes; if declining, continue at reduced load.
   3. If stable or increasing above 4.0 mm/s, initiate planned shutdown.
   4. Inspect bearings 1–4 and perform rotor balancing.
+  5. Check lube oil supply pressure and temperature at each bearing.
+  6. Perform vibration spectrum analysis to identify frequency signature (imbalance vs. misalignment).
 
 === SECTION 9: EXHAUST TEMPERATURE ===
 Rated exhaust temperature range: 520°C – 580°C (model-dependent).
@@ -65,10 +69,14 @@ Common causes of elevated exhaust temperature:
   - Turbine blade oxidation / thermal barrier coating degradation
   - Compressor fouling (reduces airflow, increases flame temperature)
   - Thermocouple calibration drift (verify with redundant sensor)
+  - Combustion liner damage allowing hot gas bypass
+  - Inlet guide vane position error
 Corrective actions:
   1. Verify thermocouple reading against adjacent sensors.
   2. Check fuel control valve position and fuel flow meter.
   3. Schedule compressor offline water wash if fouling index > 0.95.
+  4. Reduce load by 10–15% and monitor temperature trend for 20 minutes.
+  5. If temperature does not decrease, initiate controlled shutdown.
 
 === SECTION 12: COMPRESSOR MAINTENANCE ===
 Online water wash: every 500 EOH or when compressor efficiency drops > 1.5%.
@@ -81,19 +89,121 @@ Lube oil specification: ISO VG 32 turbine oil, ash-free, anti-oxidant additive.
 Oil change interval: 4,000 EOH or annually (whichever comes first).
 Oil temperature limits: 45°C minimum at bearing inlet; 90°C maximum at bearing outlet.
 Low oil pressure trip: < 1.2 bar (abs) at main header.
+
+=== SECTION 18: COMMON FAULT PATTERNS & REMEDIATION ===
+FAULT: Sudden vibration spike (> 2 mm/s increase within 30 minutes)
+  Likely cause: Foreign object damage, blade liberation, or bearing failure.
+  Immediate action: Reduce load to 50%, notify operations. If > 6 mm/s, trip immediately.
+  Follow-up: Borescope inspection of compressor and turbine stages within 24 hours.
+
+FAULT: Gradual vibration increase (< 0.5 mm/s per day)
+  Likely cause: Progressive bearing wear, rotor deposit build-up, or coupling degradation.
+  Action: Schedule vibration analysis. Increase monitoring frequency to hourly readings.
+  Planned corrective: Bearing inspection and rotor dynamic balance at next outage.
+
+FAULT: Exhaust temperature spread > 30°C between thermocouples
+  Likely cause: Combustion liner damage, fuel nozzle blockage, or hot streak.
+  Immediate action: Reduce load to 70%. Identify worst sector from thermocouple pattern.
+  Follow-up: Combustion borescope inspection at first opportunity.
+
+FAULT: High exhaust temperature with normal vibration
+  Likely cause: Compressor fouling, fuel valve malfunction, or blade coating loss.
+  Action: Perform online compressor wash. Verify fuel flow meter accuracy.
+
+FAULT: High vibration with high exhaust temperature (dual exceedance)
+  Likely cause: Hot-section distress, advanced blade damage, or rotor thermal distortion.
+  CRITICAL ACTION: Initiate controlled shutdown immediately.
+  Emergency response: Do not trip; execute controlled coast-down to protect bearings.
+  Post-shutdown: Full borescope inspection + NDT of all hot-section components.
+
+FAULT: Rapid load loss with alarm
+  Likely cause: Fuel supply interruption, inlet pressure drop, or control system fault.
+  Action: Check fuel header pressure. Review control system logs. Restart only after root cause identified.
+
+=== SECTION 22: RAG ACTION PLAN TEMPLATES ===
+
+ACTION PLAN TEMPLATE — NOK (Critical) STATUS:
+This template applies when turbine parameters exceed critical thresholds.
+Required inputs: user_technical_manual (unit-specific procedures), past_maintenance_history_notes (recent work history).
+Step 1 [IMMEDIATE — 0–15 min]: Reduce load to 50% rated capacity. Notify shift supervisor and OEM hotline.
+Step 2 [IMMEDIATE — 15–30 min]: Cross-check critical reading against redundant sensors. If confirmed, initiate controlled shutdown.
+Step 3 [SHORT-TERM — 0–24 h]: Review past_maintenance_history_notes for recent maintenance that may have introduced the fault (e.g., balance quality, bearing settings, fuel nozzle replacement).
+Step 4 [SHORT-TERM — 24–48 h]: Perform visual and borescope inspection per user_technical_manual Section 7 (vibration) or Section 9 (temperature).
+Step 5 [MEDIUM-TERM — 2–7 days]: Complete root cause analysis. Apply corrective maintenance. Update past_maintenance_history_notes with findings and corrective actions.
+Step 6 [RETURN-TO-SERVICE]: Verify repair quality through graduated load test per user_technical_manual startup and commissioning section.
+
+ACTION PLAN TEMPLATE — RISK (Warning) STATUS:
+This template applies when parameters are in the warning zone but below critical thresholds.
+Required inputs: user_technical_manual, past_maintenance_history_notes.
+Step 1 [MONITOR — Immediate]: Increase monitoring frequency (every 15 min readings). Set additional alarm at 80% of critical threshold.
+Step 2 [REVIEW — Within 4 h]: Review past_maintenance_history_notes for parameter trends over last 30 days. Identify if condition is improving, stable, or degrading.
+Step 3 [INVESTIGATE — Within 24 h]: Perform non-invasive diagnostics (vibration spectrum, fuel flow check, thermocouple verification) per user_technical_manual.
+Step 4 [PLAN — Within 48 h]: Schedule planned maintenance outage if trend is degrading. Prepare materials and personnel per user_technical_manual.
+Step 5 [CORRECTIVE — At planned outage]: Perform targeted inspection of suspected component. Update past_maintenance_history_notes.
+
+=== SECTION 25: PAST MAINTENANCE HISTORY INTEGRATION ===
+When reviewing past_maintenance_history_notes, check for:
+  - Recent bearing replacements or adjustments (correlate with vibration changes)
+  - Compressor wash history (correlate with efficiency and exhaust temperature trends)
+  - Fuel nozzle replacements (correlate with combustion temperature spread)
+  - Blade repairs or coatings (correlate with exhaust temperature and efficiency)
+  - Seal replacements (correlate with shaft speed and efficiency)
+  - Any near-miss events or previous alarms of the same parameter
+  - Hours since last major overhaul vs. recommended interval
+
+Key diagnostic questions from history:
+  Q: Has this parameter been in alarm before?
+  Q: Was maintenance performed in the last 7 days? (Post-maintenance adjustments may be needed)
+  Q: Is the rate of change accelerating or stable?
+  Q: Does the alarm correlate with an operational event (load change, trip, restart)?
 """
 
-SYSTEM_PROMPT = (
-    "You are an expert gas turbine maintenance engineer at Siemens Energy. "
-    "Answer the user's question using ONLY the information contained in the "
-    "provided maintenance manual excerpt. If the answer cannot be found in the "
-    "excerpt, say so explicitly — do NOT make up information. "
-    "Be concise, precise, and use engineering terminology appropriate for "
-    "a field maintenance technician."
-)
+PAST_MAINTENANCE_HISTORY_NOTES = """
+FLEET MAINTENANCE HISTORY — SUMMARY NOTES (Last 90 Days)
+Generated: Auto-updated by CMMS | Use with: user_technical_manual SE-GT-MM-4200
+
+Common recent findings across fleet:
+  - 3 units: Compressor blade tip erosion found during inspections; accelerated by dusty inlet conditions.
+  - 2 units: Bearing #3 oil supply restrictor partially blocked; cleared during planned maintenance.
+  - 4 units: Fuel nozzle coking on units operating on natural gas with high aromatic content; nozzles cleaned.
+  - 1 unit: Exhaust thermocouple #7 replaced due to calibration drift of +18°C.
+  - 2 units: Inlet filter differential pressure elevated; filters replaced ahead of schedule.
+
+Trending observations:
+  - Fleet-wide exhaust temperature creeping +5°C above baseline over last 60 days; attributed to seasonal ambient temperature increase.
+  - Bearing vibration on units with > 20,000 EOH showing gradual upward trend; proactive bearing inspection scheduled.
+
+Spare parts availability:
+  - Combustion liners (Type A/B): 8 sets in regional warehouse (Houston).
+  - Bearing assemblies (journal type): 12 sets available.
+  - Fuel nozzle assemblies: 24 sets (all models).
+
+OEM service bulletins active:
+  - SB-SGT-2024-07: Inspect transition piece cooling holes at next combustion inspection on units > 8,000 EOH.
+  - SB-SGT-2025-03: Lubrication system filter bypass valve check on SGT-series with > 15,000 EOH.
+"""
 
 # Gemini REST API base URL
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+
+# Keywords that indicate an alert/action-plan query requiring maintenance history context
+ALERT_KEYWORDS = (
+    'nok', 'risk', 'critical', 'emergency', 'alarm', 'alert', 'action plan',
+    'vibration', 'temperature', 'exhaust', 'bearing', 'shutdown', 'diagnostic',
+)
+
+SYSTEM_PROMPT = (
+    "You are an expert gas turbine and steam turbine maintenance engineer at Siemens Energy. "
+    "You have access to the Siemens Energy maintenance manual (user_technical_manual) and "
+    "recent fleet maintenance history notes (past_maintenance_history_notes), both of which "
+    "are provided in the context below. "
+    "When the question involves a RISK or NOK status alert, always produce a structured action plan "
+    "that explicitly references both the user_technical_manual procedures and the past_maintenance_history_notes. "
+    "Answer using ONLY the information in the provided context. If additional information is needed, "
+    "state clearly what should be checked in the user_technical_manual or CMMS. "
+    "Be concise, precise, and use engineering terminology appropriate for a field maintenance technician. "
+    "Format action plans as numbered steps with estimated timeframes."
+)
 
 
 def _build_cors_headers(event: dict) -> dict:
@@ -189,10 +299,21 @@ def lambda_handler(event: dict, context) -> dict:  # noqa: ANN001
     logger.info("Using Gemini model: %s", model)
 
     # ── Build grounded RAG prompt ────────────────────────────────────────────
-    full_prompt = (
-        f"MAINTENANCE MANUAL EXCERPT:\n{MAINTENANCE_MANUAL_EXCERPT}\n\n"
-        f"QUESTION: {query}"
-    )
+    # Detect if this is an alert/action-plan query to include maintenance history
+    is_alert_query = any(kw in query.lower() for kw in ALERT_KEYWORDS)
+
+    if is_alert_query:
+        full_prompt = (
+            f"[user_technical_manual]\n{MAINTENANCE_MANUAL_EXCERPT}\n\n"
+            f"[past_maintenance_history_notes]\n{PAST_MAINTENANCE_HISTORY_NOTES}\n\n"
+            f"QUESTION (requires action plan using both user_technical_manual and "
+            f"past_maintenance_history_notes): {query}"
+        )
+    else:
+        full_prompt = (
+            f"[user_technical_manual]\n{MAINTENANCE_MANUAL_EXCERPT}\n\n"
+            f"QUESTION: {query}"
+        )
 
     # ── Call Gemini ──────────────────────────────────────────────────────────
     try:
@@ -216,9 +337,12 @@ def lambda_handler(event: dict, context) -> dict:  # noqa: ANN001
         return _error(502, "Unexpected Gemini response format. Please try again.", cors_headers)
 
     # ── Return result ────────────────────────────────────────────────────────
+    combined_context = MAINTENANCE_MANUAL_EXCERPT.strip()
+    if is_alert_query:
+        combined_context += "\n\n" + PAST_MAINTENANCE_HISTORY_NOTES.strip()
     payload = {
         "answer": answer,
-        "context": MAINTENANCE_MANUAL_EXCERPT.strip(),
+        "context": combined_context,
         "model": model,
     }
     return {
