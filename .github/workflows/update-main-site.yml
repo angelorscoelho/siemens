@@ -1,0 +1,57 @@
+name: Notify main site of submodule update
+
+# Trigger on every push to main so the portfolio site (angelorscoelho.dev)
+# immediately reflects any change made to this sub-project.
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-submodule:
+    name: Update siemens submodule pointer in angelorscoelho.dev
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      # 1. Check out the main portfolio site using a PAT that has write access.
+      #    The PAT is stored as the secret MAIN_SITE_PAT in this repository's
+      #    Settings → Secrets and variables → Actions.
+      - name: Checkout angelorscoelho.dev
+        uses: actions/checkout@v4
+        with:
+          repository: angelorscoelho/angelorscoelho.dev
+          token: ${{ secrets.MAIN_SITE_PAT }}
+          # Do NOT recursively clone submodules — we only need the repo tree.
+          submodules: false
+
+      # 2. Point the siemens submodule at the exact commit that just landed on
+      #    main. git add records the new SHA in the parent repo's index, which
+      #    is what tells Vercel (and any downstream CI) that the sub-project
+      #    changed and a new build is required.
+      - name: Advance siemens submodule pointer
+        run: |
+          SIEMENS_SHA="${{ github.sha }}"
+          SHORT="${SIEMENS_SHA:0:8}"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Initialise the submodule entry so Git knows it exists, then fetch
+          # the specific commit we want to pin it to.
+          git submodule init siemens
+          git -C siemens fetch --depth=1 origin "$SIEMENS_SHA"
+          git -C siemens checkout "$SIEMENS_SHA"
+
+          # Stage the updated submodule pointer.
+          git add siemens
+
+          # Only commit if the pointer actually changed (idempotent).
+          if git diff --staged --quiet; then
+            echo "Submodule pointer already at $SHORT — nothing to push."
+          else
+            git commit -m "ci: update siemens submodule to ${SHORT}"
+            git push origin HEAD:main
+            echo "Pushed submodule pointer update ($SHORT) — Vercel will rebuild."
+          fi

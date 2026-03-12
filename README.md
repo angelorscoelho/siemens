@@ -182,6 +182,51 @@ If you want to deploy the siemens frontend by itself (e.g. for isolated testing)
 
 ---
 
+## CI/CD — Automated Portfolio Deployment
+
+When a change is merged to `main` in this repository, the workflow at
+`.github/workflows/update-main-site.yml` automatically advances the siemens
+submodule pointer in `angelorscoelho/angelorscoelho.dev`. Vercel monitors that
+repository and triggers a full rebuild whenever its `main` branch is pushed to,
+so the live portfolio at `angelorscoelho.dev/siemens` is updated without any
+manual intervention.
+
+```
+Push to siemens/main
+        │
+        ▼
+ GitHub Actions (this repo)
+ update-main-site.yml
+        │  git -C siemens checkout <new-sha>
+        │  git add siemens && git commit && git push
+        ▼
+ angelorscoelho/angelorscoelho.dev main branch updated
+        │
+        ▼
+ Vercel detects push → build → deploy
+        │
+        ▼
+ https://www.angelorscoelho.dev/siemens ✓ live
+```
+
+### One-time setup (required secrets)
+
+| Secret | Where to set it | What it is |
+|--------|-----------------|------------|
+| `MAIN_SITE_PAT` | Siemens repo → Settings → Secrets and variables → Actions | A GitHub **fine-grained token** (or Classic PAT) with `Contents → Read and Write` permission on `angelorscoelho/angelorscoelho.dev` |
+
+Steps to create the token:
+1. Go to **GitHub → Settings → Developer settings → Personal access tokens**.
+2. Generate a **fine-grained token** scoped to `angelorscoelho/angelorscoelho.dev` with **Contents → Read and Write**.  
+   *(Alternatively use a Classic PAT with the `repo` scope.)*
+3. Copy the token value.
+4. In **this** (siemens) repository: Settings → Secrets and variables → Actions → New repository secret → name it `MAIN_SITE_PAT`.
+
+Once the secret exists the workflow runs automatically on every push to `main`.  
+No changes are required in the Vercel dashboard or in `angelorscoelho.dev`.
+
+---
+
 ## API Reference
 
 ### `POST /ask-assistant`
