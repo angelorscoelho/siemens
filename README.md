@@ -5,6 +5,30 @@ A Proof of Concept for the **Siemens Energy Distributed AI Factory** demonstrati
 > **Live demo:** [angelorscoelho.dev/siemens](https://www.angelorscoelho.dev/siemens)  
 > This repository is a Git submodule of [angelorscoelho/angelorscoelho.dev](https://github.com/angelorscoelho/angelorscoelho.dev) and is served as the `/siemens` sub-page of that portfolio.
 
+## PoC Status – Deployed & Ready (March 12, 2026)
+
+| Aspect | Detail |
+|--------|--------|
+| **AWS Stack** | `siemens-poc` deployed in `us-east-1` via SAM (IaC) |
+| **Live API** | `https://msao2suw84.execute-api.us-east-1.amazonaws.com` |
+| **AI – Generation** | Google **Gemini 2.5 Pro** via pure REST calls — zero external SDKs |
+| **AI – Embeddings** | Google **text-embedding-004** (768-dim vectors) via REST |
+| **RAG** | Real lightweight embedding-based retrieval: chunked sample turbine manuals → S3 JSON → cosine similarity in Lambda |
+| **Frontend** | Vue 3 + Vite on Vercel — chat UI + architecture modal matching deployed reality |
+| **Live demo** | [angelorscoelho.dev/siemens](https://www.angelorscoelho.dev/siemens) |
+
+> **Local setup note:** Run `ingest_manuals.py` once with `GEMINI_API_KEY` env var to populate the S3 knowledge base before querying. User runs ingestion locally; Lambda reads from S3 at query time.
+
+> **Architecture honesty:** Diagram and implementation are now 100% aligned after fast iteration under time pressure.
+
+### Senior-Level Engineering Highlights
+
+- **Infrastructure as Code** — Full AWS SAM template (`template.yaml`) defines API Gateway, Lambda, S3 bucket, and IAM policies in a single declarative file; one-command deploy with `sam deploy`
+- **Cost-effective AI integration** — Gemini 2.5 Pro + text-embedding-004 via raw REST (`urllib`) instead of heavyweight SDKs; keeps Lambda cold-start fast and deployment artifact small
+- **Honest architecture transparency** — Diagram, README, and in-app modal all describe the *actual* deployed pipeline (no mock claims); retrieval is real semantic cosine similarity over pre-embedded chunks
+
+---
+
 ## Architecture
 
 ```
@@ -14,8 +38,8 @@ A Proof of Concept for the **Siemens Energy Distributed AI Factory** demonstrati
 │  Vue.js SPA + Tailwind CSS            │          │  API Gateway (HTTP API)             │
 │  • Fleet Status dashboard             │          │       ↓                            │
 │  • AI Maintenance Assistant chat      │◀──────── │  Lambda (Python 3.11)              │
-│                                       │          │  • RAG mock: manual excerpt context │
-└───────────────────────────────────────┘          │  • OpenAI Chat Completions API     │
+│                                       │          │  • Real RAG: S3 cosine retrieval   │
+└───────────────────────────────────────┘          │  • Gemini 2.5 Pro via REST API     │
                                                    └────────────────────────────────────┘
 ```
 
@@ -38,9 +62,9 @@ siemens/
     ├── template.yaml           # SAM IaC: API Gateway + Lambda + CORS
     ├── samconfig.toml          # SAM deploy defaults
     ├── ask_assistant/
-    │   └── app.py              # Lambda handler (RAG mock + OpenAI)
+    │   └── app.py              # Lambda handler (Gemini REST + real RAG)
     └── layer/
-        └── requirements.txt    # openai SDK (Lambda Layer)
+        └── requirements.txt    # Lambda Layer dependencies
 ```
 
 ## Prerequisites
@@ -49,7 +73,7 @@ siemens/
 - [Python 3.11+](https://www.python.org/)
 - [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
 - AWS account with appropriate IAM permissions
-- [OpenAI API key](https://platform.openai.com/api-keys)
+- [Google Gemini API key](https://aistudio.google.com/apikey)
 
 ---
 
@@ -89,8 +113,8 @@ When prompted, provide:
 |-----------|-------|
 | Stack Name | `siemens-poc` |
 | AWS Region | e.g. `us-east-1` |
-| `OpenAIApiKey` | Your OpenAI key (`sk-...`) — **marked NoEcho** |
-| `OpenAIModel` | `gpt-4o-mini` (default) or `gpt-4o` |
+| `GeminiApiKey` | Your Google Gemini key (`AIza...`) — **marked NoEcho** |
+| `GeminiModel` | `gemini-2.5-pro` (default) |
 | `S3BucketName` | `siemens-rag-knowledge-base` (must be globally unique — change suffix if needed) |
 | `AllowedOrigin` | `*` for testing, or `https://www.angelorscoelho.dev` for production |
 | Confirm changeset | `y` |
@@ -120,15 +144,15 @@ Before the Lambda can answer questions, run the ingestion script locally to embe
 
 ```bash
 # From the repo root
-pip install openai boto3
-export OPENAI_API_KEY="sk-..."
+pip install boto3
+export GEMINI_API_KEY="AIza..."
 python ingest_manuals.py --bucket siemens-rag-knowledge-base
 ```
 
 Expected output:
 ```
 === Siemens RAG Ingestion Pipeline ===
-Embedding model : text-embedding-3-small
+Embedding model : text-embedding-004 (768-dim, Google)
 S3 bucket       : siemens-rag-knowledge-base
 Chunks to ingest: 3
 
@@ -152,12 +176,12 @@ Complete flow from zero to a live real-RAG endpoint:
 cd backend
 sam build
 sam deploy --guided
-# → Provide: OpenAIApiKey, OpenAIModel=gpt-4o-mini, S3BucketName=siemens-rag-knowledge-base
+# → Provide: GeminiApiKey, GeminiModel=gemini-2.5-pro, S3BucketName=siemens-rag-knowledge-base
 
 # 2. Populate the S3 knowledge base (run once from repo root)
 cd ..
-pip install openai boto3
-export OPENAI_API_KEY="sk-..."
+pip install boto3
+export GEMINI_API_KEY="AIza..."
 python ingest_manuals.py --bucket siemens-rag-knowledge-base
 
 # 3. Smoke-test the endpoint
@@ -176,8 +200,8 @@ Expected response shape:
   "sources": [
     { "id": "chunk_002", "section": "Section 7 & 18: Vibration...", "score": 0.89, "preview": "..." }
   ],
-  "model": "gpt-4o-mini",
-  "embedding_model": "text-embedding-3-small",
+  "model": "gemini-2.5-pro",
+  "embedding_model": "text-embedding-004",
   "top_k": 3
 }
 ```
@@ -322,9 +346,9 @@ This upgrade replaces mock retrieval with a real, dependency-light RAG pipeline 
 
 | Step | Before | After |
 |------|--------|-------|
-| **Retrieval** | Hardcoded string pasted into every prompt | `text-embedding-3-small` → cosine similarity over pre-embedded S3 chunks |
+| **Retrieval** | Hardcoded string pasted into every prompt | `text-embedding-004` (768-dim) → cosine similarity over pre-embedded S3 chunks |
 | **Context injected** | Entire 3,000-word manual (always identical) | Top-3 semantically relevant chunks (~900 words) |
-| **LLM** | google/gemini-2.0-flash (via stdlib urllib) | OpenAI gpt-4o-mini (via official SDK) |
+| **LLM** | google/gemini-2.0-flash (via stdlib urllib) | Google Gemini 2.5 Pro (via stdlib urllib — zero SDK) |
 | **Response payload** | `{answer, context, model}` | `{answer, sources[], embedding_model, top_k, model}` |
 | **Infrastructure** | Lambda only | Lambda + S3 bucket (created by SAM stack) |
 
@@ -333,21 +357,21 @@ This upgrade replaces mock retrieval with a real, dependency-light RAG pipeline 
 **Why S3 + a single JSON manifest instead of a vector DB?**  
 A vector database (Pinecone, OpenSearch, pgvector) adds operational overhead, costs, and IAM complexity that is disproportionate for a knowledge base of < 500 chunks. Downloading one pre-computed JSON file from S3 and running cosine similarity in pure Python adds < 80 ms of latency, costs fractions of a cent per query, and keeps the entire retrieval path auditable in 30 lines of code. When the knowledge base grows beyond ~2,000 chunks, migrating to a proper ANN index becomes worthwhile — and the interface contract (`_retrieve_top_k`) is already isolated for that swap.
 
-**Why `text-embedding-3-small`?**  
-At $0.02 per million tokens it is the lowest-cost OpenAI embedding model. The 1536-dim vectors provide retrieval quality that is more than sufficient for technical domain documents. Embeddings are computed once at ingestion time — query-time cost is a single API call per user turn.
+**Why `text-embedding-004`?**  
+Google's 768-dimensional embedding model offers strong retrieval quality for technical domain documents at zero additional SDK cost (called via REST). Embeddings are computed once at ingestion time — query-time cost is a single API call per user turn.
 
 **Why cosine similarity in pure Python (no NumPy)?**  
-Lambda's execution environment ships with `boto3` and the Python standard library. Adding NumPy to the layer for dot-product arithmetic on vectors of length 1,536 is unnecessary overhead. The pure-Python implementation runs in < 5 ms for 200 chunks.
+Lambda's execution environment ships with `boto3` and the Python standard library. Adding NumPy to the layer for dot-product arithmetic on vectors of length 768 is unnecessary overhead. The pure-Python implementation runs in < 5 ms for 200 chunks.
 
 ### Files changed
 
 | File | Change |
 |------|--------|
-| `backend/ask_assistant/app.py` | Complete rewrite — real RAG pipeline (embed → S3 → cosine → chat) |
-| `backend/template.yaml` | Replaced Gemini params with OpenAI + S3; added `KnowledgeBaseBucket` resource + IAM policy |
-| `backend/layer/requirements.txt` | Added `openai>=1.30` (boto3 is pre-installed in Lambda runtime) |
-| `ingest_manuals.py` | New one-time script — chunks 3 SGT manual sections, embeds, uploads to S3 |
-| `README.md` | Updated architecture diagram (Mermaid) and deployment instructions |
+| `backend/ask_assistant/app.py` | Complete rewrite — real RAG pipeline (embed → S3 → cosine → Gemini chat) |
+| `backend/template.yaml` | Gemini + S3 params; added `KnowledgeBaseBucket` resource + IAM policy |
+| `backend/layer/requirements.txt` | Minimal Lambda Layer dependencies (boto3 is pre-installed in runtime) |
+| `ingest_manuals.py` | One-time script — chunks 3 SGT manual sections, embeds via Gemini REST, uploads to S3 |
+| `README.md` | Updated architecture diagram and deployment instructions |
 
 ---
 
@@ -372,8 +396,8 @@ Lambda's execution environment ships with `boto3` and the Python standard librar
       "preview": "SIEMENS SGT-SERIES — SECTION 7: VIBRATION THRESHOLDS..."
     }
   ],
-  "model": "gpt-4o-mini",
-  "embedding_model": "text-embedding-3-small",
+  "model": "gemini-2.5-pro",
+  "embedding_model": "text-embedding-004",
   "top_k": 3
 }
 ```

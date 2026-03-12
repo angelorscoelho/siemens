@@ -18,9 +18,9 @@ The Lambda function (ask_assistant/app.py) then downloads this one file at
 query time and performs cosine similarity in pure Python — zero additional
 infrastructure required.
 
-IMPORTANT: if you were previously using OpenAI embeddings (text-embedding-3-small,
-1536-dim), you must re-run this script after switching; the vector dimensions
-changed from 1536 to 768 and old manifests are incompatible.
+NOTE: This script uses Google text-embedding-004 (768-dim vectors). If upgrading from
+a previous embedding model with different dimensions, you must re-run this script;
+old manifests with incompatible vector dimensions will cause retrieval errors.
 
 Output
 ------
