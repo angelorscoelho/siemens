@@ -922,6 +922,12 @@ async function scrollToBottom() {
 onMounted(() => {
   updateInterval = setInterval(updateTelemetry, 2000)
   anomalyInterval = setInterval(triggerRandomAnomaly, 15000)
+
+  // Initialize diagnostics for any initially critical assets
+  const initialCritical = turbines.find(t => t.status === 'Critical')
+  if (initialCritical) {
+    updateDiagnostics(initialCritical)
+  }
 })
 
 onUnmounted(() => {

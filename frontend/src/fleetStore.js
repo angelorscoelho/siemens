@@ -40,6 +40,22 @@ export function randomWalk(current, step, min, max) {
   return Math.max(min, Math.min(max, newVal))
 }
 
+// ── Equipment image generator (inline SVG data URIs — no external dependency) ─
+function makeEquipmentImage(name, color) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+    <rect fill="#0f172a" width="200" height="200" rx="8"/>
+    <rect x="40" y="30" width="120" height="100" rx="6" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.5"/>
+    <circle cx="100" cy="75" r="30" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.4"/>
+    <line x1="70" y1="75" x2="130" y2="75" stroke="${color}" stroke-width="1" opacity="0.3"/>
+    <line x1="100" y1="45" x2="100" y2="105" stroke="${color}" stroke-width="1" opacity="0.3"/>
+    <path d="M85 65 L100 50 L115 65" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.6"/>
+    <path d="M85 85 L100 100 L115 85" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.6"/>
+    <text fill="${color}" font-family="system-ui,sans-serif" font-size="14" font-weight="bold" text-anchor="middle" x="100" y="155">${name}</text>
+    <text fill="#64748b" font-family="system-ui,sans-serif" font-size="10" text-anchor="middle" x="100" y="175">SIEMENS ENERGY</text>
+  </svg>`
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`
+}
+
 // ── Fleet Data — 6 Distinct Assets ────────────────────────────────────────────
 export function createFleetData() {
   return [
@@ -49,7 +65,7 @@ export function createFleetData() {
       type: 'H-class Heavy-Duty Gas Turbine',
       description: '375 MW combined cycle flagship',
       location: 'Plant Alpha — Berlin, DE',
-      imageUrl: 'https://placehold.co/200x200/1e293b/2dd4bf?text=SGT5-8000H&font=roboto',
+      imageUrl: makeEquipmentImage('SGT5-8000H', '#2dd4bf'),
       status: 'Operational',
       currentStatus: 'Operational',
       telemetryBaseline: { exhaustTemp: 560, vibration: 1.2, shaftSpeed: 3000 },
@@ -76,7 +92,7 @@ export function createFleetData() {
       type: 'Industrial Steam Turbine',
       description: '65 MW mechanical drive & power generation steam turbine',
       location: 'Plant Beta — Houston, TX',
-      imageUrl: 'https://placehold.co/200x200/1e293b/2dd4bf?text=SST-400&font=roboto',
+      imageUrl: makeEquipmentImage('SST-400', '#fbbf24'),
       status: 'Warning',
       currentStatus: 'Warning',
       telemetryBaseline: { exhaustTemp: 520, vibration: 2.0, shaftSpeed: 3600 },
@@ -103,7 +119,7 @@ export function createFleetData() {
       type: 'Industrial Gas Turbine',
       description: '53 MW high-efficiency mid-range unit',
       location: 'Plant Gamma — Riyadh, SA',
-      imageUrl: 'https://placehold.co/200x200/1e293b/2dd4bf?text=SGT-800&font=roboto',
+      imageUrl: makeEquipmentImage('SGT-800', '#2dd4bf'),
       status: 'Operational',
       currentStatus: 'Operational',
       telemetryBaseline: { exhaustTemp: 540, vibration: 0.9, shaftSpeed: 6608 },
@@ -130,7 +146,7 @@ export function createFleetData() {
       type: 'Industrial Steam Turbine',
       description: '150 MW extraction/condensing steam turbine',
       location: 'Plant Delta — Rotterdam, NL',
-      imageUrl: 'https://placehold.co/200x200/1e293b/2dd4bf?text=SST-600&font=roboto',
+      imageUrl: makeEquipmentImage('SST-600', '#2dd4bf'),
       status: 'Operational',
       currentStatus: 'Operational',
       telemetryBaseline: { exhaustTemp: 460, vibration: 1.5, shaftSpeed: 6100 },
@@ -157,7 +173,7 @@ export function createFleetData() {
       type: 'Aeroderivative Gas Turbine',
       description: '37 MW fast-start peaker unit',
       location: 'Plant Epsilon — Lagos, NG',
-      imageUrl: 'https://placehold.co/200x200/1e293b/2dd4bf?text=SGT-750&font=roboto',
+      imageUrl: makeEquipmentImage('SGT-750', '#fbbf24'),
       status: 'Warning',
       currentStatus: 'Warning',
       telemetryBaseline: { exhaustTemp: 530, vibration: 1.8, shaftSpeed: 9500 },
@@ -184,7 +200,7 @@ export function createFleetData() {
       type: 'Aeroderivative Gas Turbine',
       description: '67 MW fast-response grid stabilization',
       location: 'Plant Zeta — Yokohama, JP',
-      imageUrl: 'https://placehold.co/200x200/1e293b/2dd4bf?text=SGT-A65&font=roboto',
+      imageUrl: makeEquipmentImage('SGT-A65', '#f87171'),
       status: 'Critical',
       currentStatus: 'Critical',
       telemetryBaseline: { exhaustTemp: 550, vibration: 1.5, shaftSpeed: 3600 },
