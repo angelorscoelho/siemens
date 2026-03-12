@@ -53,7 +53,7 @@ jobs:
       - name: Sync siemens API functions to angelorscoelho.dev
         run: |
           mkdir -p main-site/api
-          cp siemens-src/frontend/api/*.ts main-site/api/
+          find siemens-src/frontend/api -maxdepth 1 -name "*.ts" -exec cp {} main-site/api/ \;
 
       # 5. Commit and push if anything changed.
       - name: Commit and push changes
