@@ -893,8 +893,11 @@
     <Teleport to="body">
       <transition name="arch-fade">
         <div v-if="archOpen"
+          ref="archModalRef"
           class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
           @click.self="archOpen = false"
+          @keydown.esc="archOpen = false"
+          tabindex="-1"
         >
           <div class="relative bg-gray-950 border border-teal-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
 
@@ -931,7 +934,9 @@
               <div class="w-full overflow-x-auto">
                 <svg viewBox="0 0 880 520" xmlns="http://www.w3.org/2000/svg"
                   class="w-full min-w-[640px] rounded-xl border border-gray-800 bg-gray-900"
-                  font-family="ui-monospace, monospace" font-size="11">
+                  font-family="ui-monospace, monospace" font-size="11"
+                  role="img" aria-labelledby="arch-svg-title">
+                  <title id="arch-svg-title">System architecture diagram showing the user's browser connecting to Vercel CDN (Vue 3 SPA), which calls a Vercel Serverless Function that proxies to Google Gemini. The browser also calls AWS API Gateway, which routes to two AWS Lambda functions: one for RAG retrieval (reading from Amazon S3) and one for maintenance history. Infrastructure is deployed via AWS SAM with CI/CD through GitHub Actions.</title>
 
                   <!-- Background regions -->
                   <!-- User zone -->
@@ -1197,6 +1202,13 @@ const alertCooldown = {}
 
 // ── Architecture Modal ────────────────────────────────────────────────────────
 const archOpen = ref(false)
+const archModalRef = ref(null)
+watch(archOpen, async (val) => {
+  if (val) {
+    await nextTick()
+    archModalRef.value?.focus()
+  }
+})
 
 // ── Mobile Navigation State ───────────────────────────────────────────────────
 const mobileView = ref('fleet')
