@@ -4,8 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/fetch-images.mjs && vite",
     "build": "vite build",
+    "prebuild": "node scripts/fetch-images.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
