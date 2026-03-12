@@ -114,7 +114,10 @@
       <!-- ── Alert Banner ── -->
       <div
         v-if="turbine.alert"
-        class="mt-2 p-2 bg-yellow-900/40 border border-yellow-700 rounded text-xs text-yellow-300 leading-snug"
+        class="mt-2 p-2 rounded text-xs leading-snug"
+        :class="turbine.status === 'NOK'
+          ? 'bg-red-900/40 border border-red-700 text-red-300'
+          : 'bg-yellow-900/40 border border-yellow-700 text-yellow-300'"
       >
         ⚠ {{ turbine.alert }}
       </div>

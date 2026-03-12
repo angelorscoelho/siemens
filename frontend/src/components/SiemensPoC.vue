@@ -38,7 +38,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
             </svg>
-            🏗️ Architecture
+            🏗️ See Project Architecture
           </button>
           <button @click="toggleAssistant"
             class="px-2.5 py-1 text-xs bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5">
@@ -96,20 +96,29 @@
         class="fixed top-[3.5rem] z-50 max-w-[calc(100vw-1.5rem)] md:max-w-sm"
         :style="{ right: assistantOpen ? 'calc(clamp(300px, 25%, 400px) + 1.5rem)' : '1.5rem' }">
         <div
-          class="bg-red-900 border border-red-500 rounded-xl px-4 py-3 shadow-2xl flex items-start gap-3 cursor-pointer hover:bg-red-800 transition-colors animate-pulse-once"
+          class="rounded-xl px-4 py-3 shadow-2xl flex items-start gap-3 cursor-pointer transition-colors animate-pulse-once"
+          :class="alertBalloon.status === 'NOK'
+            ? 'bg-red-900 border border-red-500 hover:bg-red-800'
+            : 'bg-yellow-900 border border-yellow-500 hover:bg-yellow-800'"
           @click="focusAlertCard"
           :title="'Click to focus ' + (alertBalloon.turbineName || 'unit')"
         >
-          <svg class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-5 h-5 flex-shrink-0 mt-0.5"
+            :class="alertBalloon.status === 'NOK' ? 'text-red-400' : 'text-yellow-400'"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
           <div class="flex-1 min-w-0">
-            <p class="text-xs font-semibold text-red-300 truncate">{{ alertBalloon.title }}</p>
-            <p class="text-xs text-red-400 mt-0.5 leading-relaxed">{{ alertBalloon.message }}</p>
-            <p class="text-[10px] text-red-500 mt-1 italic">Click to focus card</p>
+            <p class="text-xs font-semibold truncate"
+              :class="alertBalloon.status === 'NOK' ? 'text-red-300' : 'text-yellow-300'">{{ alertBalloon.title }}</p>
+            <p class="text-xs mt-0.5 leading-relaxed"
+              :class="alertBalloon.status === 'NOK' ? 'text-red-400' : 'text-yellow-400'">{{ alertBalloon.message }}</p>
+            <p class="text-[10px] mt-1 italic"
+              :class="alertBalloon.status === 'NOK' ? 'text-red-500' : 'text-yellow-500'">Click to focus card</p>
           </div>
-          <button @click.stop="alertBalloon = null" class="text-red-500 hover:text-red-300 cursor-pointer shrink-0">
+          <button @click.stop="alertBalloon = null" class="cursor-pointer shrink-0"
+            :class="alertBalloon.status === 'NOK' ? 'text-red-500 hover:text-red-300' : 'text-yellow-500 hover:text-yellow-300'">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -485,25 +494,55 @@
                 </div>
               </div>
               <div v-else-if="msg.role === 'user'" class="flex justify-end">
-                <div class="max-w-[85%] bg-teal-800 text-white rounded-2xl rounded-tr-sm px-3 py-2 text-xs shadow">
+                <div class="max-w-[85%] bg-teal-800 text-white rounded-2xl rounded-tr-sm px-3 py-2 text-xs shadow whitespace-pre-wrap">
                   {{ msg.content }}
                 </div>
               </div>
               <div v-else class="flex justify-start">
                 <div class="max-w-[95%] space-y-1">
-                  <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-gray-100 shadow leading-relaxed">
+                  <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-gray-100 shadow leading-relaxed whitespace-pre-wrap">
                     {{ msg.content }}
                   </div>
-                  <!-- RAG source chips — shown when context was retrieved -->
+                  <!-- RAG source chips — clickable and consultable -->
                   <div v-if="msg.context" class="flex flex-wrap gap-1.5 px-1">
-                    <span class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400" title="Retrieved from equipment manual via RAG">
+                    <!-- Equipment Manual chip: opens the equipment manual URL -->
+                    <a
+                      v-if="msg.manualUrl"
+                      :href="msg.manualUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-teal-700 rounded-full text-[10px] text-teal-400 hover:bg-teal-900/50 hover:border-teal-500 transition-colors cursor-pointer"
+                      title="Open Equipment Manual (RAG source) ↗">
+                      <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Equipment Manual ↗
+                    </a>
+                    <span v-else
+                      class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400"
+                      title="Retrieved from equipment manual via RAG">
                       <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                       Equipment Manual
                     </span>
-                    <span class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400" title="Retrieved from maintenance history via RAG">
+                    <!-- Maintenance History chip: opens the maintenance history modal -->
+                    <button
+                      v-if="msg.turbineId"
+                      @click="openHistoryModalById(msg.turbineId)"
+                      class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-teal-700 rounded-full text-[10px] text-teal-400 hover:bg-teal-900/50 hover:border-teal-500 transition-colors cursor-pointer"
+                      title="View Maintenance History (RAG source)">
+                      <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Maintenance History
+                    </button>
+                    <span v-else
+                      class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400"
+                      title="Retrieved from maintenance history via RAG">
                       <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -595,25 +634,55 @@
               </div>
             </div>
             <div v-else-if="msg.role === 'user'" class="flex justify-end">
-              <div class="max-w-[80%] bg-teal-800 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm shadow">
+              <div class="max-w-[80%] bg-teal-800 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm shadow whitespace-pre-wrap">
                 {{ msg.content }}
               </div>
             </div>
             <div v-else class="flex justify-start">
               <div class="max-w-[90%] space-y-1">
-                <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-gray-100 shadow leading-relaxed">
+                <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-gray-100 shadow leading-relaxed whitespace-pre-wrap">
                   {{ msg.content }}
                 </div>
-                <!-- RAG source chips — shown when context was retrieved -->
+                <!-- RAG source chips — clickable and consultable -->
                 <div v-if="msg.context" class="flex flex-wrap gap-1.5 px-1">
-                  <span class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400" title="Retrieved from equipment manual via RAG">
+                  <!-- Equipment Manual chip: opens the equipment manual URL -->
+                  <a
+                    v-if="msg.manualUrl"
+                    :href="msg.manualUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-teal-700 rounded-full text-[10px] text-teal-400 hover:bg-teal-900/50 hover:border-teal-500 transition-colors cursor-pointer"
+                    title="Open Equipment Manual (RAG source) ↗">
+                    <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Equipment Manual ↗
+                  </a>
+                  <span v-else
+                    class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400"
+                    title="Retrieved from equipment manual via RAG">
                     <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     Equipment Manual
                   </span>
-                  <span class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400" title="Retrieved from maintenance history via RAG">
+                  <!-- Maintenance History chip: opens the maintenance history modal -->
+                  <button
+                    v-if="msg.turbineId"
+                    @click="openHistoryModalById(msg.turbineId)"
+                    class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-teal-700 rounded-full text-[10px] text-teal-400 hover:bg-teal-900/50 hover:border-teal-500 transition-colors cursor-pointer"
+                    title="View Maintenance History (RAG source)">
+                    <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Maintenance History
+                  </button>
+                  <span v-else
+                    class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400"
+                    title="Retrieved from maintenance history via RAG">
                     <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1481,7 +1550,13 @@ function triggerRandomAnomaly() {
   const healthyAssets = turbines.filter(t => t.status === 'OK')
   if (healthyAssets.length === 0) return
   const target = healthyAssets[Math.floor(Math.random() * healthyAssets.length)]
-  target.vibration = thresholds.vibration.critical + 0.5 + Math.random() * 1.5
+
+  // Randomly choose which parameter becomes the anomaly (50/50 split)
+  if (Math.random() < 0.5) {
+    target.vibration = thresholds.vibration.critical + 0.5 + Math.random() * 1.5
+  } else {
+    target.exhaustTemp = thresholds.exhaustTemp.critical + 5 + Math.random() * 20
+  }
 }
 
 // ── Active Diagnostics ────────────────────────────────────────────────────────
@@ -1545,6 +1620,7 @@ function showAlertBalloon(turbine) {
     turbineName: `${turbine.name} / Unit ${turbine.id}`,
     title: `${turbine.name} / Unit ${turbine.id} — ${turbine.status}`,
     message: buildBalloonMessage(turbine),
+    status: turbine.status,
   }
   setTimeout(() => {
     alertBalloon.value = null
@@ -1623,6 +1699,7 @@ function clearTurbineSelection() {
 
 function askAboutTurbine(turbine) {
   assistantOpen.value = true
+  chatContextTurbine.value = turbine
   messages.value.push({
     role: 'system',
     content: `Analyzing specific fault in Asset #${turbine.id} (${turbine.name} ${turbine.type})...`,
@@ -1635,6 +1712,7 @@ function askAboutTurbine(turbine) {
 function askAboutTurbineMobile(turbine) {
   mobileView.value = 'chat'
   assistantOpen.value = true
+  chatContextTurbine.value = turbine
   messages.value.push({
     role: 'system',
     content: `Analyzing specific fault in Asset #${turbine.id} (${turbine.name} ${turbine.type})...`,
@@ -1677,6 +1755,7 @@ function closeHistoryModal() {
 function investigateWithAssistant(turbine, record) {
   // Open AI assistant and pre-fill with a rich query about this maintenance record
   assistantOpen.value = true
+  chatContextTurbine.value = turbine
   const partsStr = record.partsReplaced && record.partsReplaced.length
     ? `Parts replaced: ${record.partsReplaced.join(', ')}. `
     : ''
@@ -1865,6 +1944,8 @@ const loading = ref(false)
 const error = ref('')
 const chatScrollRef = ref(null)
 const mobileChatScrollRef = ref(null)
+// Track the turbine currently being discussed so RAG chips can be clickable
+const chatContextTurbine = ref(null)
 
 const sampleQuestions = [
   'What are the vibration thresholds for bearing fault detection?',
@@ -1883,6 +1964,11 @@ function toggleAssistant() {
   assistantOpen.value = !assistantOpen.value
 }
 
+function openHistoryModalById(turbineId) {
+  const turbine = turbines.find(t => t.id === turbineId)
+  if (turbine) openHistoryModal(turbine)
+}
+
 async function sendMessage() {
   const query = inputText.value.trim()
   if (!query || loading.value) return
@@ -1893,11 +1979,24 @@ async function sendMessage() {
   loading.value = true
   await scrollToBottom()
 
+  // Build turbine context payload if we have a current turbine in focus
+  const ctxTurbine = chatContextTurbine.value
+  const turbineContextPayload = ctxTurbine ? {
+    id: ctxTurbine.id,
+    name: ctxTurbine.name,
+    type: ctxTurbine.type,
+    location: ctxTurbine.location,
+    manualUrl: ctxTurbine.manualUrl,
+    maintenanceHistory: Array.isArray(ctxTurbine.maintenanceHistory)
+      ? ctxTurbine.maintenanceHistory.slice(0, 6)
+      : [],
+  } : undefined
+
   try {
     const res = await fetch(`${API_URL}/ask-assistant`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, turbineContext: turbineContextPayload }),
     })
 
     if (!res.ok) {
@@ -1910,6 +2009,8 @@ async function sendMessage() {
       role: 'assistant',
       content: data.answer,
       context: data.context,
+      turbineId: ctxTurbine?.id,
+      manualUrl: ctxTurbine?.manualUrl,
     })
   } catch (err) {
     error.value = err.message || 'An unexpected error occurred. Please try again.'
