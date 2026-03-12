@@ -1481,6 +1481,7 @@ function updateDetailChart() {
     ` ${item.formattedValue} ${param.unit}`
   detailChartInstance.options.scales.y.title.text = `${param.label} (${param.unit})`
 
+  // 'none' disables per-update animation to prevent visual jitter during live 2s telemetry polling
   detailChartInstance.update('none')
 }
 
