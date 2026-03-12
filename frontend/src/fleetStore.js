@@ -161,7 +161,7 @@ export function createFleetData() {
       alert: null,
       vibrationHistory: generateInitialHistory(1.534, 0.12, 60),
       documentation: [
-        { title: 'Operational Profile', content: 'Baseload duty — averaging 4 starts/day. Total starts: 12,400. Hot section life limit: 25,000 equivalent operating hours.' },
+        { title: 'Operational Profile', content: 'Baseload continuous duty — high availability operation. Steam extraction for process heat and power co-generation. Annual planned outage for inspection.' },
         { title: 'Last Hot Section Inspection', content: '2025-09-01 at 12,000 hrs. Turbine blades within creep limits. Next HSI at 20,000 hrs.' },
         { title: 'Steam System', content: 'Main steam pressure: 140 bar. Reheat steam: 40 bar. Extraction for process heat at 10 bar.' },
       ],

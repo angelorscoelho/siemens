@@ -104,7 +104,6 @@ defineEmits(['select'])
 // ── Chart.js ──────────────────────────────────────────────────────────────────
 const chartCanvas = ref(null)
 let chartInstance = null
-const fallbackImage = ref(false)
 
 function getChartColor() {
   if (props.turbine.vibrationAlert) return { border: '#f87171', bg: 'rgba(248, 113, 113, 0.08)' }
@@ -195,7 +194,6 @@ function formatValue(value, decimals) {
 }
 
 function onImageError(e) {
-  fallbackImage.value = true
   e.target.src = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="%231e293b" width="200" height="200"/><text fill="%232dd4bf" font-family="monospace" font-size="16" text-anchor="middle" x="100" y="105">' + props.turbine.name + '</text></svg>')}`
 }
 </script>
