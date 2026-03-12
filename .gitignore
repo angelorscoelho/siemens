@@ -19,3 +19,5 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+backend/layer/requirements.txt
+backend/layer/requirements.txt

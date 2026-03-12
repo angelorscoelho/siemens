@@ -1,1 +1,4 @@
-# No external dependencies needed - Gemini API called via stdlib urllib
+# Lambda Layer dependencies
+# boto3 is pre-installed in all AWS Lambda Python runtimes — no layer entry needed.
+# Gemini REST API is called via stdlib urllib — zero external SDK dependencies required.
+# This file is intentionally empty; the Lambda layer exists only as a packaging placeholder.
