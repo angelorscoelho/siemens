@@ -1,8 +1,6 @@
 name: Build frontend
 
 # Verify the frontend builds successfully on every push and pull request.
-# On pushes to main the build also validates that VITE_API_URL is available
-# as a repository secret so the deployed bundle is fully wired to the backend.
 on:
   push:
     branches:
@@ -37,11 +35,6 @@ jobs:
 
       - name: Build
         working-directory: frontend
-        env:
-          # VITE_API_URL must be added as a repository secret:
-          # Settings → Secrets and variables → Actions → New repository secret
-          # Name: VITE_API_URL  Value: https://<api-id>.execute-api.<region>.amazonaws.com
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
         run: npm run build
 
       - name: Upload build artifact
