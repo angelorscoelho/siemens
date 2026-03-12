@@ -39,9 +39,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           # Initialise the submodule entry so Git knows it exists, then fetch
-          # the specific commit we want to pin it to.
+          # the main branch (fetching by raw SHA is not reliably supported by
+          # GitHub's upload-pack) and check out the exact commit.
           git submodule init siemens
-          git -C siemens fetch --depth=1 origin "$SIEMENS_SHA"
+          git -C siemens fetch origin main
           git -C siemens checkout "$SIEMENS_SHA"
 
           # Stage the updated submodule pointer.
