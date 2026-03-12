@@ -9,13 +9,19 @@ on:
 
 jobs:
   update-submodule:
-    name: Update siemens submodule pointer in angelorscoelho.dev
+    name: Update siemens submodule pointer and API functions in angelorscoelho.dev
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
-      # 1. Check out the main portfolio site using a PAT that has write access.
+      # 1. Check out the siemens repository itself so we can copy API functions.
+      - name: Checkout siemens repository
+        uses: actions/checkout@v4
+        with:
+          path: siemens-src
+
+      # 2. Check out the main portfolio site using a PAT that has write access.
       #    The PAT is stored as the secret MAIN_SITE_PAT in this repository's
       #    Settings → Secrets and variables → Actions.
       - name: Checkout angelorscoelho.dev
@@ -23,14 +29,15 @@ jobs:
         with:
           repository: angelorscoelho/angelorscoelho.dev
           token: ${{ secrets.MAIN_SITE_PAT }}
-          # Do NOT recursively clone submodules — we only need the repo tree.
           submodules: false
+          path: main-site
 
-      # 2. Point the siemens submodule at the exact commit that just landed on
+      # 3. Point the siemens submodule at the exact commit that just landed on
       #    main. git update-index records the new SHA in the parent repo's
       #    index, which is what tells Vercel (and any downstream CI) that the
       #    sub-project changed and a new build is required.
       - name: Advance siemens submodule pointer
+        working-directory: main-site
         run: |
           SIEMENS_SHA="${{ github.sha }}"
           SHORT="${SIEMENS_SHA:0:8}"
@@ -38,18 +45,29 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Directly update the gitlink entry in the index to the new commit.
-          # Mode 160000 is the gitlink (submodule) mode used by Git.
-          # This avoids cloning the submodule locally, which previously caused
-          # git to fall back to the parent repo's remote and fail with
-          # "fatal: unable to read tree".
           git update-index --cacheinfo "160000,$SIEMENS_SHA,siemens"
 
-          # Only commit if the pointer actually changed (idempotent).
+      # 4. Sync the Vercel serverless API functions from the siemens repo into
+      #    angelorscoelho.dev so they are served at /api/ask-assistant and
+      #    /api/maintenance-history by the parent site's Vercel deployment.
+      - name: Sync siemens API functions to angelorscoelho.dev
+        run: |
+          mkdir -p main-site/api
+          cp siemens-src/frontend/api/*.ts main-site/api/
+
+      # 5. Commit and push if anything changed.
+      - name: Commit and push changes
+        working-directory: main-site
+        run: |
+          SIEMENS_SHA="${{ github.sha }}"
+          SHORT="${SIEMENS_SHA:0:8}"
+
+          git add .
+
           if git diff --staged --quiet; then
-            echo "Submodule pointer already at $SHORT — nothing to push."
+            echo "Nothing changed — nothing to push."
           else
-            git commit -m "ci: update siemens submodule to ${SHORT}"
+            git commit -m "ci: update siemens submodule to ${SHORT} and sync API functions"
             git push origin HEAD:main
-            echo "Pushed submodule pointer update ($SHORT) — Vercel will rebuild."
+            echo "Pushed changes — Vercel will rebuild."
           fi
