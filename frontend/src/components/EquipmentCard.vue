@@ -1,129 +1,232 @@
 <template>
   <div
-    @click="$emit('select', turbine)"
-    class="bg-gray-900 border rounded-xl shadow-md cursor-pointer hover:shadow-lg hover:shadow-teal-900/20 transition-all duration-200 group relative overflow-hidden"
-    :class="[borderClass, turbine.status === 'Critical' ? 'ring-1 ring-red-700/50' : '']"
+    class="bg-gray-900 border rounded-xl shadow-md transition-all duration-200 group relative overflow-hidden"
+    :class="[borderClass, focusedClass]"
+    @click="onCardClick"
+    ref="cardRef"
   >
     <div class="p-4">
-      <!-- Top section: Info + Equipment Photo (absolute top-right) -->
-      <div class="flex items-start gap-3">
-        <div class="flex-1 min-w-0">
-          <p class="text-xs text-gray-500 uppercase tracking-widest font-medium leading-none mb-0.5 truncate">
-            {{ turbine.location }}
-          </p>
-          <h3 class="text-sm font-bold text-white group-hover:text-teal-300 transition-colors leading-snug">
-            {{ turbine.name }} / Unit {{ turbine.id }}
-          </h3>
-          <p class="text-xs text-gray-400 mt-0.5 leading-snug">{{ turbine.type }}</p>
-          <span
-            class="inline-block mt-1.5 px-2 py-0.5 text-xs font-bold rounded-full"
-            :class="badgeClass"
-          >
-            {{ turbine.status }}
-          </span>
-        </div>
+      <!-- ── Card Header: Doc Icon | Img | Name+Location | Status Badge ── -->
+      <div class="flex items-start gap-2 mb-3">
 
-        <!-- Equipment Photo — top-right, ~25% of card width -->
-        <div class="w-1/4 shrink-0">
+        <!-- Document Icon (leftmost — links to manufacturer manual) -->
+        <a
+          :href="turbine.manualUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          @click.stop
+          class="shrink-0 mt-0.5 p-1 rounded-md bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
+          :title="`Open the ${turbine.name} equipment manual`"
+          :aria-label="`Open the ${turbine.name} equipment manual`"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </a>
+
+        <!-- Equipment Image (small picture frame) -->
+        <div class="shrink-0">
           <img
             :src="turbine.imageUrl"
             :alt="turbine.name + ' ' + turbine.type"
-            class="w-full aspect-square rounded-lg border-2 object-cover"
+            class="w-10 h-10 rounded-lg border-2 object-cover"
             :class="photoBorderClass"
             @error="onImageError"
           />
         </div>
+
+        <!-- Name + Location (clickable → drill-in) -->
+        <div class="flex-1 min-w-0 cursor-pointer" @click.stop="$emit('select', turbine)">
+          <p class="text-xs text-gray-500 uppercase tracking-widest font-medium leading-none mb-0.5 truncate">
+            {{ turbine.location }}
+          </p>
+          <h3 class="text-sm font-bold text-white group-hover:text-teal-300 transition-colors leading-snug truncate">
+            {{ turbine.name }} / Unit {{ turbine.id }}
+          </h3>
+          <p class="text-xs text-gray-400 mt-0.5 leading-snug truncate">{{ turbine.type }}</p>
+        </div>
+
+        <!-- Status Badge -->
+        <span
+          class="inline-block mt-0.5 px-2 py-0.5 text-xs font-bold rounded-full shrink-0 whitespace-nowrap"
+          :class="badgeClass"
+        >
+          {{ turbine.status }}
+        </span>
       </div>
 
-      <!-- Key Metrics — 2-column compact grid -->
-      <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-xs">
-        <div class="flex justify-between">
-          <span class="text-gray-500">Temp</span>
-          <span class="font-mono font-semibold" :class="turbine.tempAlert ? 'text-yellow-400' : 'text-gray-200'">
-            {{ formatValue(turbine.exhaustTemp, 1) }}°C
+      <!-- ── Metric Rows (individually clickable → changes graph) ── -->
+      <div class="space-y-0.5">
+        <div
+          v-for="param in metricParams"
+          :key="param.key"
+          @click.stop="selectMetric(param.key)"
+          class="flex items-center justify-between px-2 py-1 rounded-lg cursor-pointer transition-all"
+          :class="[
+            activeMetricKey === param.key
+              ? 'bg-gray-700 ring-1 ' + activeRingClass
+              : 'hover:bg-gray-800/60'
+          ]"
+          :title="`Show ${param.label} trend`"
+        >
+          <span class="text-xs text-gray-400">{{ param.label }}</span>
+          <span
+            class="text-xs font-mono font-semibold"
+            :class="getMetricColorClass(param.key)"
+          >
+            {{ formatValue(turbine[param.key], param.decimals) }}
+            <span class="text-gray-500 font-normal">{{ param.unit }}</span>
           </span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-gray-500">Vibration</span>
-          <span class="font-mono font-semibold" :class="turbine.vibrationAlert ? 'text-red-400' : 'text-gray-200'">
-            {{ formatValue(turbine.vibration, 2) }} mm/s
-          </span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-gray-500">Speed</span>
-          <span class="font-mono font-semibold text-gray-200">{{ formatValue(turbine.shaftSpeed, 0) }} RPM</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-gray-500">Power</span>
-          <span class="font-mono font-semibold text-gray-200">{{ formatValue(turbine.powerOutput, 1) }} MW</span>
-        </div>
-        <div class="hidden md:flex justify-between">
-          <span class="text-gray-500">Fuel</span>
-          <span class="font-mono font-semibold text-gray-200">{{ formatValue(turbine.fuelFlow, 3) }} kg/s</span>
-        </div>
-        <div class="hidden md:flex justify-between">
-          <span class="text-gray-500">Overhaul</span>
-          <span class="font-mono font-semibold text-gray-200">{{ Math.floor(turbine.hoursSinceOverhaul).toLocaleString() }} h</span>
         </div>
       </div>
 
-      <!-- Chart.js Mini Sparkline -->
+      <!-- ── Chart Area ── -->
       <div class="mt-3 pt-2 border-t border-gray-800">
-        <p class="text-xs text-gray-500 mb-1">Vibration Trend (Last 60s)</p>
-        <div class="h-14 md:h-16">
+        <!-- Chart Header: label + min/max -->
+        <div class="flex items-center justify-between mb-1 gap-2">
+          <p class="text-xs font-medium" :class="activeMetricColorClass">
+            {{ activeParam.label }} Trend
+          </p>
+          <span class="text-[10px] text-gray-600 shrink-0">
+            ↓{{ chartMin }} · ↑{{ chartMax }} {{ activeParam.unit }}
+          </span>
+        </div>
+        <div class="h-16 md:h-20 relative">
           <canvas ref="chartCanvas"></canvas>
         </div>
       </div>
 
-      <!-- Alert banner -->
+      <!-- ── Alert Banner ── -->
       <div
         v-if="turbine.alert"
-        class="mt-2 p-2 bg-yellow-900 bg-opacity-40 border border-yellow-700 rounded text-xs text-yellow-300 leading-snug"
+        class="mt-2 p-2 bg-yellow-900/40 border border-yellow-700 rounded text-xs text-yellow-300 leading-snug"
       >
         ⚠ {{ turbine.alert }}
       </div>
 
       <!-- Mobile tap hint -->
-      <div class="md:hidden mt-2 text-xs text-gray-600 text-right">Tap for details →</div>
+      <div class="md:hidden mt-1 text-xs text-gray-600 text-right">Tap name for details →</div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler } from 'chart.js'
+import {
+  Chart,
+  LineController, LineElement, PointElement,
+  LinearScale, CategoryScale, Filler, Tooltip,
+} from 'chart.js'
+import { metricParams, getMostCriticalMetricKey, historyMetricKeys } from '../fleetStore.js'
 
-Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler)
+Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip)
 
 const props = defineProps({
   turbine: { type: Object, required: true },
+  focused: { type: Boolean, default: false },
 })
 
 defineEmits(['select'])
+
+// ── Focus / Glow / Vibrate animation ─────────────────────────────────────────
+const cardRef = ref(null)
+const isFocused = ref(false)
+let focusTimeout = null
+
+watch(() => props.focused, (val) => {
+  if (val) {
+    isFocused.value = true
+    if (focusTimeout) clearTimeout(focusTimeout)
+    focusTimeout = setTimeout(() => { isFocused.value = false }, 3000)
+    // Scroll into view
+    if (cardRef.value) {
+      cardRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+})
+
+onUnmounted(() => {
+  if (focusTimeout) clearTimeout(focusTimeout)
+})
+
+const focusedClass = computed(() => {
+  if (!isFocused.value) return ''
+  if (props.turbine.status === 'NOK') return 'card-focus-nok'
+  if (props.turbine.status === 'RISK') return 'card-focus-risk'
+  return 'card-focus-ok'
+})
+
+// ── Metric Selection ──────────────────────────────────────────────────────────
+const selectedMetricKey = ref(null) // null = auto (most critical)
+
+const activeMetricKey = computed(() => {
+  return selectedMetricKey.value || getMostCriticalMetricKey(props.turbine)
+})
+
+const activeParam = computed(() => {
+  return metricParams.find(p => p.key === activeMetricKey.value) || metricParams[0]
+})
+
+function selectMetric(key) {
+  selectedMetricKey.value = (selectedMetricKey.value === key) ? null : key
+  updateChart()
+}
+
+function onCardClick() {
+  // Clicking non-metric part → no action from card itself; emit is on name div
+}
 
 // ── Chart.js ──────────────────────────────────────────────────────────────────
 const chartCanvas = ref(null)
 let chartInstance = null
 
-function getChartColor() {
-  if (props.turbine.vibrationAlert) return { border: '#f87171', bg: 'rgba(248, 113, 113, 0.08)' }
-  return { border: '#2dd4bf', bg: 'rgba(45, 212, 191, 0.08)' }
+function getChartColors() {
+  const key = activeMetricKey.value
+  const isAlert =
+    (key === 'vibration' && props.turbine.vibrationAlert) ||
+    (key === 'exhaustTemp' && props.turbine.tempAlert)
+  if (props.turbine.status === 'NOK') return { border: '#f87171', bg: 'rgba(248,113,113,0.10)' }
+  if (isAlert) return { border: '#fbbf24', bg: 'rgba(251,191,36,0.10)' }
+  return { border: '#2dd4bf', bg: 'rgba(45,212,191,0.08)' }
+}
+
+function getTimeLabels(count, intervalSec = 2) {
+  const now = Date.now()
+  return Array.from({ length: count }, (_, i) => {
+    const agoMs = (count - 1 - i) * intervalSec * 1000
+    const ts = new Date(now - agoMs)
+    return ts.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+  })
+}
+
+function getActiveHistory() {
+  const key = activeMetricKey.value
+  if (historyMetricKeys.includes(key) && props.turbine.metricHistory) {
+    return props.turbine.metricHistory[key] || []
+  }
+  return []
 }
 
 function createChart() {
   if (!chartCanvas.value) return
-  const colors = getChartColor()
+  const history = getActiveHistory()
+  const colors = getChartColors()
+  const param = activeParam.value
+  const labels = getTimeLabels(history.length)
+
   chartInstance = new Chart(chartCanvas.value, {
     type: 'line',
     data: {
-      labels: Array(props.turbine.vibrationHistory.length).fill(''),
+      labels,
       datasets: [{
-        data: [...props.turbine.vibrationHistory],
+        data: [...history],
         borderColor: colors.border,
         borderWidth: 1.5,
         fill: true,
         backgroundColor: colors.bg,
         pointRadius: 0,
+        pointHoverRadius: 4,
         tension: 0.3,
       }],
     },
@@ -131,35 +234,108 @@ function createChart() {
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          mode: 'index',
+          intersect: false,
+          backgroundColor: 'rgba(15,23,42,0.92)',
+          titleColor: '#94a3b8',
+          bodyColor: colors.border,
+          borderColor: colors.border,
+          borderWidth: 1,
+          titleFont: { size: 10 },
+          bodyFont: { size: 11, weight: 'bold' },
+          callbacks: {
+            title: (items) => items[0]?.label || '',
+            label: (item) => ` ${item.formattedValue} ${param.unit}`,
+          },
+          padding: 8,
+          cornerRadius: 6,
+        },
+      },
       scales: {
-        x: { display: false },
-        y: { display: false },
+        x: {
+          display: true,
+          ticks: {
+            maxTicksLimit: 5,
+            color: '#4b5563',
+            font: { size: 9 },
+            maxRotation: 0,
+          },
+          grid: { display: false },
+        },
+        y: {
+          display: true,
+          position: 'left',
+          ticks: {
+            maxTicksLimit: 4,
+            color: '#4b5563',
+            font: { size: 9 },
+          },
+          grid: { color: 'rgba(75,85,99,0.1)' },
+          title: {
+            display: true,
+            text: param.unit,
+            color: '#4b5563',
+            font: { size: 9 },
+          },
+        },
       },
       elements: { line: { borderCapStyle: 'round' } },
+      interaction: { mode: 'index', intersect: false },
     },
   })
 }
 
 function updateChart() {
   if (!chartInstance) return
-  const colors = getChartColor()
+  const history = getActiveHistory()
+  const colors = getChartColors()
+  const param = activeParam.value
+  const labels = getTimeLabels(history.length)
+
   const ds = chartInstance.data.datasets[0]
-  ds.data = [...props.turbine.vibrationHistory]
+  ds.data = [...history]
   ds.borderColor = colors.border
   ds.backgroundColor = colors.bg
-  chartInstance.data.labels = Array(props.turbine.vibrationHistory.length).fill('')
+  chartInstance.data.labels = labels
+
+  // Update tooltip callback for new param unit
+  chartInstance.options.plugins.tooltip.bodyColor = colors.border
+  chartInstance.options.plugins.tooltip.borderColor = colors.border
+  chartInstance.options.plugins.tooltip.callbacks.label = (item) =>
+    ` ${item.formattedValue} ${param.unit}`
+  chartInstance.options.scales.y.title.text = param.unit
+
   chartInstance.update('none')
 }
 
-// Watch for vibration changes (triggers on every telemetry update)
-watch(() => props.turbine.vibration, () => {
-  updateChart()
+// Chart min/max for display
+const chartMin = computed(() => {
+  const history = getActiveHistory()
+  if (!history.length) return '—'
+  const min = Math.min(...history)
+  return min.toFixed(activeParam.value.decimals)
 })
 
-onMounted(() => {
-  createChart()
+const chartMax = computed(() => {
+  const history = getActiveHistory()
+  if (!history.length) return '—'
+  const max = Math.max(...history)
+  return max.toFixed(activeParam.value.decimals)
 })
+
+// Watch for telemetry changes
+watch(
+  [() => props.turbine.exhaustTemp, () => props.turbine.vibration,
+   () => props.turbine.shaftSpeed, () => props.turbine.powerOutput,
+   () => props.turbine.fuelFlow],
+  () => { updateChart() },
+)
+
+onMounted(() => { createChart() })
 
 onUnmounted(() => {
   if (chartInstance) {
@@ -170,30 +346,89 @@ onUnmounted(() => {
 
 // ── Styling Helpers ───────────────────────────────────────────────────────────
 const borderClass = computed(() => {
-  if (props.turbine.status === 'Critical') return 'border-red-600'
-  if (props.turbine.status === 'Warning') return 'border-yellow-600'
+  if (props.turbine.status === 'NOK') return 'border-red-600'
+  if (props.turbine.status === 'RISK') return 'border-yellow-600'
   return 'border-teal-700'
 })
 
 const badgeClass = computed(() => {
-  if (props.turbine.status === 'Critical') return 'bg-red-900 text-red-300'
-  if (props.turbine.status === 'Warning') return 'bg-yellow-900 text-yellow-300'
+  if (props.turbine.status === 'NOK') return 'bg-red-900 text-red-300'
+  if (props.turbine.status === 'RISK') return 'bg-yellow-900 text-yellow-300'
   return 'bg-teal-900 text-teal-300'
 })
 
 const photoBorderClass = computed(() => {
-  if (props.turbine.status === 'Critical') return 'border-red-600'
-  if (props.turbine.status === 'Warning') return 'border-yellow-600'
+  if (props.turbine.status === 'NOK') return 'border-red-600'
+  if (props.turbine.status === 'RISK') return 'border-yellow-600'
   return 'border-gray-600'
 })
 
+const activeRingClass = computed(() => {
+  if (props.turbine.status === 'NOK') return 'ring-red-700'
+  if (props.turbine.status === 'RISK') return 'ring-yellow-700'
+  return 'ring-teal-700'
+})
+
+const activeMetricColorClass = computed(() => {
+  const key = activeMetricKey.value
+  if (key === 'vibration' && props.turbine.vibrationAlert) return 'text-red-400'
+  if (key === 'exhaustTemp' && props.turbine.tempAlert) return 'text-yellow-400'
+  return 'text-gray-400'
+})
+
 // ── Utilities ─────────────────────────────────────────────────────────────────
+function getMetricColorClass(key) {
+  if (key === 'exhaustTemp' && props.turbine.tempAlert) return 'text-yellow-400'
+  if (key === 'vibration' && props.turbine.vibrationAlert) return 'text-red-400'
+  return 'text-gray-200'
+}
+
 function formatValue(value, decimals) {
   if (typeof value !== 'number' || isNaN(value)) return '—'
   return value.toFixed(decimals)
 }
 
 function onImageError(e) {
-  e.target.src = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="%231e293b" width="200" height="200"/><text fill="%232dd4bf" font-family="monospace" font-size="16" text-anchor="middle" x="100" y="105">' + props.turbine.name + '</text></svg>')}`
+  e.target.src = `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="#1e293b" width="200" height="200"/><text fill="#2dd4bf" font-family="monospace" font-size="16" text-anchor="middle" x="100" y="105">${props.turbine.name}</text></svg>`
+  )}`
 }
 </script>
+
+<style scoped>
+/* ── Focus animations ── */
+@keyframes card-glow-nok {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  40% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.35), 0 0 20px 4px rgba(239, 68, 68, 0.2); }
+}
+@keyframes card-glow-risk {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+  40% { box-shadow: 0 0 0 6px rgba(234, 179, 8, 0.35), 0 0 20px 4px rgba(234, 179, 8, 0.2); }
+}
+@keyframes card-glow-ok {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45, 212, 191, 0); }
+  40% { box-shadow: 0 0 0 6px rgba(45, 212, 191, 0.35), 0 0 20px 4px rgba(45, 212, 191, 0.2); }
+}
+@keyframes card-vibrate {
+  0%, 100% { transform: translateX(0); }
+  10%       { transform: translateX(-4px) rotate(-0.5deg); }
+  20%       { transform: translateX(4px) rotate(0.5deg); }
+  30%       { transform: translateX(-4px) rotate(-0.5deg); }
+  40%       { transform: translateX(4px) rotate(0.5deg); }
+  50%       { transform: translateX(-2px); }
+  60%       { transform: translateX(2px); }
+  70%       { transform: translateX(-1px); }
+  80%       { transform: translateX(1px); }
+  90%       { transform: translateX(0); }
+}
+
+.card-focus-nok {
+  animation: card-vibrate 0.5s ease-in-out, card-glow-nok 1.5s ease-in-out 2;
+}
+.card-focus-risk {
+  animation: card-vibrate 0.5s ease-in-out, card-glow-risk 1.5s ease-in-out 2;
+}
+.card-focus-ok {
+  animation: card-vibrate 0.5s ease-in-out, card-glow-ok 1.5s ease-in-out 2;
+}
+</style>
