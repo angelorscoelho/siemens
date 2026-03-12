@@ -1083,7 +1083,7 @@
                   <path d="M570,100 L521,208" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
                   <text x="565" y="160" text-anchor="middle" fill="#64748b" font-size="9">REST API</text>
 
-                  <!-- API Gateway → Lambda RAG (through subnets) -->
+                  <!-- API Gateway → Lambda RAG (via AWS internal service) -->
                   <line x1="521" y1="278" x2="521" y2="370" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arr-amber)"/>
                   <text x="535" y="330" fill="#64748b" font-size="9">invoke</text>
 
@@ -1158,10 +1158,10 @@
 
                   <!-- Row 3 -->
                   <rect x="30" y="733" width="14" height="14" rx="2" fill="none" stroke="#22c55e" stroke-width="1" stroke-dasharray="3,2"/>
-                  <text x="50" y="744" fill="#94a3b8" font-size="10">Public subnet</text>
+                  <text x="50" y="744" fill="#94a3b8" font-size="10">Public subnet (Availability Zone)</text>
 
                   <rect x="240" y="733" width="14" height="14" rx="2" fill="none" stroke="#f97316" stroke-width="1" stroke-dasharray="3,2"/>
-                  <text x="260" y="744" fill="#94a3b8" font-size="10">Private subnet</text>
+                  <text x="260" y="744" fill="#94a3b8" font-size="10">Private subnet (Availability Zone)</text>
 
                   <rect x="460" y="733" width="14" height="14" rx="2" fill="none" stroke="#ef4444" stroke-width="1" stroke-dasharray="3,2"/>
                   <text x="480" y="744" fill="#94a3b8" font-size="10">Security group</text>
@@ -1984,6 +1984,12 @@ onUnmounted(() => {
 @keyframes pulse-slow {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
   50% { opacity: 0.9; box-shadow: 0 0 12px 2px rgba(20, 184, 166, 0.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-slow {
+    animation: none;
+  }
 }
 
 .history-slide-enter-active,
