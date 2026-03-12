@@ -200,6 +200,10 @@
                   {{ formatValue(selectedTurbine[param.key], param.decimals) }}
                   <span class="text-xs font-normal text-gray-400">{{ param.unit }}</span>
                 </p>
+                <div class="flex items-center justify-between mt-1.5 text-[10px] text-gray-500">
+                  <span title="Minimum over last 60 readings">↓ {{ getParamMin(param) }}</span>
+                  <span title="Maximum over last 60 readings">↑ {{ getParamMax(param) }}</span>
+                </div>
               </div>
             </div>
 
@@ -227,15 +231,9 @@
                   </button>
                 </div>
               </div>
-              <svg :viewBox="'0 0 300 80'" class="w-full h-16 md:h-20" preserveAspectRatio="none">
-                <polyline
-                  :points="getSparklinePoints(selectedTurbine.metricHistory?.[detailActiveMetricKey] || [], 300, 80)"
-                  fill="none"
-                  :stroke="detailSparklineColor"
-                  stroke-width="1.5"
-                  stroke-linejoin="round"
-                />
-              </svg>
+              <div class="h-40 md:h-52 relative">
+                <canvas ref="detailChartCanvas"></canvas>
+              </div>
               <p class="text-[10px] text-gray-600 text-center mt-1">Click any metric above to change chart ↑</p>
             </div>
 
@@ -473,19 +471,26 @@
                 </div>
               </div>
               <div v-else class="flex justify-start">
-                <div class="max-w-[95%] space-y-2">
-                  <div v-if="msg.context" class="bg-gray-800 border border-gray-600 rounded-xl p-3">
-                    <p class="text-xs font-semibold text-teal-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="max-w-[95%] space-y-1">
+                  <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-gray-100 shadow leading-relaxed">
+                    {{ msg.content }}
+                  </div>
+                  <!-- RAG source chips — shown when context was retrieved -->
+                  <div v-if="msg.context" class="flex flex-wrap gap-1.5 px-1">
+                    <span class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400" title="Retrieved from equipment manual via RAG">
+                      <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      Retrieved Context (RAG)
-                    </p>
-                    <p class="text-xs text-gray-400 leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">{{ msg.context }}</p>
-                  </div>
-                  <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-gray-100 shadow leading-relaxed">
-                    {{ msg.content }}
+                      Equipment Manual
+                    </span>
+                    <span class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400" title="Retrieved from maintenance history via RAG">
+                      <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Maintenance History
+                    </span>
                   </div>
                 </div>
               </div>
@@ -576,13 +581,26 @@
               </div>
             </div>
             <div v-else class="flex justify-start">
-              <div class="max-w-[90%] space-y-2">
-                <div v-if="msg.context" class="bg-gray-800 border border-gray-600 rounded-xl p-3">
-                  <p class="text-xs font-semibold text-teal-400 uppercase tracking-wider mb-1.5">Retrieved Context (RAG)</p>
-                  <p class="text-xs text-gray-400 leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto">{{ msg.context }}</p>
-                </div>
+              <div class="max-w-[90%] space-y-1">
                 <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-gray-100 shadow leading-relaxed">
                   {{ msg.content }}
+                </div>
+                <!-- RAG source chips — shown when context was retrieved -->
+                <div v-if="msg.context" class="flex flex-wrap gap-1.5 px-1">
+                  <span class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400" title="Retrieved from equipment manual via RAG">
+                    <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Equipment Manual
+                  </span>
+                  <span class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400" title="Retrieved from maintenance history via RAG">
+                    <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Maintenance History
+                  </span>
                 </div>
               </div>
             </div>
@@ -857,10 +875,17 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import {
+  Chart,
+  LineController, LineElement, PointElement,
+  LinearScale, CategoryScale, Filler, Tooltip,
+} from 'chart.js'
+import {
   metricParams, thresholds, createFleetData, randomWalk,
   generateActionPlan, historyMetricKeys, getMostCriticalMetricKey, getMaintenanceHistory,
 } from '../fleetStore.js'
 import EquipmentCard from './EquipmentCard.vue'
+
+Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip)
 
 // ── Reactive Turbine Data ─────────────────────────────────────────────────────
 const turbines = reactive(createFleetData())
@@ -930,9 +955,14 @@ function selectDetailMetric(key) {
   detailMetricKey.value = (detailMetricKey.value === key) ? null : key
 }
 
-// Reset detail metric selection when switching turbines
-watch(selectedTurbine, () => {
+// Reset detail metric selection when switching turbines and manage chart
+watch(selectedTurbine, async (newVal) => {
   detailMetricKey.value = null
+  destroyDetailChart()
+  if (newVal) {
+    await nextTick()
+    createDetailChart()
+  }
 })
 
 // ── Maintenance History Modal Style ───────────────────────────────────────────
@@ -1324,6 +1354,165 @@ function investigateWithAssistant(turbine, record) {
   nextTick(() => sendMessage())
 }
 
+// ── Detail View Chart ─────────────────────────────────────────────────────────
+const detailChartCanvas = ref(null)
+let detailChartInstance = null
+
+function getDetailTimeLabels(count, intervalSec = 2) {
+  const now = Date.now()
+  return Array.from({ length: count }, (_, i) => {
+    const agoMs = (count - 1 - i) * intervalSec * 1000
+    const ts = new Date(now - agoMs)
+    return ts.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+  })
+}
+
+function getDetailChartColors() {
+  const border = detailSparklineColor.value
+  const bg = border === '#f87171' ? 'rgba(248,113,113,0.10)'
+    : border === '#fbbf24' ? 'rgba(251,191,36,0.10)'
+    : 'rgba(45,212,191,0.08)'
+  return { border, bg }
+}
+
+function createDetailChart() {
+  if (!detailChartCanvas.value || !selectedTurbine.value) return
+  const param = detailActiveParam.value
+  const history = selectedTurbine.value.metricHistory?.[detailActiveMetricKey.value] || []
+  const labels = getDetailTimeLabels(history.length)
+  const colors = getDetailChartColors()
+
+  detailChartInstance = new Chart(detailChartCanvas.value, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: [...history],
+        borderColor: colors.border,
+        borderWidth: 2,
+        fill: true,
+        backgroundColor: colors.bg,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        tension: 0.3,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          mode: 'index',
+          intersect: false,
+          backgroundColor: 'rgba(15,23,42,0.92)',
+          titleColor: '#94a3b8',
+          bodyColor: colors.border,
+          borderColor: colors.border,
+          borderWidth: 1,
+          titleFont: { size: 10 },
+          bodyFont: { size: 12, weight: 'bold' },
+          callbacks: {
+            title: (items) => items[0]?.label || '',
+            label: (item) => ` ${item.formattedValue} ${param.unit}`,
+          },
+          padding: 8,
+          cornerRadius: 6,
+        },
+      },
+      scales: {
+        x: {
+          display: true,
+          ticks: {
+            maxTicksLimit: 6,
+            color: '#6b7280',
+            font: { size: 10 },
+            maxRotation: 0,
+          },
+          grid: { color: 'rgba(75,85,99,0.08)' },
+          title: {
+            display: true,
+            text: 'Time',
+            color: '#6b7280',
+            font: { size: 11 },
+          },
+        },
+        y: {
+          display: true,
+          position: 'left',
+          ticks: {
+            maxTicksLimit: 5,
+            color: '#6b7280',
+            font: { size: 10 },
+          },
+          grid: { color: 'rgba(75,85,99,0.15)' },
+          title: {
+            display: true,
+            text: `${param.label} (${param.unit})`,
+            color: '#6b7280',
+            font: { size: 11 },
+          },
+        },
+      },
+      elements: { line: { borderCapStyle: 'round' } },
+      interaction: { mode: 'index', intersect: false },
+    },
+  })
+}
+
+function updateDetailChart() {
+  if (!detailChartInstance || !selectedTurbine.value) return
+  const param = detailActiveParam.value
+  const history = selectedTurbine.value.metricHistory?.[detailActiveMetricKey.value] || []
+  const labels = getDetailTimeLabels(history.length)
+  const colors = getDetailChartColors()
+
+  const ds = detailChartInstance.data.datasets[0]
+  ds.data = [...history]
+  ds.borderColor = colors.border
+  ds.backgroundColor = colors.bg
+  detailChartInstance.data.labels = labels
+
+  detailChartInstance.options.plugins.tooltip.bodyColor = colors.border
+  detailChartInstance.options.plugins.tooltip.borderColor = colors.border
+  detailChartInstance.options.plugins.tooltip.callbacks.label = (item) =>
+    ` ${item.formattedValue} ${param.unit}`
+  detailChartInstance.options.scales.y.title.text = `${param.label} (${param.unit})`
+
+  // 'none' disables per-update animation to prevent visual jitter during live 2s telemetry polling
+  detailChartInstance.update('none')
+}
+
+function destroyDetailChart() {
+  if (detailChartInstance) {
+    detailChartInstance.destroy()
+    detailChartInstance = null
+  }
+}
+
+// Computed for reactive telemetry watching
+const detailActiveHistory = computed(() =>
+  selectedTurbine.value?.metricHistory?.[detailActiveMetricKey.value] || []
+)
+
+watch(detailActiveHistory, () => { updateDetailChart() })
+watch(detailActiveMetricKey, () => { updateDetailChart() })
+
+// ── Metric Min/Max Helpers (full view cards) ──────────────────────────────────
+function getParamMin(param) {
+  const history = selectedTurbine.value?.metricHistory?.[param.key]
+  if (!history?.length) return '—'
+  return Math.min(...history).toFixed(param.decimals)
+}
+
+function getParamMax(param) {
+  const history = selectedTurbine.value?.metricHistory?.[param.key]
+  if (!history?.length) return '—'
+  return Math.max(...history).toFixed(param.decimals)
+}
+
 // ── Chat State ────────────────────────────────────────────────────────────────
 const messages = ref([])
 const inputText = ref('')
@@ -1406,6 +1595,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (updateInterval) clearInterval(updateInterval)
   if (anomalyInterval) clearInterval(anomalyInterval)
+  destroyDetailChart()
 })
 </script>
 
