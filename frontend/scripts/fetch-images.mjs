@@ -135,25 +135,48 @@ const IMAGE_CATALOGUE = [
 
 // ── Wikimedia Commons thumbnail URL builder ───────────────────────────────────
 function wikimediaThumbnailUrl(filename, width) {
-  // Use the Wikimedia Commons Special:FilePath API — always resolves correctly
+  // Use the Wikimedia Commons Special:FilePath API — always resolves correctly.
+  // Using ?width= causes Wikimedia to rasterise SVGs to PNG, which is fine
+  // because we always save images as .jpg for consistency.
   const encoded = encodeURIComponent(filename.replace(/ /g, '_'))
   return `https://commons.wikimedia.org/wiki/Special:FilePath/${encoded}?width=${width}`
 }
 
-// ── Download a single file ────────────────────────────────────────────────────
+// ── Download a single file (with timeout + size guard) ────────────────────────
+const FETCH_TIMEOUT_MS = 15000
+const MIN_IMAGE_BYTES = 1024 // anything smaller is likely an error page
+
 async function downloadFile(url, destPath) {
-  const resp = await fetch(url, {
-    redirect: 'follow',
-    headers: {
-      'User-Agent': 'SiemensEnergyPoC/2.0 (build image fetcher; educational/demo use)',
-    },
-  })
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+
+  let resp
+  try {
+    resp = await fetch(url, {
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'SiemensEnergyPoC/2.0 (build image fetcher; educational/demo use)',
+      },
+    })
+  } catch (err) {
+    clearTimeout(timer)
+    if (err.name === 'AbortError') {
+      throw new Error(`Timed out after ${FETCH_TIMEOUT_MS / 1000}s: ${url}`)
+    }
+    throw err
+  }
+  clearTimeout(timer)
+
   if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`)
   const contentType = resp.headers.get('content-type') || ''
   if (!contentType.startsWith('image/') && !contentType.includes('svg')) {
     throw new Error(`Unexpected content-type: ${contentType}`)
   }
   const buffer = await resp.arrayBuffer()
+  if (buffer.byteLength < MIN_IMAGE_BYTES) {
+    throw new Error(`Response too small (${buffer.byteLength} B) — likely an error page`)
+  }
   writeFileSync(destPath, Buffer.from(buffer))
   return contentType
 }
@@ -176,12 +199,12 @@ async function main() {
   let failed = 0
 
   for (const entry of IMAGE_CATALOGUE) {
-    const ext = entry.isSvg ? 'svg' : 'jpg'
-    const destPath = join(OUTPUT_DIR, `${entry.slot}.${ext}`)
-    const jpgPath = join(OUTPUT_DIR, `${entry.slot}.jpg`)
+    // Always use .jpg as the target extension. Wikimedia rasterises SVGs when
+    // ?width= is specified, so the downloaded file is always a JPEG/PNG.
+    const destPath = join(OUTPUT_DIR, `${entry.slot}.jpg`)
 
-    // Skip if fresh copy already exists (either .jpg or .svg)
-    if (isFresh(destPath) || isFresh(jpgPath)) {
+    // Skip if fresh copy already exists
+    if (isFresh(destPath)) {
       console.log(`  ✓  ${entry.slot} — cached (skip)`)
       skipped++
       continue
@@ -192,14 +215,11 @@ async function main() {
     let success = false
 
     for (const filename of filesToTry) {
-      const isSvg = filename.endsWith('.svg')
-      const targetExt = isSvg ? 'svg' : 'jpg'
-      const targetPath = join(OUTPUT_DIR, `${entry.slot}.${targetExt}`)
       const url = wikimediaThumbnailUrl(filename, THUMB_WIDTH)
 
       try {
         process.stdout.write(`  ↓  ${entry.slot} — ${filename.substring(0, 50)}…`)
-        await downloadFile(url, targetPath)
+        await downloadFile(url, destPath)
         console.log(` ✓`)
         downloaded++
         success = true

@@ -204,25 +204,29 @@ export function randomWalk(current, step, min, max) {
 // Slot numbers match the catalogue in scripts/fetch-images.mjs (1-indexed).
 // The browser will try the downloaded image first; EquipmentCard.vue handles
 // load errors by showing the inline SVG fallback.
+//
+// Prefix with import.meta.env.BASE_URL so the paths resolve correctly both in
+// local dev (BASE_URL = '/') and in production (BASE_URL = '/siemens/').
+const baseUrl = import.meta.env.BASE_URL ?? '/'
 const IMAGE_SLOTS = [
-  '/images/turbine-01.jpg',
-  '/images/turbine-02.jpg',
-  '/images/turbine-03.jpg',
-  '/images/turbine-04.jpg',
-  '/images/turbine-05.jpg',
-  '/images/turbine-06.jpg',
-  '/images/turbine-07.jpg',
-  '/images/turbine-08.jpg',
-  '/images/turbine-09.jpg',
-  '/images/turbine-10.jpg',
-  '/images/turbine-11.jpg',
-  '/images/turbine-12.jpg',
-  '/images/turbine-13.jpg',
-  '/images/turbine-14.jpg',
-  '/images/turbine-15.jpg',
-  '/images/turbine-16.jpg',
-  '/images/turbine-17.jpg',
-  '/images/turbine-18.jpg',
+  `${baseUrl}images/turbine-01.jpg`,
+  `${baseUrl}images/turbine-02.jpg`,
+  `${baseUrl}images/turbine-03.jpg`,
+  `${baseUrl}images/turbine-04.jpg`,
+  `${baseUrl}images/turbine-05.jpg`,
+  `${baseUrl}images/turbine-06.jpg`,
+  `${baseUrl}images/turbine-07.jpg`,
+  `${baseUrl}images/turbine-08.jpg`,
+  `${baseUrl}images/turbine-09.jpg`,
+  `${baseUrl}images/turbine-10.jpg`,
+  `${baseUrl}images/turbine-11.jpg`,
+  `${baseUrl}images/turbine-12.jpg`,
+  `${baseUrl}images/turbine-13.jpg`,
+  `${baseUrl}images/turbine-14.jpg`,
+  `${baseUrl}images/turbine-15.jpg`,
+  `${baseUrl}images/turbine-16.jpg`,
+  `${baseUrl}images/turbine-17.jpg`,
+  `${baseUrl}images/turbine-18.jpg`,
 ]
 
 function makeEquipmentImage(name, color, slotIndex) {
