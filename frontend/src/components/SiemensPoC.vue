@@ -455,7 +455,7 @@
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
               AI Maintenance Assistant
-              <span class="text-xs text-gray-500 font-normal">(Gemini RAG)</span>
+              <span class="text-xs text-gray-500 font-normal">(Real RAG · S3 + Gemini)</span>
             </h2>
             <button @click="assistantOpen = false" class="text-gray-500 hover:text-gray-300 cursor-pointer">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -566,7 +566,7 @@
           </svg>
           <div class="flex-1">
             <h2 class="text-sm font-semibold text-teal-300">AI Maintenance Assistant</h2>
-            <p class="text-xs text-gray-500">Gemini RAG</p>
+            <p class="text-xs text-gray-500">Real RAG</p>
           </div>
           <span v-if="messages.length > 0" class="text-xs text-gray-500">{{ messages.length }} msgs</span>
         </div>
@@ -724,7 +724,7 @@
 
     <!-- FOOTER -->
     <footer class="hidden md:block border-t border-gray-800 py-3 text-center text-xs text-gray-600 shrink-0">
-      Siemens Energy · Gas Turbine AI Maintenance Assistant · PoC · Vue.js + AWS Lambda + Google Gemini ·
+      Siemens Energy · Gas Turbine AI Maintenance Assistant · PoC · Vue.js + AWS Lambda + Gemini 2.5 Pro ·
       <a href="https://www.angelorscoelho.dev" class="hover:text-teal-500 transition-colors">angelorscoelho.dev</a>
     </footer>
 
@@ -927,180 +927,127 @@
             <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
               <!-- Architecture description -->
+              <!-- Architecture description -->
               <p class="text-sm text-gray-300 leading-relaxed">
-                This proof-of-concept is a full-stack cloud-native application. The <span class="text-teal-400 font-semibold">Vue 3 + Vite</span> single-page application is deployed on <span class="text-teal-400 font-semibold">Vercel</span> and communicates with a <span class="text-teal-400 font-semibold">Vercel Serverless Function</span> that proxies requests to the <span class="text-teal-400 font-semibold">Google Gemini API</span>. On the AWS side, a <span class="text-teal-400 font-semibold">VPC</span> with public and private subnets across two availability zones hosts the backend services. An <span class="text-teal-400 font-semibold">Internet Gateway</span> routes incoming traffic through <span class="text-teal-400 font-semibold">Amazon API Gateway</span> in the public subnet, while <span class="text-teal-400 font-semibold">AWS Lambda</span> functions run in private subnets with <span class="text-teal-400 font-semibold">NAT Gateway</span> access. The knowledge base (vector embeddings and equipment manuals) is stored in <span class="text-teal-400 font-semibold">Amazon S3</span>, forming a lightweight Retrieval-Augmented Generation (RAG) pipeline that grounds every AI response with real equipment data. Infrastructure is defined as code with <span class="text-teal-400 font-semibold">AWS SAM / CloudFormation</span>.
+                This proof-of-concept is a full-stack cloud-native application. The <span class="text-teal-400 font-semibold">Vue 3 + Vite</span> single-page application is deployed on <span class="text-teal-400 font-semibold">Vercel</span> and served directly to users from the global CDN edge. Queries are sent over HTTPS directly to <span class="text-teal-400 font-semibold">Amazon API Gateway</span>, which invokes the <span class="text-teal-400 font-semibold">AWS Lambda</span> ask_assistant function. The Lambda executes a real <span class="text-teal-400 font-semibold">Retrieval-Augmented Generation (RAG)</span> pipeline: it embeds the user query using Google <span class="text-teal-400 font-semibold">text-embedding-004</span>, downloads pre-computed chunk vectors from <span class="text-teal-400 font-semibold">Amazon S3</span>, performs pure-Python cosine similarity to retrieve the top-3 most relevant manual excerpts, then passes the grounded context to <span class="text-teal-400 font-semibold">gemini-2.5-pro</span> for the final answer. No VPC or proxy layer is required — the Lambda calls the Gemini REST API directly via stdlib urllib. Infrastructure is defined as code with <span class="text-teal-400 font-semibold">AWS SAM / CloudFormation</span>.
               </p>
 
               <!-- Architecture SVG Diagram -->
               <div class="w-full overflow-x-auto">
-                <svg viewBox="0 0 1020 780" xmlns="http://www.w3.org/2000/svg"
+                <svg viewBox="0 0 1020 660" xmlns="http://www.w3.org/2000/svg"
                   class="w-full min-w-[720px] rounded-xl border border-gray-800 bg-gray-900"
                   font-family="ui-monospace, monospace" font-size="12"
                   role="img" aria-labelledby="arch-svg-title">
-                  <title id="arch-svg-title">System architecture diagram showing the user's browser connecting to Vercel CDN (Vue 3 SPA), which calls a Vercel Serverless Function that proxies to Google Gemini. The browser also calls AWS API Gateway, which routes through a VPC with public and private subnets across two availability zones to AWS Lambda functions: one for RAG retrieval (reading from Amazon S3) and one for maintenance history. Infrastructure is deployed via AWS SAM with CI/CD through GitHub Actions.</title>
+                  <title id="arch-svg-title">System architecture: User browser loads Vue 3 SPA from Vercel CDN. Browser calls AWS API Gateway (REST API) directly via HTTPS. API Gateway invokes Lambda ask_assistant which runs a RAG pipeline: embeds query with text-embedding-004, retrieves top-3 chunk vectors from S3 via cosine similarity, calls gemini-2.5-pro for the grounded answer. API Gateway also invokes Lambda maintenance_history. Infrastructure deployed via AWS SAM. GitHub Actions provides CI/CD.</title>
 
-                  <!-- ═══════════ TOP: USER ZONE ═══════════ -->
+                  <!-- USER ZONE -->
                   <rect x="10" y="10" width="1000" height="100" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
                   <text x="510" y="28" text-anchor="middle" fill="#64748b" font-size="11" font-weight="bold">USER</text>
+                  <rect x="390" y="36" width="240" height="64" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.4"/>
+                  <rect x="404" y="46" width="32" height="24" rx="3" fill="none" stroke="#94a3b8" stroke-width="1.3"/>
+                  <line x1="404" y1="53" x2="436" y2="53" stroke="#94a3b8" stroke-width="1.3"/>
+                  <circle cx="408" cy="50" r="2" fill="#ef4444"/>
+                  <circle cx="414" cy="50" r="2" fill="#f59e0b"/>
+                  <circle cx="420" cy="50" r="2" fill="#22c55e"/>
+                  <text x="446" y="57" fill="#e2e8f0" font-size="12" font-weight="bold">Browser</text>
+                  <text x="446" y="71" fill="#94a3b8" font-size="10">Vue 3 / Vite · Tailwind CSS · Chart.js</text>
+                  <text x="446" y="85" fill="#94a3b8" font-size="10">Single-page application (SPA)</text>
 
-                  <!-- Browser box (centered in top zone) -->
-                  <rect x="390" y="38" width="240" height="62" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.4"/>
-                  <rect x="404" y="48" width="32" height="24" rx="3" fill="none" stroke="#94a3b8" stroke-width="1.3"/>
-                  <line x1="404" y1="55" x2="436" y2="55" stroke="#94a3b8" stroke-width="1.3"/>
-                  <circle cx="408" cy="52" r="2" fill="#ef4444"/>
-                  <circle cx="414" cy="52" r="2" fill="#f59e0b"/>
-                  <circle cx="420" cy="52" r="2" fill="#22c55e"/>
-                  <text x="446" y="59" fill="#e2e8f0" font-size="12" font-weight="bold">Browser</text>
-                  <text x="446" y="73" fill="#94a3b8" font-size="10">Vue 3 / Vite · Tailwind CSS · Chart.js</text>
-                  <text x="446" y="86" fill="#94a3b8" font-size="10">Single-page application (SPA)</text>
-
-                  <!-- ═══════════ BOTTOM LEFT: VERCEL ZONE ═══════════ -->
-                  <rect x="10" y="130" width="310" height="500" rx="12" fill="#0f172a" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="5,3"/>
-                  <text x="165" y="148" text-anchor="middle" fill="#0d9488" font-size="11" font-weight="bold">VERCEL (Frontend + API)</text>
-
+                  <!-- VERCEL ZONE -->
+                  <rect x="10" y="130" width="268" height="395" rx="12" fill="#0f172a" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="5,3"/>
+                  <text x="144" y="148" text-anchor="middle" fill="#0d9488" font-size="11" font-weight="bold">VERCEL (Frontend)</text>
                   <!-- Vercel CDN box -->
-                  <rect x="30" y="162" width="270" height="72" rx="8" fill="#1e293b" stroke="#0d9488" stroke-width="1.4"/>
-                  <polygon points="46,200 60,178 74,200" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-linejoin="round"/>
-                  <text x="84" y="185" fill="#e2e8f0" font-size="12" font-weight="bold">Vercel CDN</text>
-                  <text x="84" y="199" fill="#94a3b8" font-size="10">Static SPA hosting — Global edge</text>
-                  <text x="84" y="213" fill="#94a3b8" font-size="10">angelorscoelho.dev</text>
+                  <rect x="26" y="162" width="236" height="72" rx="8" fill="#1e293b" stroke="#0d9488" stroke-width="1.4"/>
+                  <polygon points="42,200 56,178 70,200" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-linejoin="round"/>
+                  <text x="80" y="187" fill="#e2e8f0" font-size="12" font-weight="bold">Vercel CDN</text>
+                  <text x="80" y="201" fill="#94a3b8" font-size="10">Static SPA hosting · Global edge</text>
+                  <text x="80" y="215" fill="#94a3b8" font-size="10">angelorscoelho.dev</text>
+                  <!-- GitHub Actions box -->
+                  <rect x="26" y="256" width="236" height="72" rx="8" fill="#1e293b" stroke="#6b7280" stroke-width="1.4"/>
+                  <circle cx="46" cy="291" r="12" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
+                  <circle cx="46" cy="288" r="5" fill="#e2e8f0"/>
+                  <path d="M36,302 Q46,296 56,302" fill="#e2e8f0"/>
+                  <text x="68" y="281" fill="#e2e8f0" font-size="12" font-weight="bold">GitHub Actions</text>
+                  <text x="68" y="295" fill="#94a3b8" font-size="10">build.yml · CI/CD automation</text>
+                  <text x="68" y="309" fill="#94a3b8" font-size="10">deploy triggers · branch workflows</text>
 
-                  <!-- Vercel Serverless Function box -->
-                  <rect x="30" y="254" width="270" height="72" rx="8" fill="#1e293b" stroke="#0d9488" stroke-width="1.4"/>
-                  <text x="44" y="286" fill="#0d9488" font-size="18" font-weight="bold">λ</text>
-                  <text x="72" y="278" fill="#e2e8f0" font-size="12" font-weight="bold">Serverless Function</text>
-                  <text x="72" y="292" fill="#94a3b8" font-size="10">/api/ask-assistant · TypeScript</text>
-                  <text x="72" y="306" fill="#94a3b8" font-size="10">Node.js · Vercel runtime</text>
-
-                  <!-- Google Gemini box -->
-                  <rect x="30" y="360" width="270" height="72" rx="8" fill="#1e293b" stroke="#818cf8" stroke-width="1.4"/>
-                  <circle cx="50" cy="395" r="12" fill="none" stroke="#818cf8" stroke-width="1.5"/>
-                  <line x1="50" y1="383" x2="50" y2="407" stroke="#818cf8" stroke-width="1.5"/>
-                  <line x1="38" y1="395" x2="62" y2="395" stroke="#818cf8" stroke-width="1.5"/>
-                  <text x="72" y="387" fill="#e2e8f0" font-size="12" font-weight="bold">Google Gemini</text>
-                  <text x="72" y="401" fill="#94a3b8" font-size="10">gemini-1.5-flash · LLM inference</text>
-                  <text x="72" y="415" fill="#94a3b8" font-size="10">GOOGLE_API_KEY (server-side)</text>
-
-                  <!-- GitHub Actions box (in Vercel zone) -->
-                  <rect x="30" y="462" width="270" height="72" rx="8" fill="#1e293b" stroke="#6b7280" stroke-width="1.4"/>
-                  <circle cx="50" cy="497" r="12" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
-                  <circle cx="50" cy="494" r="5" fill="#e2e8f0"/>
-                  <path d="M40,508 Q50,502 60,508" fill="#e2e8f0"/>
-                  <text x="72" y="487" fill="#e2e8f0" font-size="12" font-weight="bold">GitHub Actions</text>
-                  <text x="72" y="501" fill="#94a3b8" font-size="10">build.yml · update-main-site.yml</text>
-                  <text x="72" y="515" fill="#94a3b8" font-size="10">CI/CD automation · deploy triggers</text>
-
-                  <!-- ═══════════ BOTTOM RIGHT: AWS ZONE ═══════════ -->
-                  <rect x="340" y="130" width="670" height="500" rx="12" fill="#0f172a" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="5,3"/>
-                  <text x="675" y="148" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="bold">AWS CLOUD (us-east-1)</text>
-
-                  <!-- ── VPC boundary ── -->
-                  <rect x="356" y="158" width="640" height="340" rx="10" fill="#0c1222" stroke="#3b82f6" stroke-width="1.2" stroke-dasharray="6,3"/>
-                  <text x="676" y="174" text-anchor="middle" fill="#3b82f6" font-size="10" font-weight="bold">VPC — 10.0.0.0/16</text>
-
-                  <!-- ── Public Subnet (AZ-a) ── -->
-                  <rect x="370" y="186" width="302" height="148" rx="8" fill="#0f1729" stroke="#22c55e" stroke-width="1" stroke-dasharray="4,3"/>
-                  <text x="521" y="201" text-anchor="middle" fill="#22c55e" font-size="9.5" font-weight="bold">Public Subnet · 10.0.1.0/24 · AZ us-east-1a</text>
-
+                  <!-- AWS ZONE -->
+                  <rect x="298" y="130" width="452" height="395" rx="12" fill="#0f172a" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="5,3"/>
+                  <text x="524" y="148" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="bold">AWS CLOUD (us-east-1)</text>
                   <!-- API Gateway box -->
-                  <rect x="384" y="210" width="274" height="68" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
-                  <rect x="398" y="222" width="30" height="22" rx="3" fill="#8b5cf6"/>
-                  <polyline points="406,229 402,233 406,237" fill="none" stroke="white" stroke-width="1.3" stroke-linejoin="round"/>
-                  <polyline points="420,229 424,233 420,237" fill="none" stroke="white" stroke-width="1.3" stroke-linejoin="round"/>
-                  <line x1="406" y1="233" x2="420" y2="233" stroke="white" stroke-width="1.3"/>
-                  <text x="436" y="231" fill="#e2e8f0" font-size="12" font-weight="bold">Amazon API Gateway</text>
-                  <text x="436" y="245" fill="#94a3b8" font-size="10">REST API — CORS enabled</text>
-                  <text x="436" y="259" fill="#94a3b8" font-size="10">POST /ask · GET /maintenance-history</text>
-
-                  <!-- Internet Gateway note -->
-                  <rect x="384" y="292" width="274" height="32" rx="6" fill="#1a2332" stroke="#22c55e" stroke-width="1"/>
-                  <text x="521" y="312" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="bold">Internet Gateway (IGW)</text>
-
-                  <!-- ── Private Subnet (AZ-a) ── -->
-                  <rect x="370" y="348" width="302" height="138" rx="8" fill="#0f1729" stroke="#f97316" stroke-width="1" stroke-dasharray="4,3"/>
-                  <text x="521" y="363" text-anchor="middle" fill="#f97316" font-size="9.5" font-weight="bold">Private Subnet · 10.0.2.0/24 · AZ us-east-1a</text>
-
+                  <rect x="314" y="162" width="420" height="68" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
+                  <rect x="328" y="174" width="30" height="22" rx="3" fill="#8b5cf6"/>
+                  <polyline points="336,181 332,185 336,189" fill="none" stroke="white" stroke-width="1.3" stroke-linejoin="round"/>
+                  <polyline points="350,181 354,185 350,189" fill="none" stroke="white" stroke-width="1.3" stroke-linejoin="round"/>
+                  <line x1="336" y1="185" x2="350" y2="185" stroke="white" stroke-width="1.3"/>
+                  <text x="368" y="183" fill="#e2e8f0" font-size="12" font-weight="bold">Amazon API Gateway</text>
+                  <text x="368" y="197" fill="#94a3b8" font-size="10">HTTP API · CORS enabled · prod stage</text>
+                  <text x="368" y="211" fill="#94a3b8" font-size="10">POST /ask-assistant · GET /maintenance-history</text>
                   <!-- Lambda RAG box -->
-                  <rect x="384" y="372" width="274" height="50" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
-                  <rect x="396" y="380" width="24" height="24" rx="3" fill="#f59e0b"/>
-                  <text x="408" y="397" text-anchor="middle" fill="#1e293b" font-size="14" font-weight="bold">λ</text>
-                  <text x="428" y="393" fill="#e2e8f0" font-size="11" font-weight="bold">Lambda — ask_assistant</text>
-                  <text x="428" y="407" fill="#94a3b8" font-size="10">Python 3.11 · RAG logic · OpenAI embeddings</text>
-
+                  <rect x="314" y="254" width="420" height="72" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
+                  <rect x="328" y="266" width="24" height="24" rx="3" fill="#f59e0b"/>
+                  <text x="340" y="283" text-anchor="middle" fill="#1e293b" font-size="14" font-weight="bold">λ</text>
+                  <text x="362" y="275" fill="#e2e8f0" font-size="12" font-weight="bold">Lambda — ask_assistant</text>
+                  <text x="362" y="289" fill="#94a3b8" font-size="10">Python 3.11 · Real RAG pipeline · Gemini embeddings + LLM</text>
+                  <text x="362" y="303" fill="#94a3b8" font-size="10">S3 cosine retrieval → top-3 context → gemini-2.5-pro answer</text>
+                  <text x="362" y="317" fill="#64748b" font-size="9">stdlib urllib only · zero external SDK · 256 MB · 30 s timeout</text>
                   <!-- Lambda Maintenance box -->
-                  <rect x="384" y="432" width="274" height="50" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
-                  <rect x="396" y="440" width="24" height="24" rx="3" fill="#f59e0b"/>
-                  <text x="408" y="457" text-anchor="middle" fill="#1e293b" font-size="14" font-weight="bold">λ</text>
-                  <text x="428" y="453" fill="#e2e8f0" font-size="11" font-weight="bold">Lambda — maintenance_history</text>
-                  <text x="428" y="467" fill="#94a3b8" font-size="10">Python 3.11 · GET /maintenance-history</text>
+                  <rect x="314" y="352" width="420" height="68" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
+                  <rect x="328" y="364" width="24" height="24" rx="3" fill="#f59e0b"/>
+                  <text x="340" y="381" text-anchor="middle" fill="#1e293b" font-size="14" font-weight="bold">λ</text>
+                  <text x="362" y="373" fill="#e2e8f0" font-size="12" font-weight="bold">Lambda — maintenance_history</text>
+                  <text x="362" y="387" fill="#94a3b8" font-size="10">Python 3.11 · GET /maintenance-history</text>
+                  <text x="362" y="401" fill="#94a3b8" font-size="10">Structured records per equipment ID (PoC hardcoded)</text>
+                  <!-- S3 box -->
+                  <rect x="314" y="446" width="420" height="68" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="1.4"/>
+                  <rect x="328" y="458" width="28" height="22" rx="2" fill="#22c55e"/>
+                  <ellipse cx="342" cy="458" rx="14" ry="4.5" fill="#16a34a"/>
+                  <ellipse cx="342" cy="480" rx="14" ry="4.5" fill="#16a34a"/>
+                  <text x="366" y="467" fill="#e2e8f0" font-size="12" font-weight="bold">Amazon S3 — Knowledge Base</text>
+                  <text x="366" y="481" fill="#94a3b8" font-size="10">chunks/embeddings.json · 768-dim vectors (text-embedding-004)</text>
+                  <text x="366" y="495" fill="#94a3b8" font-size="10">Pure-Python cosine similarity · no vector DB needed</text>
+                  <!-- AWS SAM note -->
+                  <rect x="314" y="530" width="204" height="34" rx="6" fill="#1a2332" stroke="#f59e0b" stroke-width="1"/>
+                  <text x="416" y="551" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
 
-                  <!-- ── Private Subnet (AZ-b) ── -->
-                  <rect x="686" y="186" width="296" height="300" rx="8" fill="#0f1729" stroke="#f97316" stroke-width="1" stroke-dasharray="4,3"/>
-                  <text x="834" y="201" text-anchor="middle" fill="#f97316" font-size="9.5" font-weight="bold">Private Subnet · 10.0.3.0/24 · AZ us-east-1b</text>
+                  <!-- GOOGLE ZONE -->
+                  <rect x="770" y="130" width="240" height="395" rx="12" fill="#0f172a" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="5,3"/>
+                  <text x="890" y="148" text-anchor="middle" fill="#818cf8" font-size="11" font-weight="bold">GOOGLE (External)</text>
+                  <!-- Gemini API box -->
+                  <rect x="786" y="220" width="208" height="150" rx="8" fill="#1e293b" stroke="#818cf8" stroke-width="1.4"/>
+                  <circle cx="806" cy="260" r="12" fill="none" stroke="#818cf8" stroke-width="1.5"/>
+                  <line x1="806" y1="248" x2="806" y2="272" stroke="#818cf8" stroke-width="1.5"/>
+                  <line x1="794" y1="260" x2="818" y2="260" stroke="#818cf8" stroke-width="1.5"/>
+                  <text x="826" y="253" fill="#e2e8f0" font-size="12" font-weight="bold">Gemini API</text>
+                  <text x="826" y="267" fill="#94a3b8" font-size="9">generativelanguage.googleapis.com</text>
+                  <text x="794" y="298" fill="#94a3b8" font-size="10">text-embedding-004</text>
+                  <text x="794" y="312" fill="#64748b" font-size="9">768-dim · ingest + query embed</text>
+                  <text x="794" y="334" fill="#94a3b8" font-size="10">gemini-2.5-pro</text>
+                  <text x="794" y="348" fill="#64748b" font-size="9">LLM inference · grounded RAG answers</text>
+                  <text x="794" y="362" fill="#64748b" font-size="9">GEMINI_API_KEY (env var)</text>
 
-                  <!-- S3 Knowledge Base box -->
-                  <rect x="700" y="216" width="268" height="68" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="1.4"/>
-                  <rect x="714" y="228" width="28" height="22" rx="2" fill="#22c55e"/>
-                  <ellipse cx="728" cy="228" rx="14" ry="4.5" fill="#16a34a"/>
-                  <ellipse cx="728" cy="250" rx="14" ry="4.5" fill="#16a34a"/>
-                  <text x="750" y="239" fill="#e2e8f0" font-size="12" font-weight="bold">Amazon S3</text>
-                  <text x="750" y="253" fill="#94a3b8" font-size="10">Knowledge base · Equipment manuals</text>
-                  <text x="750" y="267" fill="#94a3b8" font-size="10">Vector embeddings (RAG)</text>
-
-                  <!-- AWS SAM box -->
-                  <rect x="700" y="302" width="268" height="68" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
-                  <rect x="714" y="316" width="28" height="7" rx="2" fill="#0d9488"/>
-                  <rect x="714" y="326" width="28" height="7" rx="2" fill="#0d9488"/>
-                  <rect x="714" y="336" width="28" height="7" rx="2" fill="#0d9488"/>
-                  <text x="750" y="325" fill="#e2e8f0" font-size="12" font-weight="bold">AWS SAM / CloudFormation</text>
-                  <text x="750" y="339" fill="#94a3b8" font-size="10">template.yaml · samconfig.toml</text>
-                  <text x="750" y="353" fill="#94a3b8" font-size="10">IaC — Lambda + APIGW + VPC</text>
-
-                  <!-- Security Group note -->
-                  <rect x="700" y="388" width="268" height="46" rx="6" fill="#1a2332" stroke="#ef4444" stroke-width="1" stroke-dasharray="4,3"/>
-                  <text x="834" y="407" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="bold">Security Group</text>
-                  <text x="834" y="421" text-anchor="middle" fill="#94a3b8" font-size="9.5">Inbound: HTTPS (443) · Outbound: All</text>
-
-                  <!-- NAT Gateway note -->
-                  <rect x="700" y="448" width="268" height="34" rx="6" fill="#1a2332" stroke="#a78bfa" stroke-width="1"/>
-                  <text x="834" y="470" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="bold">NAT Gateway (private → internet)</text>
-
-                  <!-- ═══════════ ARROWS ═══════════ -->
-
+                  <!-- ARROWS -->
                   <!-- Browser → Vercel CDN -->
-                  <path d="M450,100 L165,162" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
-                  <text x="290" y="125" text-anchor="middle" fill="#64748b" font-size="9">HTTPS</text>
-
-                  <!-- Vercel CDN → Serverless fn -->
-                  <line x1="165" y1="234" x2="165" y2="252" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
-                  <text x="180" y="248" fill="#64748b" font-size="9">POST /ask</text>
-
-                  <!-- Serverless fn → Gemini -->
-                  <line x1="165" y1="326" x2="165" y2="358" stroke="#818cf8" stroke-width="1.8" marker-end="url(#arr-indigo)"/>
-                  <text x="180" y="348" fill="#64748b" font-size="9">Gemini API</text>
-
-                  <!-- Browser → API Gateway (REST) -->
-                  <path d="M570,100 L521,208" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
-                  <text x="565" y="160" text-anchor="middle" fill="#64748b" font-size="9">REST API</text>
-
-                  <!-- API Gateway → Lambda RAG (via AWS internal service) -->
-                  <line x1="521" y1="278" x2="521" y2="370" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arr-amber)"/>
-                  <text x="535" y="330" fill="#64748b" font-size="9">invoke</text>
-
-                  <!-- API Gateway → Lambda Maintenance -->
-                  <path d="M521,278 Q540,340 521,430" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
-
+                  <path d="M440,100 L144,162" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
+                  <text x="270" y="124" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
+                  <!-- Browser → API Gateway -->
+                  <path d="M540,100 L524,160" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
+                  <text x="566" y="128" text-anchor="middle" fill="#64748b" font-size="9">REST API</text>
+                  <!-- API GW → Lambda RAG -->
+                  <line x1="524" y1="230" x2="524" y2="252" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arr-amber)"/>
+                  <text x="540" y="246" fill="#64748b" font-size="9">invoke</text>
+                  <!-- API GW → Lambda Maintenance (side path) -->
+                  <path d="M610,230 Q640,300 610,350" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
+                  <text x="648" y="298" fill="#64748b" font-size="9">invoke</text>
                   <!-- Lambda RAG → S3 -->
-                  <path d="M658,397 L698,250" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-green)"/>
-                  <text x="690" y="330" fill="#64748b" font-size="9">GetObject</text>
-
-                  <!-- SAM deploys Lambdas -->
-                  <path d="M700,336 L660,400" fill="none" stroke="#0d9488" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr-teal)"/>
-                  <text x="666" y="370" fill="#64748b" font-size="8.5">deploys</text>
-
-                  <!-- GitHub Actions → SAM -->
-                  <path d="M300,498 Q500,540 700,336" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arr-gray)"/>
-                  <text x="490" y="440" fill="#64748b" font-size="9">triggers deploy</text>
+                  <line x1="524" y1="326" x2="524" y2="444" stroke="#22c55e" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-green)"/>
+                  <text x="540" y="390" fill="#64748b" font-size="9">GetObject</text>
+                  <!-- Lambda RAG → Gemini API -->
+                  <path d="M734,290 L784,280" fill="none" stroke="#818cf8" stroke-width="1.8" marker-end="url(#arr-indigo)"/>
+                  <text x="759" y="278" text-anchor="middle" fill="#64748b" font-size="9">HTTPS</text>
+                  <!-- GitHub Actions → SAM (CI/CD deploys) -->
+                  <path d="M262,292 Q285,545 314,545" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arr-gray)"/>
+                  <text x="262" y="440" fill="#64748b" font-size="9">deploys</text>
 
                   <!-- Arrow markers -->
                   <defs>
@@ -1121,50 +1068,30 @@
                     </marker>
                   </defs>
 
-                  <!-- ═══════════ LEGEND (below all boxes) ═══════════ -->
-                  <rect x="10" y="650" width="1000" height="120" rx="10" fill="#111827" stroke="#1e293b" stroke-width="1"/>
-                  <text x="510" y="672" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">LEGEND</text>
-
-                  <!-- Row 1 -->
-                  <line x1="30" y1="692" x2="55" y2="692" stroke="#0d9488" stroke-width="2"/>
-                  <polygon points="55,688 55,696 63,692" fill="#0d9488"/>
-                  <text x="70" y="696" fill="#94a3b8" font-size="10">Vercel / HTTPS request</text>
-
-                  <line x1="240" y1="692" x2="265" y2="692" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="265,688 265,696 273,692" fill="#f59e0b"/>
-                  <text x="280" y="696" fill="#94a3b8" font-size="10">AWS REST / invocation</text>
-
-                  <line x1="460" y1="692" x2="485" y2="692" stroke="#818cf8" stroke-width="2"/>
-                  <polygon points="485,688 485,696 493,692" fill="#818cf8"/>
-                  <text x="500" y="696" fill="#94a3b8" font-size="10">Gemini LLM API call</text>
-
-                  <line x1="680" y1="692" x2="705" y2="692" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="705,688 705,696 713,692" fill="#22c55e"/>
-                  <text x="720" y="696" fill="#94a3b8" font-size="10">S3 object retrieval (RAG)</text>
-
-                  <!-- Row 2 -->
-                  <line x1="30" y1="716" x2="55" y2="716" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="55,712 55,720 63,716" fill="#6b7280"/>
-                  <text x="70" y="720" fill="#94a3b8" font-size="10">CI/CD pipeline trigger</text>
-
-                  <rect x="240" y="709" width="14" height="14" rx="2" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
-                  <text x="260" y="720" fill="#94a3b8" font-size="10">AWS cloud boundary</text>
-
-                  <rect x="460" y="709" width="14" height="14" rx="2" fill="none" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="3,2"/>
-                  <text x="480" y="720" fill="#94a3b8" font-size="10">Vercel cloud boundary</text>
-
-                  <rect x="680" y="709" width="14" height="14" rx="2" fill="none" stroke="#3b82f6" stroke-width="1.2" stroke-dasharray="4,2"/>
-                  <text x="700" y="720" fill="#94a3b8" font-size="10">VPC boundary</text>
-
-                  <!-- Row 3 -->
-                  <rect x="30" y="733" width="14" height="14" rx="2" fill="none" stroke="#22c55e" stroke-width="1" stroke-dasharray="3,2"/>
-                  <text x="50" y="744" fill="#94a3b8" font-size="10">Public subnet (Availability Zone)</text>
-
-                  <rect x="240" y="733" width="14" height="14" rx="2" fill="none" stroke="#f97316" stroke-width="1" stroke-dasharray="3,2"/>
-                  <text x="260" y="744" fill="#94a3b8" font-size="10">Private subnet (Availability Zone)</text>
-
-                  <rect x="460" y="733" width="14" height="14" rx="2" fill="none" stroke="#ef4444" stroke-width="1" stroke-dasharray="3,2"/>
-                  <text x="480" y="744" fill="#94a3b8" font-size="10">Security group</text>
+                  <!-- LEGEND -->
+                  <rect x="10" y="555" width="750" height="90" rx="10" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+                  <text x="375" y="573" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">LEGEND</text>
+                  <line x1="30" y1="595" x2="55" y2="595" stroke="#0d9488" stroke-width="2"/>
+                  <polygon points="55,591 55,599 63,595" fill="#0d9488"/>
+                  <text x="70" y="599" fill="#94a3b8" font-size="10">Vercel HTTPS (SPA)</text>
+                  <line x1="200" y1="595" x2="225" y2="595" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="225,591 225,599 233,595" fill="#f59e0b"/>
+                  <text x="240" y="599" fill="#94a3b8" font-size="10">AWS REST / invoke</text>
+                  <line x1="400" y1="595" x2="425" y2="595" stroke="#818cf8" stroke-width="2"/>
+                  <polygon points="425,591 425,599 433,595" fill="#818cf8"/>
+                  <text x="440" y="599" fill="#94a3b8" font-size="10">Gemini API (HTTPS)</text>
+                  <line x1="590" y1="595" x2="615" y2="595" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="615,591 615,599 623,595" fill="#22c55e"/>
+                  <text x="630" y="599" fill="#94a3b8" font-size="10">S3 RAG retrieval</text>
+                  <line x1="30" y1="625" x2="55" y2="625" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="55,621 55,629 63,625" fill="#6b7280"/>
+                  <text x="70" y="629" fill="#94a3b8" font-size="10">CI/CD deploy trigger</text>
+                  <rect x="200" y="619" width="14" height="14" rx="2" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+                  <text x="220" y="629" fill="#94a3b8" font-size="10">AWS cloud boundary</text>
+                  <rect x="400" y="619" width="14" height="14" rx="2" fill="none" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="3,2"/>
+                  <text x="420" y="629" fill="#94a3b8" font-size="10">Vercel cloud boundary</text>
+                  <rect x="590" y="619" width="14" height="14" rx="2" fill="none" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="3,2"/>
+                  <text x="610" y="629" fill="#94a3b8" font-size="10">Google (external API)</text>
                 </svg>
               </div>
             </div>

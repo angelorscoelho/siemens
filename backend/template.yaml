@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   Siemens Energy — Gas Turbine AI Maintenance Assistant
-  Serverless backend: HTTP API Gateway + Python Lambda (RAG via Google Gemini)
+  Serverless backend: HTTP API Gateway + Python Lambda (Real RAG via Gemini + S3)
 
 Globals:
   Function:
@@ -19,21 +19,25 @@ Parameters:
     Type: String
     NoEcho: true
     Description: >
-      Your Google AI Studio (Gemini) API key. This is stored as a CloudFormation
-      parameter and injected into Lambda as an environment variable. For production
-      use AWS Secrets Manager instead.
+      Your Google Gemini API key (from AI Studio). Injected into Lambda as an
+      environment variable. For production, migrate to AWS Secrets Manager.
 
   GeminiModel:
     Type: String
-    Default: gemini-2.0-flash
+    Default: gemini-2.5-pro
     AllowedValues:
+      - gemini-2.5-pro
       - gemini-2.0-flash
-      - gemini-1.5-pro
-      - gemini-2.0-flash-thinking-exp
     Description: >
-      Gemini model to use. gemini-2.0-flash is recommended for speed and quality
-      balance. gemini-1.5-pro offers the highest reasoning quality for complex
-      maintenance queries.
+      Gemini chat model. gemini-2.5-pro delivers the highest reasoning quality
+      for complex industrial maintenance queries.
+
+  S3BucketName:
+    Type: String
+    Default: siemens-rag-knowledge-base
+    Description: >
+      Name of the S3 bucket that holds the pre-computed chunk embeddings manifest
+      (chunks/embeddings.json). Must be globally unique. Created by this stack.
 
   AllowedOrigin:
     Type: String
@@ -60,6 +64,18 @@ Resources:
           - Authorization
         MaxAge: 600
 
+  # ── S3 Knowledge Base Bucket ──────────────────────────────────────────────
+  KnowledgeBaseBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketName
+      # Block all public access — Lambda reads via IAM role only
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
   # ── Lambda Function: AI Ask Assistant ─────────────────────────────────────
   AskAssistantFunction:
     Type: AWS::Serverless::Function
@@ -68,8 +84,21 @@ Resources:
       CodeUri: ask_assistant/
       Handler: app.lambda_handler
       Description: >
-        RAG-mock maintenance assistant: retrieves hardcoded turbine manual
-        context and queries Google Gemini to produce grounded answers.
+        Real-RAG maintenance assistant: embeds query with text-embedding-004 (768-dim),
+        retrieves top-3 chunks via cosine similarity from S3, then calls gemini-2.5-pro.
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:ListBucket
+              Resource:
+                - !Sub 'arn:aws:s3:::${S3BucketName}'
+                - !Sub 'arn:aws:s3:::${S3BucketName}/*'
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref S3BucketName
+          RAG_TOP_K: '3'
       Events:
         AskPost:
           Type: HttpApi
@@ -92,11 +121,9 @@ Resources:
       CodeUri: maintenance_history/
       Handler: app.lambda_handler
       Description: >
-        Returns structured maintenance history records for a given equipment
-        asset (equipment_id query parameter). Records are stored in the Lambda
-        function itself for this PoC; in production replace with a DynamoDB
-        query. The records are also available as RAG context for the AI
-        assistant to answer questions about maintenance patterns and history.
+        Returns structured maintenance history records for a given asset
+        (equipment_id param). Records are hardcoded in the Lambda for this PoC;
+        production would use a DynamoDB query.
       Events:
         HistoryGet:
           Type: HttpApi
@@ -119,8 +146,14 @@ Outputs:
       Copy this value into your frontend .env as VITE_API_URL.
     Value: !Sub 'https://${GasTurbineApi}.execute-api.${AWS::Region}.amazonaws.com'
 
+  KnowledgeBaseBucketName:
+    Description: >
+      S3 bucket holding the RAG knowledge base (chunks/embeddings.json).
+      Run ingest_manuals.py once to populate it before first query.
+    Value: !Ref KnowledgeBaseBucket
+
   AskAssistantFunctionArn:
-    Description: ARN of the Ask Assistant Lambda function
+    Description: ARN of the Ask Assistant Lambda function (Real RAG — Gemini 2.5 Pro + S3)
     Value: !GetAtt AskAssistantFunction.Arn
 
   MaintenanceHistoryFunctionArn:
