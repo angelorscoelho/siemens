@@ -125,27 +125,49 @@
           </button>
 
           <div class="bg-gray-900 border rounded-xl p-4 md:p-6 shadow-md" :class="statusBorderClass(selectedTurbine)">
-            <!-- Header row -->
-            <div class="flex items-start justify-between mb-4 gap-3">
-              <div class="min-w-0">
+            <!-- Header row: Image | Name+Location | Manual | History | Status -->
+            <div class="flex items-start gap-3 mb-4">
+              <!-- Equipment Image -->
+              <img
+                :src="selectedTurbine.imageUrl"
+                :alt="selectedTurbine.name"
+                class="w-14 h-14 rounded-xl border-2 object-cover shrink-0 hidden md:block"
+                :class="statusBorderClass(selectedTurbine)"
+              />
+              <div class="flex-1 min-w-0">
                 <p class="text-xs text-gray-400 uppercase tracking-widest font-medium">{{ selectedTurbine.location }}</p>
                 <h3 class="text-base md:text-xl font-bold text-white mt-1 leading-tight">{{ selectedTurbine.name }} / Unit {{ selectedTurbine.id }}</h3>
                 <p class="text-xs md:text-sm text-gray-400 mt-1 leading-snug">{{ selectedTurbine.type }} — {{ selectedTurbine.description }}</p>
-                <a
-                  v-if="selectedTurbine.manualUrl"
-                  :href="selectedTurbine.manualUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1 mt-2 text-xs text-teal-400 hover:text-teal-300 transition-colors"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Equipment Manual
-                </a>
               </div>
-              <span class="px-2.5 py-1 text-xs md:text-sm font-semibold rounded-full shrink-0"
+              <!-- Manual link icon -->
+              <a
+                v-if="selectedTurbine.manualUrl"
+                :href="selectedTurbine.manualUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="shrink-0 mt-0.5 p-1.5 rounded-lg bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
+                title="Equipment Manual"
+                :aria-label="`Open the ${selectedTurbine.name} equipment manual`"
+              >
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </a>
+              <!-- Maintenance History icon -->
+              <button
+                @click="openHistoryModal(selectedTurbine)"
+                class="shrink-0 mt-0.5 p-1.5 rounded-lg bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
+                title="View Maintenance History"
+                :aria-label="`View maintenance history for ${selectedTurbine.name}`"
+              >
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+              <!-- Status Badge -->
+              <span class="px-2.5 py-1 text-xs md:text-sm font-semibold rounded-full shrink-0 mt-0.5"
                 :class="statusBadgeClass(selectedTurbine)">
                 {{ selectedTurbine.status }}
               </span>
@@ -283,6 +305,7 @@
               :turbine="turbine"
               :focused="focusedCardId === turbine.id"
               @select="openTurbineSession"
+              @show-history="openHistoryModal"
             />
           </div>
 
@@ -629,6 +652,166 @@
       <a href="https://www.angelorscoelho.dev" class="hover:text-teal-500 transition-colors">angelorscoelho.dev</a>
     </footer>
 
+    <!-- ═══════════════════════════════════════════════════════════════
+         MAINTENANCE HISTORY MODAL
+         Scoped to the left content panel — never covers the AI assistant.
+    ═══════════════════════════════════════════════════════════════ -->
+    <Teleport to="body">
+      <transition name="history-slide">
+        <div v-if="historyModalTurbine"
+          class="fixed z-40 bg-gray-950 border-r border-gray-800 flex flex-col overflow-hidden shadow-2xl"
+          :style="historyModalStyle"
+        >
+          <!-- Modal Header -->
+          <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-700 bg-gray-900 shrink-0">
+            <svg class="w-5 h-5 text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-sm font-bold text-white truncate">
+                Maintenance History — {{ historyModalTurbine.name }} / Unit {{ historyModalTurbine.id }}
+              </h2>
+              <p class="text-xs text-gray-400 truncate">{{ historyModalTurbine.location }}</p>
+            </div>
+            <span class="px-2 py-0.5 text-xs font-bold rounded-full shrink-0"
+              :class="statusBadgeClass(historyModalTurbine)">
+              {{ historyModalTurbine.status }}
+            </span>
+            <button
+              @click="closeHistoryModal"
+              class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer shrink-0 p-1"
+              aria-label="Close maintenance history"
+            >
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Loading state -->
+          <div v-if="historyModalLoading" class="flex-1 flex items-center justify-center">
+            <div class="flex flex-col items-center gap-3 text-gray-500">
+              <span class="flex gap-1.5">
+                <span class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+                <span class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+                <span class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+              </span>
+              <p class="text-xs">Loading maintenance history…</p>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div v-else-if="historyModalData.length === 0" class="flex-1 flex items-center justify-center text-gray-500 text-sm px-8 text-center">
+            <div>
+              <svg class="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p>No maintenance history available for this unit.</p>
+            </div>
+          </div>
+
+          <!-- Timeline -->
+          <div v-else class="flex-1 overflow-y-auto px-4 py-4 space-y-0">
+            <div v-for="(record, idx) in historyModalData" :key="record.orderNumber || idx"
+              class="relative flex gap-4 pb-6 last:pb-0">
+
+              <!-- Timeline vertical line -->
+              <div class="flex flex-col items-center shrink-0" style="width: 2.5rem;">
+                <!-- Dot -->
+                <div class="w-3 h-3 rounded-full mt-1 shrink-0 ring-2 ring-gray-950 z-10"
+                  :class="record.result === 'COMPLETED' ? 'bg-teal-400' : record.result === 'COMPLETED_WITH_FINDINGS' ? 'bg-yellow-400' : 'bg-red-400'">
+                </div>
+                <!-- Line below (not for last) -->
+                <div v-if="idx < historyModalData.length - 1" class="w-px flex-1 bg-gray-700 mt-1"></div>
+              </div>
+
+              <!-- Timestamp label (left of content) -->
+              <div class="shrink-0 text-right" style="width: 7rem;">
+                <p class="text-[10px] text-gray-500 font-mono leading-tight">
+                  {{ record.timestamp ? record.timestamp.slice(0, 10) : '' }}
+                </p>
+                <p class="text-[10px] text-gray-600 font-mono leading-tight">
+                  {{ record.timestamp ? record.timestamp.slice(11, 16) : '' }} UTC
+                </p>
+                <p v-if="record.hoursAtService !== undefined" class="text-[10px] text-gray-600 mt-0.5 leading-tight">
+                  {{ record.hoursAtService?.toLocaleString() }} h
+                </p>
+              </div>
+
+              <!-- Content card -->
+              <div class="flex-1 min-w-0 bg-gray-900 border rounded-xl p-3 relative"
+                :class="record.result === 'COMPLETED' ? 'border-gray-700' : record.result === 'COMPLETED_WITH_FINDINGS' ? 'border-yellow-800' : 'border-red-800'">
+
+                <!-- Top row: type + result badge + Investigate button -->
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-white leading-snug">{{ record.type }}</p>
+                    <p class="text-[10px] text-gray-500 mt-0.5">{{ record.orderNumber }}</p>
+                  </div>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="px-1.5 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap"
+                      :class="record.result === 'COMPLETED' ? 'bg-teal-900 text-teal-300' : record.result === 'COMPLETED_WITH_FINDINGS' ? 'bg-yellow-900 text-yellow-300' : 'bg-red-900 text-red-300'">
+                      {{ record.result === 'COMPLETED_WITH_FINDINGS' ? 'FINDINGS' : record.result }}
+                    </span>
+                    <!-- Investigate with Assistant button -->
+                    <button
+                      @click="investigateWithAssistant(historyModalTurbine, record)"
+                      class="px-2 py-0.5 text-[10px] font-semibold bg-teal-800 hover:bg-teal-700 text-teal-200 rounded-md transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1"
+                      title="Investigate this maintenance record with the AI assistant"
+                    >
+                      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      Investigate
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Technician -->
+                <p class="text-[10px] text-gray-500 mb-1.5">
+                  <span class="text-gray-600">Technician:</span> {{ record.technician }}
+                  <span class="ml-2 text-gray-600">Duration:</span> {{ record.durationHours }}h
+                </p>
+
+                <!-- Description -->
+                <p class="text-xs text-gray-300 leading-relaxed mb-1.5">{{ record.description }}</p>
+
+                <!-- Findings (if different from description) -->
+                <div v-if="record.findings" class="bg-gray-800 rounded-lg px-2.5 py-1.5 mb-1.5">
+                  <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Findings</p>
+                  <p class="text-xs text-gray-300 leading-relaxed">{{ record.findings }}</p>
+                </div>
+
+                <!-- Parts replaced -->
+                <div v-if="record.partsReplaced && record.partsReplaced.length" class="flex flex-wrap gap-1 mt-1.5">
+                  <span class="text-[10px] text-gray-500 self-center">Parts:</span>
+                  <span v-for="part in record.partsReplaced" :key="part"
+                    class="px-1.5 py-0.5 text-[10px] bg-gray-800 text-gray-400 rounded-md">
+                    {{ part }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="shrink-0 border-t border-gray-700 px-4 py-2 bg-gray-900 flex items-center justify-between">
+            <p class="text-[10px] text-gray-600">
+              {{ historyModalData.length }} maintenance record{{ historyModalData.length !== 1 ? 's' : '' }} · {{ historyModalTurbine.name }}
+            </p>
+            <button
+              @click="closeHistoryModal"
+              class="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </transition>
+    </Teleport>
+
   </div>
 </template>
 
@@ -636,7 +819,7 @@
 import { ref, reactive, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import {
   metricParams, thresholds, createFleetData, randomWalk,
-  generateActionPlan, historyMetricKeys,
+  generateActionPlan, historyMetricKeys, getMaintenanceHistory,
 } from '../fleetStore.js'
 import EquipmentCard from './EquipmentCard.vue'
 
@@ -648,6 +831,11 @@ const alertBalloon = ref(null)
 const focusedCardId = ref(null)
 let updateInterval = null
 let anomalyInterval = null
+
+// ── Maintenance History Modal ─────────────────────────────────────────────────
+const historyModalTurbine = ref(null)
+const historyModalLoading = ref(false)
+const historyModalData = ref([])
 const alertCooldown = {}
 
 // ── Mobile Navigation State ───────────────────────────────────────────────────
@@ -677,6 +865,17 @@ function clearFilters() {
 // ── Fleet Status Computed ─────────────────────────────────────────────────────
 const criticalCount = computed(() => turbines.filter(t => t.status === 'NOK').length)
 const warningCount = computed(() => turbines.filter(t => t.status === 'RISK').length)
+
+// ── Maintenance History Modal Style ───────────────────────────────────────────
+// Positions the modal within the left content panel so it never overlaps
+// the right-side AI assistant sidebar.
+const historyModalStyle = computed(() => ({
+  top: '0',
+  bottom: '0',
+  left: '0',
+  // When the AI assistant is open on desktop it takes clamp(300px, 25%, 400px)
+  right: assistantOpen.value ? 'clamp(300px, 25%, 400px)' : '0',
+}))
 
 // ── Telemetry Simulation ──────────────────────────────────────────────────────
 function updateTelemetry() {
@@ -920,6 +1119,62 @@ function askAboutTurbineMobile(turbine) {
   nextTick(() => sendMessage())
 }
 
+// ── Maintenance History Modal ─────────────────────────────────────────────────
+async function openHistoryModal(turbine) {
+  historyModalTurbine.value = turbine
+  historyModalData.value = []
+  historyModalLoading.value = true
+
+  // Try to fetch from API; fall back to local store data
+  if (API_URL) {
+    try {
+      const res = await fetch(`${API_URL}/maintenance-history?equipment_id=${encodeURIComponent(turbine.id)}`)
+      if (res.ok) {
+        const data = await res.json()
+        historyModalData.value = data.records || []
+        historyModalLoading.value = false
+        return
+      }
+    } catch {
+      // Fall through to local data
+    }
+  }
+
+  // Local fallback (always available)
+  historyModalData.value = getMaintenanceHistory(turbine.id)
+  historyModalLoading.value = false
+}
+
+function closeHistoryModal() {
+  historyModalTurbine.value = null
+  historyModalData.value = []
+}
+
+function investigateWithAssistant(turbine, record) {
+  // Open AI assistant and pre-fill with a rich query about this maintenance record
+  assistantOpen.value = true
+  const partsStr = record.partsReplaced && record.partsReplaced.length
+    ? `Parts replaced: ${record.partsReplaced.join(', ')}. `
+    : ''
+  const query =
+    `Investigate the following maintenance event for ${turbine.name} ${turbine.type} (Unit ${turbine.id}, ${turbine.location}):\n` +
+    `Work Order: ${record.orderNumber} | Date: ${record.timestamp?.slice(0, 10)} | Type: ${record.type}\n` +
+    `Description: ${record.description}\n` +
+    `Findings: ${record.findings}\n` +
+    `${partsStr}Duration: ${record.durationHours}h | Result: ${record.result} | Service Hours: ${record.hoursAtService?.toLocaleString()}h\n\n` +
+    `Please provide: 1) An overview of this maintenance event and why it was performed. ` +
+    `2) What do the findings indicate about the equipment's health and wear patterns? ` +
+    `3) What are the most common root causes for this type of maintenance? ` +
+    `4) What engineering or operational actions should be taken to prevent recurrence or optimize maintenance intervals?`
+
+  messages.value.push({
+    role: 'system',
+    content: `Investigating maintenance record ${record.orderNumber} for ${turbine.name} / Unit ${turbine.id}…`,
+  })
+  inputText.value = query
+  nextTick(() => sendMessage())
+}
+
 // ── Chat State ────────────────────────────────────────────────────────────────
 const messages = ref([])
 const inputText = ref('')
@@ -1039,5 +1294,18 @@ onUnmounted(() => {
 @keyframes pulse-once {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.8; }
+}
+
+.history-slide-enter-active,
+.history-slide-leave-active {
+  transition: all 0.3s ease;
+}
+.history-slide-enter-from {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+.history-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-12px);
 }
 </style>

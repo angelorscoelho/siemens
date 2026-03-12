@@ -60,7 +60,7 @@ Resources:
           - Authorization
         MaxAge: 600
 
-  # ── Lambda Function ────────────────────────────────────────────────────────
+  # ── Lambda Function: AI Ask Assistant ─────────────────────────────────────
   AskAssistantFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -84,13 +84,45 @@ Resources:
             Path: /ask-assistant
             Method: OPTIONS
 
+  # ── Lambda Function: Maintenance History ───────────────────────────────────
+  MaintenanceHistoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: siemens-poc-maintenance-history
+      CodeUri: maintenance_history/
+      Handler: app.lambda_handler
+      Description: >
+        Returns structured maintenance history records for a given equipment
+        asset (equipment_id query parameter). Records are stored in the Lambda
+        function itself for this PoC; in production replace with a DynamoDB
+        query. The records are also available as RAG context for the AI
+        assistant to answer questions about maintenance patterns and history.
+      Events:
+        HistoryGet:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref GasTurbineApi
+            Path: /maintenance-history
+            Method: GET
+        HistoryOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref GasTurbineApi
+            Path: /maintenance-history
+            Method: OPTIONS
+
 Outputs:
   ApiBaseUrl:
     Description: >
-      HTTP API base URL. Append /ask-assistant for the chat endpoint.
+      HTTP API base URL. Append /ask-assistant for the chat endpoint or
+      /maintenance-history?equipment_id=GT-01 for maintenance history.
       Copy this value into your frontend .env as VITE_API_URL.
     Value: !Sub 'https://${GasTurbineApi}.execute-api.${AWS::Region}.amazonaws.com'
 
   AskAssistantFunctionArn:
-    Description: ARN of the Lambda function
+    Description: ARN of the Ask Assistant Lambda function
     Value: !GetAtt AskAssistantFunction.Arn
+
+  MaintenanceHistoryFunctionArn:
+    Description: ARN of the Maintenance History Lambda function
+    Value: !GetAtt MaintenanceHistoryFunction.Arn
