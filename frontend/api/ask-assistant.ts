@@ -450,7 +450,7 @@ const supportsThinkingConfig = (modelId: string) =>
 
 export default async function handler(req: any, res: any) {
   const FUNCTION_START = Date.now();
-  // Hard cap: leave a 8 s buffer before Vercel's maxDuration (60 s).
+  // Hard cap: leave an 8 s buffer before Vercel's maxDuration (60 s).
   const MAX_FUNCTION_MS = 52_000;
 
   res.setHeader('Access-Control-Allow-Origin', '*');

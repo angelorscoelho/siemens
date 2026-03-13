@@ -51,6 +51,8 @@ DEFAULT_TOP_K = 3                            # context chunks injected into the 
 # /tmp cache for embeddings (survives across warm Lambda invocations)
 _CACHE_PATH = "/tmp/embeddings_cache.json"
 _CACHE_TTL_SECONDS = 3600  # 1 hour
+MIN_REMAINING_MS = 15_000  # early bailout threshold (ms)
+MAX_RAG_TIME_SECONDS = 30  # if RAG takes longer, skip context
 
 SYSTEM_PROMPT = (
     "You are an expert gas turbine maintenance engineer at Siemens Energy. "
@@ -283,7 +285,7 @@ def lambda_handler(event: dict, context) -> dict:  # noqa: ANN001
     timings = {}
 
     # ── Step 1: Embed the user query ──────────────────────────────────────
-    if _remaining_ms(context) < 15_000:
+    if _remaining_ms(context) < MIN_REMAINING_MS:
         logger.warning("EARLY BAILOUT before embed — only %d ms left", _remaining_ms(context))
         return _error(504, "Insufficient time remaining for processing.", cors_headers)
 
@@ -305,7 +307,7 @@ def lambda_handler(event: dict, context) -> dict:  # noqa: ANN001
     top_chunks = []
     context_text = ""
 
-    if _remaining_ms(context) < 15_000:
+    if _remaining_ms(context) < MIN_REMAINING_MS:
         logger.warning("EARLY BAILOUT before S3 — only %d ms left, skipping RAG", _remaining_ms(context))
         rag_skipped = True
     else:
@@ -337,14 +339,14 @@ def lambda_handler(event: dict, context) -> dict:  # noqa: ANN001
 
     # ── Fallback check: if total RAG time > 30 s, skip context ────────────
     total_rag_time = _elapsed_since(handler_start)
-    if total_rag_time > 30 and not rag_skipped:
+    if total_rag_time > MAX_RAG_TIME_SECONDS and not rag_skipped:
         logger.warning("RAG pipeline took %.1fs — skipping context for Gemini call", total_rag_time)
         rag_skipped = True
         context_text = ""
         top_chunks = []
 
     # ── Step 4: Call Gemini chat ──────────────────────────────────────────
-    if _remaining_ms(context) < 15_000:
+    if _remaining_ms(context) < MIN_REMAINING_MS:
         logger.warning("EARLY BAILOUT before Gemini — only %d ms left", _remaining_ms(context))
         return _error(504, "Insufficient time remaining for LLM call.", cors_headers)
 
