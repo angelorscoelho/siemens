@@ -10,7 +10,15 @@
       <div class="flex items-start gap-2 mb-3">
 
         <!-- Equipment Image (first item, clickable → drill-in) -->
-        <div class="shrink-0 cursor-pointer" @click.stop="$emit('select', turbine, activeMetricKey)">
+        <div
+          class="shrink-0 cursor-pointer"
+          tabindex="0"
+          role="button"
+          :aria-label="`Open detail view for ${turbine.name}`"
+          @click.stop="$emit('select', turbine, activeMetricKey)"
+          @keydown.enter.prevent="$emit('select', turbine, activeMetricKey)"
+          @keydown.space.prevent="$emit('select', turbine, activeMetricKey)"
+        >
           <img
             :src="displayImageSrc"
             :alt="turbine.name + ' ' + turbine.type"

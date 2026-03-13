@@ -244,95 +244,95 @@ function makeSvgImage(name, color) {
 
 // ── Type-specific SVG machine drawings for image fallbacks ────────────────────
 export function makeFallbackSvg(name, type, color) {
-  const c = color || '#2dd4bf'
-  const t = (type || '').toLowerCase()
+  const svgColor = color || '#2dd4bf'
+  const equipmentType = (type || '').toLowerCase()
   let drawing
 
-  if (t.includes('steam turbine')) {
+  if (equipmentType.includes('steam turbine')) {
     // Steam turbine: wide, low profile with steam pipes
     drawing = `
-      <rect x="30" y="82" width="140" height="48" rx="4" fill="none" stroke="${c}" stroke-width="1.5" opacity="0.85"/>
-      <rect x="86" y="42" width="28" height="42" fill="none" stroke="${c}" stroke-width="1.4" opacity="0.75"/>
-      <rect x="80" y="36" width="40" height="8" rx="2" fill="none" stroke="${c}" stroke-width="1.2" opacity="0.7"/>
-      <line x1="56" y1="82" x2="56" y2="130" stroke="${c}" stroke-width="1" opacity="0.35"/>
-      <line x1="82" y1="82" x2="82" y2="130" stroke="${c}" stroke-width="1" opacity="0.35"/>
-      <line x1="108" y1="82" x2="108" y2="130" stroke="${c}" stroke-width="1" opacity="0.35"/>
-      <line x1="134" y1="82" x2="134" y2="130" stroke="${c}" stroke-width="1" opacity="0.35"/>
-      <rect x="86" y="128" width="28" height="22" fill="none" stroke="${c}" stroke-width="1.2" opacity="0.6"/>
-      <circle cx="30" cy="106" r="7" fill="none" stroke="${c}" stroke-width="1.2" opacity="0.5"/>
-      <circle cx="170" cy="106" r="7" fill="none" stroke="${c}" stroke-width="1.2" opacity="0.5"/>
-      <line x1="8" y1="106" x2="37" y2="106" stroke="${c}" stroke-width="1.8" opacity="0.5"/>
-      <line x1="163" y1="106" x2="192" y2="106" stroke="${c}" stroke-width="1.8" opacity="0.5"/>`
-  } else if (t.includes('generator')) {
+      <rect x="30" y="82" width="140" height="48" rx="4" fill="none" stroke="${svgColor}" stroke-width="1.5" opacity="0.85"/>
+      <rect x="86" y="42" width="28" height="42" fill="none" stroke="${svgColor}" stroke-width="1.4" opacity="0.75"/>
+      <rect x="80" y="36" width="40" height="8" rx="2" fill="none" stroke="${svgColor}" stroke-width="1.2" opacity="0.7"/>
+      <line x1="56" y1="82" x2="56" y2="130" stroke="${svgColor}" stroke-width="1" opacity="0.35"/>
+      <line x1="82" y1="82" x2="82" y2="130" stroke="${svgColor}" stroke-width="1" opacity="0.35"/>
+      <line x1="108" y1="82" x2="108" y2="130" stroke="${svgColor}" stroke-width="1" opacity="0.35"/>
+      <line x1="134" y1="82" x2="134" y2="130" stroke="${svgColor}" stroke-width="1" opacity="0.35"/>
+      <rect x="86" y="128" width="28" height="22" fill="none" stroke="${svgColor}" stroke-width="1.2" opacity="0.6"/>
+      <circle cx="30" cy="106" r="7" fill="none" stroke="${svgColor}" stroke-width="1.2" opacity="0.5"/>
+      <circle cx="170" cy="106" r="7" fill="none" stroke="${svgColor}" stroke-width="1.2" opacity="0.5"/>
+      <line x1="8" y1="106" x2="37" y2="106" stroke="${svgColor}" stroke-width="1.8" opacity="0.5"/>
+      <line x1="163" y1="106" x2="192" y2="106" stroke="${svgColor}" stroke-width="1.8" opacity="0.5"/>`
+  } else if (equipmentType.includes('generator')) {
     // Generator: long cylinder with cooling fins and shaft ends
     drawing = `
-      <rect x="18" y="76" width="164" height="58" rx="28" fill="none" stroke="${c}" stroke-width="1.5" opacity="0.85"/>
-      <line x1="52" y1="76" x2="52" y2="134" stroke="${c}" stroke-width="1" opacity="0.35"/>
-      <line x1="76" y1="76" x2="76" y2="134" stroke="${c}" stroke-width="1" opacity="0.35"/>
-      <line x1="100" y1="76" x2="100" y2="134" stroke="${c}" stroke-width="1" opacity="0.35"/>
-      <line x1="124" y1="76" x2="124" y2="134" stroke="${c}" stroke-width="1" opacity="0.35"/>
-      <line x1="148" y1="76" x2="148" y2="134" stroke="${c}" stroke-width="1" opacity="0.35"/>
-      <rect x="6" y="85" width="14" height="40" rx="3" fill="none" stroke="${c}" stroke-width="1.2" opacity="0.6"/>
-      <rect x="180" y="85" width="14" height="40" rx="3" fill="none" stroke="${c}" stroke-width="1.2" opacity="0.6"/>
-      <line x1="1" y1="105" x2="20" y2="105" stroke="${c}" stroke-width="2" opacity="0.6"/>
-      <line x1="180" y1="105" x2="199" y2="105" stroke="${c}" stroke-width="2" opacity="0.6"/>
-      <rect x="78" y="62" width="44" height="16" rx="3" fill="none" stroke="${c}" stroke-width="1.2" opacity="0.7"/>
-      <circle cx="100" cy="105" r="14" fill="none" stroke="${c}" stroke-width="1" opacity="0.3"/>
-      <circle cx="100" cy="105" r="4" fill="${c}" opacity="0.4"/>`
-  } else if (t.includes('aeroderivative')) {
+      <rect x="18" y="76" width="164" height="58" rx="28" fill="none" stroke="${svgColor}" stroke-width="1.5" opacity="0.85"/>
+      <line x1="52" y1="76" x2="52" y2="134" stroke="${svgColor}" stroke-width="1" opacity="0.35"/>
+      <line x1="76" y1="76" x2="76" y2="134" stroke="${svgColor}" stroke-width="1" opacity="0.35"/>
+      <line x1="100" y1="76" x2="100" y2="134" stroke="${svgColor}" stroke-width="1" opacity="0.35"/>
+      <line x1="124" y1="76" x2="124" y2="134" stroke="${svgColor}" stroke-width="1" opacity="0.35"/>
+      <line x1="148" y1="76" x2="148" y2="134" stroke="${svgColor}" stroke-width="1" opacity="0.35"/>
+      <rect x="6" y="85" width="14" height="40" rx="3" fill="none" stroke="${svgColor}" stroke-width="1.2" opacity="0.6"/>
+      <rect x="180" y="85" width="14" height="40" rx="3" fill="none" stroke="${svgColor}" stroke-width="1.2" opacity="0.6"/>
+      <line x1="1" y1="105" x2="20" y2="105" stroke="${svgColor}" stroke-width="2" opacity="0.6"/>
+      <line x1="180" y1="105" x2="199" y2="105" stroke="${svgColor}" stroke-width="2" opacity="0.6"/>
+      <rect x="78" y="62" width="44" height="16" rx="3" fill="none" stroke="${svgColor}" stroke-width="1.2" opacity="0.7"/>
+      <circle cx="100" cy="105" r="14" fill="none" stroke="${svgColor}" stroke-width="1" opacity="0.3"/>
+      <circle cx="100" cy="105" r="4" fill="${svgColor}" opacity="0.4"/>`
+  } else if (equipmentType.includes('aeroderivative')) {
     // Aeroderivative: slim jet-engine style with fan face
     drawing = `
-      <ellipse cx="32" cy="100" rx="18" ry="28" fill="none" stroke="${c}" stroke-width="1.5" opacity="0.75"/>
-      <line x1="32" y1="72" x2="32" y2="100" stroke="${c}" stroke-width="1" opacity="0.4"/>
-      <line x1="44" y1="76" x2="32" y2="100" stroke="${c}" stroke-width="1" opacity="0.4"/>
-      <line x1="50" y1="88" x2="32" y2="100" stroke="${c}" stroke-width="1" opacity="0.4"/>
-      <line x1="14" y1="76" x2="32" y2="100" stroke="${c}" stroke-width="1" opacity="0.4"/>
-      <line x1="14" y1="124" x2="32" y2="100" stroke="${c}" stroke-width="1" opacity="0.4"/>
-      <line x1="44" y1="124" x2="32" y2="100" stroke="${c}" stroke-width="1" opacity="0.4"/>
-      <rect x="50" y="87" width="112" height="26" rx="13" fill="none" stroke="${c}" stroke-width="1.5" opacity="0.85"/>
-      <rect x="80" y="89" width="46" height="22" rx="3" fill="none" stroke="${c}" stroke-width="1" opacity="0.5"/>
-      <line x1="103" y1="87" x2="103" y2="113" stroke="${c}" stroke-width="1" opacity="0.4"/>
-      <line x1="118" y1="87" x2="118" y2="113" stroke="${c}" stroke-width="1" opacity="0.4"/>
-      <polygon points="162,91 188,96 188,104 162,109" fill="none" stroke="${c}" stroke-width="1.4" stroke-linejoin="round" opacity="0.75"/>
-      <circle cx="192" cy="100" r="3" fill="${c}" opacity="0.3"/>
-      <circle cx="196" cy="97" r="2" fill="${c}" opacity="0.2"/>
-      <circle cx="196" cy="103" r="2" fill="${c}" opacity="0.2"/>`
-  } else if (t.includes('small')) {
+      <ellipse cx="32" cy="100" rx="18" ry="28" fill="none" stroke="${svgColor}" stroke-width="1.5" opacity="0.75"/>
+      <line x1="32" y1="72" x2="32" y2="100" stroke="${svgColor}" stroke-width="1" opacity="0.4"/>
+      <line x1="44" y1="76" x2="32" y2="100" stroke="${svgColor}" stroke-width="1" opacity="0.4"/>
+      <line x1="50" y1="88" x2="32" y2="100" stroke="${svgColor}" stroke-width="1" opacity="0.4"/>
+      <line x1="14" y1="76" x2="32" y2="100" stroke="${svgColor}" stroke-width="1" opacity="0.4"/>
+      <line x1="14" y1="124" x2="32" y2="100" stroke="${svgColor}" stroke-width="1" opacity="0.4"/>
+      <line x1="44" y1="124" x2="32" y2="100" stroke="${svgColor}" stroke-width="1" opacity="0.4"/>
+      <rect x="50" y="87" width="112" height="26" rx="13" fill="none" stroke="${svgColor}" stroke-width="1.5" opacity="0.85"/>
+      <rect x="80" y="89" width="46" height="22" rx="3" fill="none" stroke="${svgColor}" stroke-width="1" opacity="0.5"/>
+      <line x1="103" y1="87" x2="103" y2="113" stroke="${svgColor}" stroke-width="1" opacity="0.4"/>
+      <line x1="118" y1="87" x2="118" y2="113" stroke="${svgColor}" stroke-width="1" opacity="0.4"/>
+      <polygon points="162,91 188,96 188,104 162,109" fill="none" stroke="${svgColor}" stroke-width="1.4" stroke-linejoin="round" opacity="0.75"/>
+      <circle cx="192" cy="100" r="3" fill="${svgColor}" opacity="0.3"/>
+      <circle cx="196" cy="97" r="2" fill="${svgColor}" opacity="0.2"/>
+      <circle cx="196" cy="103" r="2" fill="${svgColor}" opacity="0.2"/>`
+  } else if (equipmentType.includes('small')) {
     // Small industrial gas turbine: compact enclosed package
     drawing = `
-      <rect x="35" y="66" width="130" height="78" rx="6" fill="none" stroke="${c}" stroke-width="1.5" opacity="0.85"/>
-      <polygon points="10,86 35,76 35,124 10,114" fill="none" stroke="${c}" stroke-width="1.3" opacity="0.75"/>
-      <rect x="40" y="73" width="44" height="64" rx="3" fill="none" stroke="${c}" stroke-width="1" opacity="0.5"/>
-      <line x1="54" y1="73" x2="54" y2="137" stroke="${c}" stroke-width="0.8" opacity="0.35"/>
-      <line x1="67" y1="73" x2="67" y2="137" stroke="${c}" stroke-width="0.8" opacity="0.35"/>
-      <line x1="78" y1="73" x2="78" y2="137" stroke="${c}" stroke-width="0.8" opacity="0.35"/>
-      <circle cx="110" cy="105" r="20" fill="none" stroke="${c}" stroke-width="1.3" opacity="0.65"/>
-      <circle cx="110" cy="105" r="8" fill="none" stroke="${c}" stroke-width="1" opacity="0.35"/>
-      <polygon points="155,76 192,86 192,114 155,124" fill="none" stroke="${c}" stroke-width="1.3" opacity="0.75"/>
-      <line x1="10" y1="100" x2="192" y2="100" stroke="${c}" stroke-width="0.8" opacity="0.15" stroke-dasharray="5,4"/>`
+      <rect x="35" y="66" width="130" height="78" rx="6" fill="none" stroke="${svgColor}" stroke-width="1.5" opacity="0.85"/>
+      <polygon points="10,86 35,76 35,124 10,114" fill="none" stroke="${svgColor}" stroke-width="1.3" opacity="0.75"/>
+      <rect x="40" y="73" width="44" height="64" rx="3" fill="none" stroke="${svgColor}" stroke-width="1" opacity="0.5"/>
+      <line x1="54" y1="73" x2="54" y2="137" stroke="${svgColor}" stroke-width="0.8" opacity="0.35"/>
+      <line x1="67" y1="73" x2="67" y2="137" stroke="${svgColor}" stroke-width="0.8" opacity="0.35"/>
+      <line x1="78" y1="73" x2="78" y2="137" stroke="${svgColor}" stroke-width="0.8" opacity="0.35"/>
+      <circle cx="110" cy="105" r="20" fill="none" stroke="${svgColor}" stroke-width="1.3" opacity="0.65"/>
+      <circle cx="110" cy="105" r="8" fill="none" stroke="${svgColor}" stroke-width="1" opacity="0.35"/>
+      <polygon points="155,76 192,86 192,114 155,124" fill="none" stroke="${svgColor}" stroke-width="1.3" opacity="0.75"/>
+      <line x1="10" y1="100" x2="192" y2="100" stroke="${svgColor}" stroke-width="0.8" opacity="0.15" stroke-dasharray="5,4"/>`
   } else {
     // Default heavy-duty / industrial gas turbine (H-class, F-class, industrial)
     drawing = `
-      <polygon points="12,82 46,70 46,130 12,118" fill="none" stroke="${c}" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
-      <rect x="46" y="70" width="42" height="60" rx="2" fill="none" stroke="${c}" stroke-width="1.5" opacity="0.75"/>
-      <line x1="57" y1="70" x2="57" y2="130" stroke="${c}" stroke-width="0.9" opacity="0.4"/>
-      <line x1="67" y1="70" x2="67" y2="130" stroke="${c}" stroke-width="0.9" opacity="0.4"/>
-      <line x1="77" y1="70" x2="77" y2="130" stroke="${c}" stroke-width="0.9" opacity="0.4"/>
-      <rect x="88" y="64" width="42" height="72" rx="4" fill="none" stroke="${c}" stroke-width="1.5" opacity="0.75"/>
-      <ellipse cx="109" cy="78" rx="11" ry="5.5" fill="none" stroke="${c}" stroke-width="1" opacity="0.5"/>
-      <ellipse cx="109" cy="100" rx="11" ry="5.5" fill="none" stroke="${c}" stroke-width="1" opacity="0.5"/>
-      <ellipse cx="109" cy="122" rx="11" ry="5.5" fill="none" stroke="${c}" stroke-width="1" opacity="0.5"/>
-      <rect x="130" y="74" width="32" height="52" rx="2" fill="none" stroke="${c}" stroke-width="1.5" opacity="0.75"/>
-      <line x1="140" y1="74" x2="140" y2="126" stroke="${c}" stroke-width="0.9" opacity="0.4"/>
-      <line x1="151" y1="74" x2="151" y2="126" stroke="${c}" stroke-width="0.9" opacity="0.4"/>
-      <polygon points="162,70 190,82 190,118 162,130" fill="none" stroke="${c}" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
-      <line x1="12" y1="100" x2="190" y2="100" stroke="${c}" stroke-width="0.8" opacity="0.12" stroke-dasharray="4,4"/>`
+      <polygon points="12,82 46,70 46,130 12,118" fill="none" stroke="${svgColor}" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+      <rect x="46" y="70" width="42" height="60" rx="2" fill="none" stroke="${svgColor}" stroke-width="1.5" opacity="0.75"/>
+      <line x1="57" y1="70" x2="57" y2="130" stroke="${svgColor}" stroke-width="0.9" opacity="0.4"/>
+      <line x1="67" y1="70" x2="67" y2="130" stroke="${svgColor}" stroke-width="0.9" opacity="0.4"/>
+      <line x1="77" y1="70" x2="77" y2="130" stroke="${svgColor}" stroke-width="0.9" opacity="0.4"/>
+      <rect x="88" y="64" width="42" height="72" rx="4" fill="none" stroke="${svgColor}" stroke-width="1.5" opacity="0.75"/>
+      <ellipse cx="109" cy="78" rx="11" ry="5.5" fill="none" stroke="${svgColor}" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="109" cy="100" rx="11" ry="5.5" fill="none" stroke="${svgColor}" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="109" cy="122" rx="11" ry="5.5" fill="none" stroke="${svgColor}" stroke-width="1" opacity="0.5"/>
+      <rect x="130" y="74" width="32" height="52" rx="2" fill="none" stroke="${svgColor}" stroke-width="1.5" opacity="0.75"/>
+      <line x1="140" y1="74" x2="140" y2="126" stroke="${svgColor}" stroke-width="0.9" opacity="0.4"/>
+      <line x1="151" y1="74" x2="151" y2="126" stroke="${svgColor}" stroke-width="0.9" opacity="0.4"/>
+      <polygon points="162,70 190,82 190,118 162,130" fill="none" stroke="${svgColor}" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+      <line x1="12" y1="100" x2="190" y2="100" stroke="${svgColor}" stroke-width="0.8" opacity="0.12" stroke-dasharray="4,4"/>`
   }
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
     <rect fill="#0f172a" width="200" height="200" rx="8"/>
     ${drawing}
-    <text fill="${c}" font-family="system-ui,sans-serif" font-size="11" font-weight="bold" text-anchor="middle" x="100" y="158">${name}</text>
+    <text fill="${svgColor}" font-family="system-ui,sans-serif" font-size="11" font-weight="bold" text-anchor="middle" x="100" y="158">${name}</text>
     <text fill="#475569" font-family="system-ui,sans-serif" font-size="8" text-anchor="middle" x="100" y="171">SIEMENS ENERGY</text>
   </svg>`
   return `data:image/svg+xml,${encodeURIComponent(svg)}`

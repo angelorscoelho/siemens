@@ -2041,7 +2041,7 @@ function askAboutTurbineOverview(turbine) {
   const query =
     `Give a brief operational health overview for ${turbine.name} ${turbine.type} (Unit ${turbine.id}, ${turbine.location}). ` +
     `Current readings: vibration ${turbine.vibration.toFixed(2)} mm/s, exhaust temp ${turbine.exhaustTemp.toFixed(0)}°C, ` +
-    `power output ${turbine.powerOutput.toFixed(0)} ${turbine.powerOutput < 100 ? 'MW' : 'MW'}, ` +
+    `power output ${turbine.powerOutput.toFixed(0)} MW, ` +
     `hours since overhaul: ${Math.floor(turbine.hoursSinceOverhaul).toLocaleString()} hrs. ` +
     `Status: OK (all parameters within normal range). Summarize the current health, any upcoming maintenance milestones, ` +
     `efficiency notes, and general recommendations for this unit type. Keep it concise.`
