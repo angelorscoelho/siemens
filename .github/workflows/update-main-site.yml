@@ -32,7 +32,44 @@ jobs:
           submodules: false
           path: main-site
 
-      # 3. Point the siemens submodule at the exact commit that just landed on
+      # 3. Build the siemens frontend so the parent site doesn't need to
+      #    fetch the submodule at Vercel build time. Vercel cannot reliably
+      #    clone git submodules, so we pre-build here and commit the output.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: siemens-src/frontend/package-lock.json
+
+      - name: Build siemens frontend
+        working-directory: siemens-src/frontend
+        run: npm ci && npm run build
+
+      - name: Copy pre-built siemens dist to parent repo
+        run: |
+          set -euo pipefail
+          if [ ! -d siemens-src/frontend/dist ]; then
+            echo "::error::Siemens frontend dist directory not found after build"
+            exit 1
+          fi
+          rm -rf main-site/siemens-prebuilt
+          cp -r siemens-src/frontend/dist main-site/siemens-prebuilt
+          echo "Copied $(find main-site/siemens-prebuilt -type f | wc -l) files to siemens-prebuilt/"
+
+      # 4. Update the parent's build:siemens script to copy from the
+      #    pre-built directory instead of building from the submodule.
+      - name: Update parent build:siemens script
+        working-directory: main-site
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.scripts['build:siemens'] = 'mkdir -p dist/siemens && cp -r siemens-prebuilt/* dist/siemens/';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      # 5. Point the siemens submodule at the exact commit that just landed on
       #    main. git update-index records the new SHA in the parent repo's
       #    index, which is what tells Vercel (and any downstream CI) that the
       #    sub-project changed and a new build is required.
@@ -47,7 +84,7 @@ jobs:
 
           git update-index --cacheinfo "160000,$SIEMENS_SHA,siemens"
 
-      # 4. Sync the Vercel serverless API functions from the siemens repo into
+      # 6. Sync the Vercel serverless API functions from the siemens repo into
       #    angelorscoelho.dev so they are served at /api/ask-assistant and
       #    /api/maintenance-history by the parent site's Vercel deployment.
       - name: Sync siemens API functions to angelorscoelho.dev
@@ -55,7 +92,7 @@ jobs:
           mkdir -p main-site/api
           find siemens-src/frontend/api -maxdepth 1 -name "*.ts" -exec cp {} main-site/api/ \;
 
-      # 5. Commit and push if anything changed.
+      # 7. Commit and push if anything changed.
       - name: Commit and push changes
         working-directory: main-site
         run: |
@@ -67,7 +104,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "Nothing changed — nothing to push."
           else
-            git commit -m "ci: update siemens submodule to ${SHORT} and sync API functions"
+            git commit -m "ci: update siemens submodule to ${SHORT}, pre-build frontend, and sync API functions"
             git push origin HEAD:main
             echo "Pushed changes — Vercel will rebuild."
           fi
