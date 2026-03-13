@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "node scripts/fetch-images.mjs && vite",
     "build": "vite build",
-    "prebuild": "node scripts/fetch-images.mjs",
-    "preview": "vite preview"
+    "prebuild": "node scripts/fetch-images.mjs && node scripts/check-manual-urls.mjs",
+    "preview": "vite preview",
+    "check-manuals": "node scripts/check-manual-urls.mjs --fail-on-error"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
