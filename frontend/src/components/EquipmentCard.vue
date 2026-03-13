@@ -9,8 +9,8 @@
       <!-- ── Card Header: Img | Name+Location | Manual | History | Status ── -->
       <div class="flex items-start gap-2 mb-3">
 
-        <!-- Equipment Image (first item) -->
-        <div class="shrink-0">
+        <!-- Equipment Image (first item, clickable → drill-in) -->
+        <div class="shrink-0 cursor-pointer" @click.stop="$emit('select', turbine, activeMetricKey)">
           <img
             :src="displayImageSrc"
             :alt="turbine.name + ' ' + turbine.type"
@@ -111,7 +111,7 @@
         </div>
       </div>
 
-      <!-- ── Alert Banner ── -->
+      <!-- ── Alert Banner (RISK/NOK) ── -->
       <div
         v-if="turbine.alert"
         class="mt-2 p-2 rounded text-xs leading-snug relative flex items-start gap-1 cursor-pointer group/alert"
@@ -122,7 +122,7 @@
         :title="'Click to open full detail view'"
       >
         <span class="flex-1">⚠ {{ turbine.alert }}</span>
-        <!-- Bot / AI assistant button -->
+        <!-- Bot / AI assistant button (problem-solving mode) -->
         <button
           @click.stop="$emit('ask-assistant', turbine)"
           class="bot-icon-btn shrink-0 ml-1 p-1 rounded-md transition-all duration-200 cursor-pointer"
@@ -132,7 +132,6 @@
           title="Ask Assistant for Detailed Analysis"
           aria-label="Ask Assistant for Detailed Analysis"
         >
-          <!-- Bot icon -->
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="8" width="18" height="12" rx="2"/>
             <path d="M12 2v4"/>
@@ -143,6 +142,37 @@
             <path d="M3 12H1m22 0h-2"/>
           </svg>
         </button>
+      </div>
+
+      <!-- ── OK card insight (status = OK) ── -->
+      <div v-if="turbine.status === 'OK'" class="mt-2 space-y-1">
+        <div class="flex items-start gap-1.5 px-2 py-1.5 rounded-lg bg-teal-900/20 border border-teal-800/40">
+          <svg class="w-3 h-3 text-teal-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] text-teal-400 font-medium leading-snug">{{ okInsight.stableStr }}</p>
+            <p class="text-[10px] text-gray-400 leading-snug mt-0.5">{{ okInsight.positive }}</p>
+            <p class="text-[10px] text-gray-500 leading-snug mt-0.5 italic">Watch: {{ okInsight.commonIssue }}</p>
+          </div>
+          <!-- Bot icon: overview mode -->
+          <button
+            @click.stop="$emit('ask-overview', turbine)"
+            class="bot-icon-btn shrink-0 p-1 rounded-md bg-teal-900/40 text-teal-400 hover:bg-teal-800/60 hover:text-teal-200 ok-glow transition-all duration-200 cursor-pointer"
+            title="Ask Assistant for Equipment Overview"
+            aria-label="Ask Assistant for Equipment Overview"
+          >
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="8" width="18" height="12" rx="2"/>
+              <path d="M12 2v4"/>
+              <circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/>
+              <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+              <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+              <path d="M9 17h6"/>
+              <path d="M3 12H1m22 0h-2"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <!-- Mobile tap hint -->
@@ -158,7 +188,7 @@ import {
   LineController, LineElement, PointElement,
   LinearScale, CategoryScale, Filler, Tooltip,
 } from 'chart.js'
-import { metricParams, getMostCriticalMetricKey, historyMetricKeys } from '../fleetStore.js'
+import { metricParams, getMostCriticalMetricKey, historyMetricKeys, makeFallbackSvg, getOkCardInsight } from '../fleetStore.js'
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip)
 
@@ -167,21 +197,22 @@ const props = defineProps({
   focused: { type: Boolean, default: false },
 })
 
-defineEmits(['select', 'show-history', 'ask-assistant'])
+defineEmits(['select', 'show-history', 'ask-assistant', 'ask-overview'])
 
 // ── Equipment image with reactive fallback ────────────────────────────────────
-// Use a ref so the fallback SVG survives Vue re-renders triggered by telemetry
-// updates (direct e.target.src mutations get reset when Vue patches the DOM).
 const imageHasError = ref(false)
 watch(() => props.turbine.imageUrl, () => { imageHasError.value = false })
 const displayImageSrc = computed(() => {
   if (imageHasError.value) {
-    return `data:image/svg+xml,${encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="#1e293b" width="200" height="200"/><text fill="#2dd4bf" font-family="monospace" font-size="16" text-anchor="middle" x="100" y="105">${props.turbine.name}</text></svg>`
-    )}`
+    const color = props.turbine.status === 'NOK' ? '#f87171'
+      : props.turbine.status === 'RISK' ? '#fbbf24' : '#2dd4bf'
+    return makeFallbackSvg(props.turbine.name, props.turbine.type, color)
   }
   return props.turbine.imageUrl
 })
+
+// ── OK card insight data ──────────────────────────────────────────────────────
+const okInsight = computed(() => getOkCardInsight(props.turbine))
 
 // ── Focus / Glow / Vibrate animation ─────────────────────────────────────────
 const cardRef = ref(null)
@@ -192,7 +223,7 @@ watch(() => props.focused, (val) => {
   if (val) {
     isFocused.value = true
     if (focusTimeout) clearTimeout(focusTimeout)
-    focusTimeout = setTimeout(() => { isFocused.value = false }, 8800)
+    focusTimeout = setTimeout(() => { isFocused.value = false }, 13500)
     // Scroll into view
     if (cardRef.value) {
       cardRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -475,13 +506,13 @@ function onImageError() {
 }
 
 .card-focus-nok {
-  animation: card-vibrate 0.8s ease-in-out, card-glow-nok 2s ease-in-out 4;
+  animation: card-vibrate 1s ease-in-out, card-glow-nok 2.5s ease-in-out 5;
 }
 .card-focus-risk {
-  animation: card-vibrate 0.8s ease-in-out, card-glow-risk 2s ease-in-out 4;
+  animation: card-vibrate 1s ease-in-out, card-glow-risk 2.5s ease-in-out 5;
 }
 .card-focus-ok {
-  animation: card-vibrate 0.8s ease-in-out, card-glow-ok 2s ease-in-out 4;
+  animation: card-vibrate 1s ease-in-out, card-glow-ok 2.5s ease-in-out 5;
 }
 
 /* ── Bot icon button hover glow ── */
@@ -493,5 +524,8 @@ function onImageError() {
 }
 .bot-icon-btn.risk-glow:hover {
   box-shadow: 0 0 8px 2px rgba(234, 179, 8, 0.55), 0 0 16px 2px rgba(234, 179, 8, 0.25);
+}
+.bot-icon-btn.ok-glow:hover {
+  box-shadow: 0 0 8px 2px rgba(45, 212, 191, 0.55), 0 0 16px 2px rgba(45, 212, 191, 0.25);
 }
 </style>

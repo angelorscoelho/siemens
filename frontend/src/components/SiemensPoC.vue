@@ -32,6 +32,10 @@
           <button @click="openArchModal()"
             class="px-3 py-1.5 text-xs font-semibold bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5"
             title="Explore the system architecture">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            </svg>
             See Project Architecture
           </button>
           <button @click="openHowToUse()"
@@ -97,7 +101,7 @@
         <button
           v-if="!assistantOpen"
           @click="assistantOpen = true"
-          class="hidden md:flex fixed right-4 top-1/2 -translate-y-1/2 p-3 bg-teal-700 hover:bg-teal-600 text-white rounded-full shadow-2xl transition-all cursor-pointer z-30 items-center justify-center"
+          class="hidden md:flex fixed right-4 top-4 p-3 bg-teal-700 hover:bg-teal-600 text-white rounded-full shadow-2xl transition-all cursor-pointer z-30 items-center justify-center"
           title="Show AI Maintenance Assistant sidebar"
           aria-label="Show AI Maintenance Assistant sidebar"
         >
@@ -119,7 +123,7 @@
     ═══════════════════════════════════════════════════════════════ -->
     <transition name="balloon">
       <div v-if="alertBalloon"
-        class="fixed top-[3.5rem] z-50 max-w-[calc(100vw-1.5rem)] md:max-w-sm"
+        class="fixed top-[3.5rem] z-50 max-w-[calc(100vw-1.5rem)] md:max-w-[280px]"
         :style="{ right: assistantOpen ? 'calc(clamp(300px, 25%, 400px) + 1.5rem)' : '1.5rem' }">
         <div
           class="rounded-xl px-4 py-3 shadow-2xl flex items-start gap-3 cursor-pointer transition-colors animate-pulse-once"
@@ -398,6 +402,7 @@
               @select="openTurbineSession"
               @show-history="openHistoryModal"
               @ask-assistant="openTurbineWithAssistant"
+              @ask-overview="askAboutTurbineOverview"
             />
           </div>
 
@@ -413,68 +418,68 @@
           <!-- ═══════════════════════════════════════════════════════════════
                ACTIVE DIAGNOSTICS PANEL
           ═══════════════════════════════════════════════════════════════ -->
-          <div v-if="activeDiagnostics" class="mt-6 bg-gray-900 border border-amber-700 rounded-xl overflow-hidden shadow-lg">
-            <div class="px-5 py-3 bg-amber-900/40 border-b border-amber-700 flex items-center justify-between">
-              <h3 class="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+          <!-- ── Fleet General Overview ── -->
+          <div class="mt-6 bg-gray-900 border border-teal-800/50 rounded-xl overflow-hidden shadow-lg">
+            <div class="px-5 py-3 border-b border-teal-800/40 flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-teal-300 uppercase tracking-wider flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                Active Diagnostics
+                Fleet General Overview
               </h3>
               <div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 text-xs rounded-full font-semibold"
-                  :class="activeDiagnostics.ragStatus === 'Live' ? 'bg-teal-900 text-teal-300' : 'bg-gray-700 text-gray-300'">
-                  RAG {{ activeDiagnostics.ragStatus }}
-                </span>
-                <span class="text-xs text-gray-500">{{ activeDiagnostics.timestamp }}</span>
+                <span v-if="fleetOverview.timestamp" class="text-[10px] text-gray-500">{{ fleetOverview.timestamp }}</span>
+                <button
+                  @click="loadFleetOverview"
+                  :disabled="fleetOverview.loading"
+                  class="p-1 rounded-md text-gray-400 hover:text-teal-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  title="Refresh overview"
+                >
+                  <svg class="w-3.5 h-3.5" :class="fleetOverview.loading ? 'animate-spin' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
               </div>
             </div>
             <div class="p-5">
-              <div class="mb-4">
-                <p class="text-sm font-bold text-white">
-                  Action Plan for {{ activeDiagnostics.name }} {{ activeDiagnostics.type }} #{{ activeDiagnostics.id }}
-                </p>
-                <p class="text-xs text-red-400 mt-1 font-medium">
-                  {{ activeDiagnostics.failingMetric }} — Critical threshold exceeded
-                </p>
-              </div>
-
-              <div v-if="activeDiagnostics.ragResponse" class="mb-4 bg-gray-800 border border-teal-800 rounded-lg p-3">
-                <p class="text-xs font-semibold text-teal-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Live RAG Response
-                </p>
-                <p class="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">{{ activeDiagnostics.ragResponse }}</p>
-              </div>
-
-              <div class="space-y-2">
-                <div v-for="(step, idx) in activeDiagnostics.actionPlan" :key="idx"
-                  class="flex items-start gap-2 text-sm text-gray-300 bg-gray-800 rounded-lg px-3 py-2">
-                  <span class="text-amber-500 font-mono font-bold text-xs mt-0.5">▸</span>
-                  <span class="leading-snug">{{ step }}</span>
+              <!-- Status summary chips -->
+              <div class="flex flex-wrap gap-2 mb-4">
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-900/30 border border-teal-800/60">
+                  <span class="w-2 h-2 bg-teal-400 rounded-full shrink-0"></span>
+                  <span class="text-xs font-bold text-teal-300">{{ turbines.filter(t => t.status === 'OK').length }}</span>
+                  <span class="text-xs text-gray-400">OK</span>
+                </div>
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yellow-900/30 border border-yellow-800/60">
+                  <span class="w-2 h-2 bg-yellow-400 rounded-full shrink-0 animate-pulse"></span>
+                  <span class="text-xs font-bold text-yellow-300">{{ warningCount }}</span>
+                  <span class="text-xs text-gray-400">RISK</span>
+                </div>
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-900/30 border border-red-800/60">
+                  <span class="w-2 h-2 bg-red-400 rounded-full shrink-0 animate-pulse"></span>
+                  <span class="text-xs font-bold text-red-300">{{ criticalCount }}</span>
+                  <span class="text-xs text-gray-400">NOK</span>
+                </div>
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-800 border border-gray-700">
+                  <span class="text-xs text-gray-400">{{ turbines.length }} total</span>
                 </div>
               </div>
 
-              <div class="mt-4 flex gap-2">
-                <button
-                  @click="askAboutTurbine(turbines.find(t => t.id === activeDiagnostics.id))"
-                  class="px-4 py-2 text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  Ask AI Assistant
-                </button>
-                <button
-                  @click="activeDiagnostics = null"
-                  class="px-4 py-2 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors cursor-pointer">
-                  Dismiss
-                </button>
+              <!-- AI summary -->
+              <div v-if="fleetOverview.loading" class="flex items-center gap-2 text-gray-500 text-xs py-1">
+                <span class="flex gap-1">
+                  <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay:0ms"></span>
+                  <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay:150ms"></span>
+                  <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay:300ms"></span>
+                </span>
+                Generating fleet overview…
               </div>
+              <div v-else-if="fleetOverview.error" class="text-xs text-red-400">{{ fleetOverview.error }}</div>
+              <div v-else-if="fleetOverview.aiSummary"
+                class="text-xs text-gray-300 leading-relaxed ai-message"
+                v-html="renderMarkdown(fleetOverview.aiSummary)">
+              </div>
+              <div v-else class="text-xs text-gray-500">Overview will appear here after loading.</div>
             </div>
           </div>
         </section>
@@ -530,7 +535,7 @@
                   <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-gray-100 shadow leading-relaxed ai-message" v-html="renderMarkdown(msg.content)">
                   </div>
                   <!-- RAG source chips — clickable and consultable -->
-                  <div v-if="msg.context" class="flex flex-wrap gap-1.5 px-1">
+                  <div v-if="msg.context && (msg.turbineId || msg.manualUrl)" class="flex flex-wrap gap-1.5 px-1">
                     <!-- Equipment Manual chip: opens the equipment manual URL -->
                     <a
                       v-if="msg.manualUrl"
@@ -545,15 +550,6 @@
                       </svg>
                       Equipment Manual ↗
                     </a>
-                    <span v-else
-                      class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400"
-                      title="Retrieved from equipment manual via RAG">
-                      <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Equipment Manual
-                    </span>
                     <!-- Maintenance History chip: opens the maintenance history modal -->
                     <button
                       v-if="msg.turbineId"
@@ -566,15 +562,6 @@
                       </svg>
                       Maintenance History
                     </button>
-                    <span v-else
-                      class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400"
-                      title="Retrieved from maintenance history via RAG">
-                      <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Maintenance History
-                    </span>
                   </div>
                 </div>
               </div>
@@ -669,7 +656,7 @@
                 <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-gray-100 shadow leading-relaxed ai-message" v-html="renderMarkdown(msg.content)">
                 </div>
                 <!-- RAG source chips — clickable and consultable -->
-                <div v-if="msg.context" class="flex flex-wrap gap-1.5 px-1">
+                <div v-if="msg.context && (msg.turbineId || msg.manualUrl)" class="flex flex-wrap gap-1.5 px-1">
                   <!-- Equipment Manual chip: opens the equipment manual URL -->
                   <a
                     v-if="msg.manualUrl"
@@ -684,15 +671,6 @@
                     </svg>
                     Equipment Manual ↗
                   </a>
-                  <span v-else
-                    class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400"
-                    title="Retrieved from equipment manual via RAG">
-                    <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Equipment Manual
-                  </span>
                   <!-- Maintenance History chip: opens the maintenance history modal -->
                   <button
                     v-if="msg.turbineId"
@@ -705,15 +683,6 @@
                     </svg>
                     Maintenance History
                   </button>
-                  <span v-else
-                    class="flex items-center gap-1 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-[10px] text-gray-400"
-                    title="Retrieved from maintenance history via RAG">
-                    <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Maintenance History
-                  </span>
                 </div>
               </div>
             </div>
@@ -818,8 +787,7 @@
 
     <!-- FOOTER -->
     <footer class="hidden md:block border-t border-gray-800 py-3 text-center text-xs text-gray-600 shrink-0">
-      Siemens Energy · Gas Turbine AI Maintenance Assistant · PoC · Vue.js + AWS Lambda + Gemini 2.5 Pro ·
-      <a href="https://www.angelorscoelho.dev" class="hover:text-teal-500 transition-colors">angelorscoelho.dev</a>
+      <a href="https://www.angelorscoelho.dev" target="_blank" rel="noopener noreferrer" class="hover:text-teal-500 transition-colors">Architected and developed by Ângelo Coelho</a>
     </footer>
 
     <!-- ═══════════════════════════════════════════════════════════════
@@ -994,7 +962,7 @@
           @keydown.esc="closeHowToUse()"
           tabindex="-1"
         >
-          <div class="relative bg-gray-950 border border-teal-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col overflow-hidden">
+          <div class="relative bg-gray-950 border border-teal-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
 
             <!-- Modal Header -->
             <div class="shrink-0 flex items-center gap-3 border-b border-gray-800 px-6 py-4 bg-gray-900">
@@ -1284,7 +1252,7 @@
 
               <!-- Architecture SVG Diagram -->
               <div class="w-full overflow-x-auto">
-                <svg viewBox="0 0 1020 570" xmlns="http://www.w3.org/2000/svg"
+                <svg viewBox="0 0 1020 600" xmlns="http://www.w3.org/2000/svg"
                   class="w-full min-w-[720px] rounded-xl border border-gray-800 bg-gray-900"
                   font-family="ui-monospace, monospace" font-size="12"
                   role="img" aria-labelledby="arch-svg-title">
@@ -1394,19 +1362,19 @@
                   <text x="790" y="290" fill="#64748b" font-size="8">GEMINI_API_KEY (env var)</text>
 
                   <!-- ═══ AWS SAM / CloudFormation (centered below AWS boundary) ═══ -->
-                  <rect x="416" y="425" width="180" height="30" rx="6" fill="#1a2332" stroke="#f59e0b" stroke-width="1"/>
-                  <text x="506" y="444" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
+                  <rect x="416" y="450" width="180" height="30" rx="6" fill="#1a2332" stroke="#f59e0b" stroke-width="1"/>
+                  <text x="506" y="469" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
 
                   <!-- ═══ ARROWS ═══ -->
-                  <!-- Browser → Vercel CDN: route left along edge then down to triangle icon -->
-                  <path d="M390,65 L8,65 L8,172 L38,172" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
-                  <text x="199" y="60" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
+                  <!-- Browser → Vercel CDN: route left to left edge of CDN box then down -->
+                  <path d="M390,65 L22,65 L22,150" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
+                  <text x="206" y="60" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
                   <!-- Browser → API Gateway: route to left part of API GW -->
                   <path d="M390,90 L310,90 L310,150" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
                   <text x="347" y="86" fill="#64748b" font-size="9">REST API</text>
                   <!-- API GW → Lambda maintenance_history (left, dashed) -->
                   <line x1="391" y1="200" x2="391" y2="235" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
-                  <text x="299" y="220" fill="#64748b" font-size="8">invoke</text>
+                  <text x="399" y="220" fill="#64748b" font-size="8">invoke</text>
                   <!-- API GW → Lambda ask_assistant (right, solid) -->
                   <line x1="621" y1="200" x2="621" y2="235" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arr-amber)"/>
                   <text x="629" y="220" fill="#64748b" font-size="8">invoke</text>
@@ -1417,36 +1385,36 @@
                   <path d="M726,271 L774,271" fill="none" stroke="#818cf8" stroke-width="1.8" marker-end="url(#arr-indigo)"/>
                   <text x="750" y="266" text-anchor="middle" fill="#64748b" font-size="9">HTTPS</text>
                   <!-- GitHub Actions → SAM (down then right to centered SAM) -->
-                  <path d="M132,278 L132,440 L416,440" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arr-gray)"/>
+                  <path d="M132,278 L132,460 L416,460" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arr-gray)"/>
                   <text x="140" y="370" fill="#64748b" font-size="9">deploys</text>
                   <!-- AWS SAM → AWS CLOUD boundary (IaC setup, upward) -->
-                  <line x1="506" y1="425" x2="506" y2="415" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-amber)"/>
-                  <text x="514" y="422" fill="#64748b" font-size="8">IaC setup</text>
+                  <line x1="506" y1="450" x2="506" y2="415" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+                  <text x="514" y="435" fill="#64748b" font-size="8">IaC setup</text>
 
                   <!-- ═══ LEGEND (horizontally centred) ═══ -->
-                  <rect x="130" y="470" width="760" height="80" rx="10" fill="#111827" stroke="#1e293b" stroke-width="1"/>
-                  <text x="510" y="488" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">LEGEND</text>
-                  <line x1="150" y1="510" x2="175" y2="510" stroke="#0d9488" stroke-width="2"/>
-                  <polygon points="175,506 175,514 183,510" fill="#0d9488"/>
-                  <text x="190" y="514" fill="#94a3b8" font-size="10">Vercel HTTPS (SPA)</text>
-                  <line x1="320" y1="510" x2="345" y2="510" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="345,506 345,514 353,510" fill="#f59e0b"/>
-                  <text x="360" y="514" fill="#94a3b8" font-size="10">AWS REST / invoke</text>
-                  <line x1="520" y1="510" x2="545" y2="510" stroke="#818cf8" stroke-width="2"/>
-                  <polygon points="545,506 545,514 553,510" fill="#818cf8"/>
-                  <text x="560" y="514" fill="#94a3b8" font-size="10">Gemini API (HTTPS)</text>
-                  <line x1="710" y1="510" x2="735" y2="510" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="735,506 735,514 743,510" fill="#22c55e"/>
-                  <text x="750" y="514" fill="#94a3b8" font-size="10">S3 RAG retrieval</text>
-                  <line x1="150" y1="536" x2="175" y2="536" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="175,532 175,540 183,536" fill="#6b7280"/>
-                  <text x="190" y="540" fill="#94a3b8" font-size="10">CI/CD deploy trigger</text>
-                  <rect x="320" y="530" width="14" height="14" rx="2" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
-                  <text x="340" y="540" fill="#94a3b8" font-size="10">AWS cloud boundary</text>
-                  <rect x="520" y="530" width="14" height="14" rx="2" fill="none" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="3,2"/>
-                  <text x="540" y="540" fill="#94a3b8" font-size="10">Vercel cloud boundary</text>
-                  <rect x="710" y="530" width="14" height="14" rx="2" fill="none" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="3,2"/>
-                  <text x="730" y="540" fill="#94a3b8" font-size="10">Google (external API)</text>
+                  <rect x="130" y="498" width="760" height="80" rx="10" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+                  <text x="510" y="516" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">LEGEND</text>
+                  <line x1="150" y1="538" x2="175" y2="538" stroke="#0d9488" stroke-width="2"/>
+                  <polygon points="175,534 175,542 183,538" fill="#0d9488"/>
+                  <text x="190" y="542" fill="#94a3b8" font-size="10">Vercel HTTPS (SPA)</text>
+                  <line x1="320" y1="538" x2="345" y2="538" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="345,534 345,542 353,538" fill="#f59e0b"/>
+                  <text x="360" y="542" fill="#94a3b8" font-size="10">AWS REST / invoke</text>
+                  <line x1="520" y1="538" x2="545" y2="538" stroke="#818cf8" stroke-width="2"/>
+                  <polygon points="545,534 545,542 553,538" fill="#818cf8"/>
+                  <text x="560" y="542" fill="#94a3b8" font-size="10">Gemini API (HTTPS)</text>
+                  <line x1="710" y1="538" x2="735" y2="538" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="735,534 735,542 743,538" fill="#22c55e"/>
+                  <text x="750" y="542" fill="#94a3b8" font-size="10">S3 RAG retrieval</text>
+                  <line x1="150" y1="564" x2="175" y2="564" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="175,560 175,568 183,564" fill="#6b7280"/>
+                  <text x="190" y="568" fill="#94a3b8" font-size="10">CI/CD deploy trigger</text>
+                  <rect x="320" y="558" width="14" height="14" rx="2" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+                  <text x="340" y="568" fill="#94a3b8" font-size="10">AWS cloud boundary</text>
+                  <rect x="520" y="558" width="14" height="14" rx="2" fill="none" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="3,2"/>
+                  <text x="540" y="568" fill="#94a3b8" font-size="10">Vercel cloud boundary</text>
+                  <rect x="710" y="558" width="14" height="14" rx="2" fill="none" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="3,2"/>
+                  <text x="730" y="568" fill="#94a3b8" font-size="10">Google (external API)</text>
                 </svg>
               </div>
             </div>
@@ -1485,7 +1453,8 @@ import {
 } from 'chart.js'
 import {
   metricParams, thresholds, createFleetData, randomWalk,
-  generateActionPlan, historyMetricKeys, getMostCriticalMetricKey, getMaintenanceHistory,
+  historyMetricKeys, getMostCriticalMetricKey, getMaintenanceHistory,
+  makeFallbackSvg,
 } from '../fleetStore.js'
 import EquipmentCard from './EquipmentCard.vue'
 import { marked } from 'marked'
@@ -1618,8 +1587,55 @@ function setMobileChat() {
 // ── Mobile Navigation State ───────────────────────────────────────────────────
 const mobileView = ref('fleet')
 
-// ── Active Diagnostics (Simulated RAG) ───────────────────────────────────────
-const activeDiagnostics = ref(null)
+// ── Fleet General Overview (replaces Active Diagnostics) ─────────────────────
+const fleetOverview = reactive({
+  loaded: false,
+  loading: false,
+  timestamp: null,
+  aiSummary: null,
+  error: null,
+})
+
+async function loadFleetOverview() {
+  if (fleetOverview.loading) return
+  fleetOverview.loading = true
+  fleetOverview.error = null
+
+  const nokCount = turbines.filter(t => t.status === 'NOK').length
+  const riskCount = turbines.filter(t => t.status === 'RISK').length
+  const okCount = turbines.filter(t => t.status === 'OK').length
+  const nokSummary = turbines.filter(t => t.status === 'NOK').map(t =>
+    `${t.name} (${t.id}): ${t.alert || t.aiSuggestion || 'critical condition'}`).join('; ')
+  const riskSummary = turbines.filter(t => t.status === 'RISK').map(t =>
+    `${t.name} (${t.id}): ${t.alert || 'elevated readings'}`).join('; ')
+
+  const query =
+    `You are a fleet operations AI. Provide a concise 3-4 sentence executive summary of the current turbine fleet health. ` +
+    `Fleet: ${turbines.length} units — ${okCount} OK, ${riskCount} RISK, ${nokCount} NOK. ` +
+    (nokCount > 0 ? `Critical units: ${nokSummary}. ` : '') +
+    (riskCount > 0 ? `Risk units: ${riskSummary}. ` : '') +
+    `Summarize the overall operational status, highlight priority concerns, and note general fleet health. Be succinct and professional.`
+
+  try {
+    const res = await fetch(`${API_URL}/ask-assistant`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      fleetOverview.aiSummary = data.answer
+    } else {
+      fleetOverview.error = 'Unable to load AI fleet summary.'
+    }
+  } catch {
+    fleetOverview.error = 'Network error loading fleet overview.'
+  } finally {
+    fleetOverview.loading = false
+    fleetOverview.loaded = true
+    fleetOverview.timestamp = new Date().toLocaleTimeString()
+  }
+}
 
 // ── Status Filters ────────────────────────────────────────────────────────────
 const statusFilters = reactive({ OK: false, RISK: false, NOK: false })
@@ -1647,9 +1663,7 @@ const detailDisplayImageSrc = computed(() => {
   if (!t) return ''
   if (detailImageHasError.value) {
     const color = t.status === 'NOK' ? '#f87171' : t.status === 'RISK' ? '#fbbf24' : '#2dd4bf'
-    return `data:image/svg+xml,${encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect fill="#1e293b" width="200" height="200"/><text fill="${color}" font-family="monospace" font-size="16" text-anchor="middle" x="100" y="105">${t.name}</text></svg>`
-    )}`
+    return makeFallbackSvg(t.name, t.type, color)
   }
   return t.imageUrl
 })
@@ -1783,21 +1797,18 @@ function updateTelemetry() {
         alertCooldown[cooldownKey] = now
         showAlertBalloon(t)
       }
-      if (t.status === 'NOK') {
-        updateDiagnostics(t)
-      }
     }
   })
 
-  // Enforce max 30% NOK and 30% RISK to keep dashboard realistic
+  // Enforce max 10% NOK and 20% RISK to keep dashboard realistic
   enforceStatusDistribution()
 }
 
-// ── Status Distribution Cap (max 30% NOK, max 30% RISK) ──────────────────────
+// ── Status Distribution Cap (max 10% NOK, max 20% RISK) ──────────────────────
 function enforceStatusDistribution() {
   const total = turbines.length
-  const maxNOK = Math.floor(total * 0.3)
-  const maxRISK = Math.floor(total * 0.3)
+  const maxNOK = Math.max(1, Math.floor(total * 0.1))
+  const maxRISK = Math.max(1, Math.floor(total * 0.2))
 
   // Get NOK turbines sorted by how far above critical threshold they are (least critical first)
   const nokTurbines = turbines
@@ -1865,7 +1876,7 @@ function enforceStatusDistribution() {
 // ── Anomaly Trigger ────────────────────────────────────────────────────────────
 function triggerRandomAnomaly() {
   const total = turbines.length
-  const maxNOK = Math.floor(total * 0.3)
+  const maxNOK = Math.max(1, Math.floor(total * 0.1))
   const currentNOK = turbines.filter(t => t.status === 'NOK').length
   if (currentNOK >= maxNOK) return
 
@@ -1878,46 +1889,6 @@ function triggerRandomAnomaly() {
     target.vibration = thresholds.vibration.critical + 0.5 + Math.random() * 1.5
   } else {
     target.exhaustTemp = thresholds.exhaustTemp.critical + 5 + Math.random() * 20
-  }
-}
-
-// ── Active Diagnostics ────────────────────────────────────────────────────────
-function updateDiagnostics(turbine) {
-  const isVibrationCritical = turbine.vibration > thresholds.vibration.critical
-  const failingMetric = isVibrationCritical
-    ? `Vibration at ${turbine.vibration.toFixed(1)} mm/s`
-    : `Exhaust temp at ${turbine.exhaustTemp.toFixed(0)}°C`
-
-  activeDiagnostics.value = {
-    id: turbine.id,
-    name: turbine.name,
-    type: turbine.type,
-    failingMetric,
-    timestamp: new Date().toLocaleTimeString(),
-    actionPlan: generateActionPlan(turbine),
-    ragStatus: 'Complete',
-  }
-
-  performDiagnosticRAG(turbine)
-}
-
-async function performDiagnosticRAG(turbine) {
-  try {
-    const query = `Emergency diagnostic for ${turbine.name} ${turbine.type} (Unit ${turbine.id}). Current vibration: ${turbine.vibration.toFixed(3)} mm/s. Exhaust temp: ${turbine.exhaustTemp.toFixed(1)}°C. Hours since overhaul: ${Math.floor(turbine.hoursSinceOverhaul)}. What is the recommended action plan?`
-    const res = await fetch(`${API_URL}/ask-assistant`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      if (activeDiagnostics.value && activeDiagnostics.value.id === turbine.id) {
-        activeDiagnostics.value.ragResponse = data.answer
-        activeDiagnostics.value.ragStatus = 'Live'
-      }
-    }
-  } catch {
-    // Silently fall back to mock action plan
   }
 }
 
@@ -1967,7 +1938,7 @@ function focusAlertCard() {
     // Reset after animation (4 glow pulses × 2s each + 0.8s vibrate)
     setTimeout(() => {
       focusedCardId.value = null
-    }, 8800)
+    }, 13500)
   })
 
   // If we're in detail view, go back to fleet first
@@ -2058,6 +2029,24 @@ function askAboutTurbineMobile(turbine) {
 function openTurbineWithAssistant(turbine) {
   openTurbineSession(turbine)
   askAboutTurbine(turbine)
+}
+
+function askAboutTurbineOverview(turbine) {
+  assistantOpen.value = true
+  chatContextTurbine.value = turbine
+  messages.value.push({
+    role: 'system',
+    content: `Loading general health overview for ${turbine.name} / Unit ${turbine.id}…`,
+  })
+  const query =
+    `Give a brief operational health overview for ${turbine.name} ${turbine.type} (Unit ${turbine.id}, ${turbine.location}). ` +
+    `Current readings: vibration ${turbine.vibration.toFixed(2)} mm/s, exhaust temp ${turbine.exhaustTemp.toFixed(0)}°C, ` +
+    `power output ${turbine.powerOutput.toFixed(0)} ${turbine.powerOutput < 100 ? 'MW' : 'MW'}, ` +
+    `hours since overhaul: ${Math.floor(turbine.hoursSinceOverhaul).toLocaleString()} hrs. ` +
+    `Status: OK (all parameters within normal range). Summarize the current health, any upcoming maintenance milestones, ` +
+    `efficiency notes, and general recommendations for this unit type. Keep it concise.`
+  inputText.value = query
+  nextTick(() => sendMessage())
 }
 
 // ── Maintenance History Modal ─────────────────────────────────────────────────
@@ -2296,15 +2285,23 @@ const mobileChatScrollRef = ref(null)
 const chatContextTurbine = ref(null)
 
 // ── Rotating loading messages ─────────────────────────────────────────────────
-const LOADING_MESSAGES = [
-  'Fetching user manual…',
+const LOADING_MESSAGES_EQUIPMENT = [
+  'Fetching equipment manual…',
   'Reasoning over problem root cause…',
-  'Forming a structured plan…',
+  'Forming a structured action plan…',
   'Reviewing maintenance history…',
   'Cross-referencing technical data…',
   'Synthesizing recommendations…',
 ]
-const loadingMessage = ref(LOADING_MESSAGES[0])
+const LOADING_MESSAGES_GENERIC = [
+  'Thinking…',
+  'Analyzing your question…',
+  'Searching knowledge base…',
+  'Forming a response…',
+  'Synthesizing information…',
+  'Waiting for answer…',
+]
+const loadingMessage = ref(LOADING_MESSAGES_GENERIC[0])
 let loadingMsgInterval = null
 
 // ── Markdown renderer ─────────────────────────────────────────────────────────
@@ -2344,6 +2341,10 @@ async function sendMessage() {
   messages.value.push({ role: 'user', content: query })
   inputText.value = ''
   loading.value = true
+
+  // Pick loading messages based on whether we have a turbine context
+  const ctxTurbine = chatContextTurbine.value
+  const LOADING_MESSAGES = ctxTurbine ? LOADING_MESSAGES_EQUIPMENT : LOADING_MESSAGES_GENERIC
   loadingMessage.value = LOADING_MESSAGES[0]
   let shuffledQueue = []
   loadingMsgInterval = setInterval(() => {
@@ -2362,7 +2363,6 @@ async function sendMessage() {
   await scrollToBottom()
 
   // Build turbine context payload if we have a current turbine in focus
-  const ctxTurbine = chatContextTurbine.value
   const turbineContextPayload = ctxTurbine ? {
     id: ctxTurbine.id,
     name: ctxTurbine.name,
@@ -2399,7 +2399,7 @@ async function sendMessage() {
   } finally {
     loading.value = false
     clearInterval(loadingMsgInterval)
-    loadingMessage.value = LOADING_MESSAGES[0]
+    loadingMessage.value = LOADING_MESSAGES_GENERIC[0]
     await scrollToBottom()
   }
 }
@@ -2415,8 +2415,8 @@ onMounted(() => {
   updateInterval = setInterval(updateTelemetry, 2000)
   anomalyInterval = setInterval(triggerRandomAnomaly, 15000)
 
-  const initialCritical = turbines.find(t => t.status === 'NOK')
-  if (initialCritical) updateDiagnostics(initialCritical)
+  // Load fleet overview once on mount
+  loadFleetOverview()
 
   // Restore view from URL hash (sharable links)
   if (location.hash) applyHash()
