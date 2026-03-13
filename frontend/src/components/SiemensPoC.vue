@@ -31,7 +31,7 @@
           <span class="px-2 py-0.5 text-xs bg-teal-900 text-teal-300 rounded-full border border-teal-700 font-semibold uppercase tracking-wider">
             v2.0
           </span>
-          <button @click="archOpen = true"
+          <button @click="openArchModal()"
             class="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-teal-600 to-cyan-600 border border-teal-400 rounded-lg text-white hover:from-teal-500 hover:to-cyan-500 hover:shadow-lg hover:shadow-teal-500/25 transition-all duration-300 cursor-pointer flex items-center gap-1.5 animate-pulse-slow"
             title="Explore the system architecture">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,7 +76,7 @@
             <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse"></span>
             OK
           </span>
-          <button @click="archOpen = true"
+          <button @click="openArchModal()"
             class="p-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 border border-teal-400 text-white hover:shadow-lg hover:shadow-teal-500/25 transition-all duration-300 cursor-pointer animate-pulse-slow"
             title="View Architecture">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -776,7 +776,7 @@
       </button>
 
       <button
-        @click="mobileView = 'chat'"
+        @click="setMobileChat()"
         class="flex-1 flex flex-col items-center justify-center py-2.5 gap-1 cursor-pointer transition-colors relative"
         :class="mobileView === 'chat' ? 'text-teal-400' : 'text-gray-500 hover:text-gray-300'">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -964,8 +964,8 @@
         <div v-if="archOpen"
           ref="archModalRef"
           class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-          @click.self="archOpen = false"
-          @keydown.esc="archOpen = false"
+          @click.self="closeArchModal()"
+          @keydown.esc="closeArchModal()"
           tabindex="-1"
         >
           <div class="relative bg-gray-950 border border-teal-800 rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden">
@@ -981,7 +981,7 @@
                 <p class="text-xs text-gray-400">Siemens Energy · AI Maintenance Dashboard · PoC</p>
               </div>
               <button
-                @click="archOpen = false"
+                @click="closeArchModal()"
                 class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer p-1 rounded-lg hover:bg-gray-800"
                 aria-label="Close architecture diagram"
               >
@@ -1002,27 +1002,27 @@
 
               <!-- Architecture SVG Diagram -->
               <div class="w-full overflow-x-auto">
-                <svg viewBox="0 0 1020 685" xmlns="http://www.w3.org/2000/svg"
-                  class="w-full min-w-[720px] rounded-xl border border-gray-800 bg-gray-900"
+                <svg viewBox="0 0 1150 700" xmlns="http://www.w3.org/2000/svg"
+                  class="w-full min-w-[820px] rounded-xl border border-gray-800 bg-gray-900"
                   font-family="ui-monospace, monospace" font-size="12"
                   role="img" aria-labelledby="arch-svg-title">
-                  <title id="arch-svg-title">System architecture: User browser loads Vue 3 SPA from Vercel CDN. Browser calls AWS API Gateway (REST API) directly via HTTPS. API Gateway invokes Lambda ask_assistant which runs a RAG pipeline: embeds query with text-embedding-004, retrieves top-3 chunk vectors from S3 via cosine similarity (/tmp cached), calls gemini-2.0-flash for the grounded answer. API Gateway also invokes Lambda maintenance_history. Infrastructure deployed via AWS SAM / CloudFormation. GitHub Actions provides CI/CD.</title>
+                  <title id="arch-svg-title">System architecture: User browser loads Vue 3 SPA from Vercel CDN. Browser calls AWS API Gateway (REST API) directly via HTTPS. API Gateway invokes Lambda maintenance_history (left) and Lambda ask_assistant (right). ask_assistant runs a RAG pipeline: embeds query with text-embedding-004, retrieves top-3 chunk vectors from S3 (below ask_assistant) via cosine similarity, calls gemini-2.0-flash for the grounded answer. Infrastructure deployed via AWS SAM / CloudFormation. GitHub Actions provides CI/CD.</title>
 
                   <!-- USER ZONE -->
-                  <rect x="10" y="10" width="1000" height="100" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
-                  <text x="510" y="28" text-anchor="middle" fill="#64748b" font-size="11" font-weight="bold">USER</text>
-                  <rect x="390" y="36" width="240" height="64" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.4"/>
-                  <rect x="404" y="46" width="32" height="24" rx="3" fill="none" stroke="#94a3b8" stroke-width="1.3"/>
-                  <line x1="404" y1="53" x2="436" y2="53" stroke="#94a3b8" stroke-width="1.3"/>
-                  <circle cx="408" cy="50" r="2" fill="#ef4444"/>
-                  <circle cx="414" cy="50" r="2" fill="#f59e0b"/>
-                  <circle cx="420" cy="50" r="2" fill="#22c55e"/>
-                  <text x="446" y="57" fill="#e2e8f0" font-size="12" font-weight="bold">Browser</text>
-                  <text x="446" y="71" fill="#94a3b8" font-size="10">Vue 3 / Vite · Tailwind CSS · Chart.js</text>
-                  <text x="446" y="85" fill="#94a3b8" font-size="10">Single-page application (SPA)</text>
+                  <rect x="10" y="10" width="1130" height="100" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+                  <text x="575" y="28" text-anchor="middle" fill="#64748b" font-size="11" font-weight="bold">USER</text>
+                  <rect x="455" y="36" width="240" height="64" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.4"/>
+                  <rect x="469" y="46" width="32" height="24" rx="3" fill="none" stroke="#94a3b8" stroke-width="1.3"/>
+                  <line x1="469" y1="53" x2="501" y2="53" stroke="#94a3b8" stroke-width="1.3"/>
+                  <circle cx="473" cy="50" r="2" fill="#ef4444"/>
+                  <circle cx="479" cy="50" r="2" fill="#f59e0b"/>
+                  <circle cx="485" cy="50" r="2" fill="#22c55e"/>
+                  <text x="511" y="57" fill="#e2e8f0" font-size="12" font-weight="bold">Browser</text>
+                  <text x="511" y="71" fill="#94a3b8" font-size="10">Vue 3 / Vite · Tailwind CSS · Chart.js</text>
+                  <text x="511" y="85" fill="#94a3b8" font-size="10">Single-page application (SPA)</text>
 
                   <!-- VERCEL ZONE -->
-                  <rect x="10" y="130" width="268" height="395" rx="12" fill="#0f172a" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="5,3"/>
+                  <rect x="10" y="130" width="268" height="430" rx="12" fill="#0f172a" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="5,3"/>
                   <text x="144" y="148" text-anchor="middle" fill="#0d9488" font-size="11" font-weight="bold">VERCEL (Frontend)</text>
                   <!-- Vercel CDN box -->
                   <rect x="26" y="162" width="236" height="72" rx="8" fill="#1e293b" stroke="#0d9488" stroke-width="1.4"/>
@@ -1040,10 +1040,10 @@
                   <text x="68" y="309" fill="#94a3b8" font-size="10">deploy triggers · branch workflows</text>
 
                   <!-- AWS ZONE -->
-                  <rect x="298" y="130" width="452" height="395" rx="12" fill="#0f172a" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="5,3"/>
-                  <text x="524" y="148" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="bold">AWS CLOUD (us-east-1)</text>
-                  <!-- API Gateway box -->
-                  <rect x="314" y="162" width="420" height="68" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
+                  <rect x="298" y="130" width="610" height="430" rx="12" fill="#0f172a" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="5,3"/>
+                  <text x="603" y="148" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="bold">AWS CLOUD (us-east-1)</text>
+                  <!-- API Gateway box (full width) -->
+                  <rect x="314" y="162" width="578" height="68" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
                   <rect x="328" y="174" width="30" height="22" rx="3" fill="#8b5cf6"/>
                   <polyline points="336,181 332,185 336,189" fill="none" stroke="white" stroke-width="1.3" stroke-linejoin="round"/>
                   <polyline points="350,181 354,185 350,189" fill="none" stroke="white" stroke-width="1.3" stroke-linejoin="round"/>
@@ -1051,70 +1051,70 @@
                   <text x="368" y="183" fill="#e2e8f0" font-size="12" font-weight="bold">Amazon API Gateway</text>
                   <text x="368" y="197" fill="#94a3b8" font-size="10">HTTP API · CORS enabled · prod stage</text>
                   <text x="368" y="211" fill="#94a3b8" font-size="10">POST /ask-assistant · GET /maintenance-history</text>
-                  <!-- Lambda RAG box -->
-                  <rect x="314" y="254" width="420" height="72" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
-                  <rect x="328" y="266" width="24" height="24" rx="3" fill="#f59e0b"/>
-                  <text x="340" y="283" text-anchor="middle" fill="#1e293b" font-size="14" font-weight="bold">λ</text>
-                  <text x="362" y="275" fill="#e2e8f0" font-size="12" font-weight="bold">Lambda — ask_assistant</text>
-                  <text x="362" y="289" fill="#94a3b8" font-size="10">Python 3.11 · Real RAG pipeline · Gemini embeddings + LLM</text>
-                  <text x="362" y="303" fill="#94a3b8" font-size="10">S3 cosine retrieval → top-3 context → gemini-2.0-flash answer</text>
-                  <text x="362" y="317" fill="#64748b" font-size="9">stdlib urllib only · zero SDK · /tmp caching · 256 MB · 30 s timeout</text>
-                  <!-- Lambda Maintenance box -->
-                  <rect x="314" y="352" width="420" height="68" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
-                  <rect x="328" y="364" width="24" height="24" rx="3" fill="#f59e0b"/>
-                  <text x="340" y="381" text-anchor="middle" fill="#1e293b" font-size="14" font-weight="bold">λ</text>
-                  <text x="362" y="373" fill="#e2e8f0" font-size="12" font-weight="bold">Lambda — maintenance_history</text>
-                  <text x="362" y="387" fill="#94a3b8" font-size="10">Python 3.11 · GET /maintenance-history</text>
-                  <text x="362" y="401" fill="#94a3b8" font-size="10">Structured records per equipment ID (PoC hardcoded)</text>
-                  <!-- S3 box -->
-                  <rect x="314" y="446" width="420" height="68" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="1.4"/>
-                  <rect x="328" y="458" width="28" height="22" rx="2" fill="#22c55e"/>
-                  <ellipse cx="342" cy="458" rx="14" ry="4.5" fill="#16a34a"/>
-                  <ellipse cx="342" cy="480" rx="14" ry="4.5" fill="#16a34a"/>
-                  <text x="366" y="467" fill="#e2e8f0" font-size="12" font-weight="bold">Amazon S3 — Knowledge Base</text>
-                  <text x="366" y="481" fill="#94a3b8" font-size="10">chunks/embeddings.json · 768-dim vectors (text-embedding-004)</text>
-                  <text x="366" y="495" fill="#94a3b8" font-size="10">Pure-Python cosine similarity · no vector DB needed</text>
+                  <!-- Lambda maintenance_history box (LEFT) -->
+                  <rect x="314" y="254" width="278" height="80" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
+                  <rect x="328" y="266" width="22" height="22" rx="3" fill="#f59e0b"/>
+                  <text x="339" y="281" text-anchor="middle" fill="#1e293b" font-size="14" font-weight="bold">λ</text>
+                  <text x="358" y="276" fill="#e2e8f0" font-size="12" font-weight="bold">Lambda — maintenance_history</text>
+                  <text x="358" y="290" fill="#94a3b8" font-size="10">Python 3.11 · maintenance endpoint</text>
+                  <text x="358" y="304" fill="#94a3b8" font-size="10">Records per equipment ID (PoC static)</text>
+                  <!-- Lambda ask_assistant box (RIGHT, closer to Gemini) -->
+                  <rect x="608" y="254" width="278" height="80" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
+                  <rect x="622" y="266" width="22" height="22" rx="3" fill="#f59e0b"/>
+                  <text x="633" y="281" text-anchor="middle" fill="#1e293b" font-size="14" font-weight="bold">λ</text>
+                  <text x="652" y="276" fill="#e2e8f0" font-size="12" font-weight="bold">Lambda — ask_assistant</text>
+                  <text x="652" y="290" fill="#94a3b8" font-size="10">Python 3.11 · RAG pipeline · Gemini + S3</text>
+                  <text x="652" y="304" fill="#94a3b8" font-size="10">S3 cosine sim → top-3 context → gemini-2.0-flash</text>
+                  <text x="652" y="317" fill="#64748b" font-size="9">stdlib urllib · /tmp cache · 256 MB · 30 s timeout</text>
+                  <!-- S3 box (below ask_assistant) -->
+                  <rect x="608" y="352" width="278" height="70" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="1.4"/>
+                  <rect x="622" y="365" width="28" height="22" rx="2" fill="#22c55e"/>
+                  <ellipse cx="636" cy="365" rx="14" ry="4.5" fill="#16a34a"/>
+                  <ellipse cx="636" cy="387" rx="14" ry="4.5" fill="#16a34a"/>
+                  <text x="660" y="375" fill="#e2e8f0" font-size="12" font-weight="bold">Amazon S3 — Knowledge Base</text>
+                  <text x="660" y="389" fill="#94a3b8" font-size="10">768-dim vectors · text-embedding-004</text>
+                  <text x="660" y="403" fill="#94a3b8" font-size="10">cosine similarity retrieval · no vector DB</text>
                   <!-- AWS SAM note -->
-                  <rect x="314" y="530" width="204" height="34" rx="6" fill="#1a2332" stroke="#f59e0b" stroke-width="1"/>
-                  <text x="416" y="551" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
+                  <rect x="314" y="450" width="204" height="34" rx="6" fill="#1a2332" stroke="#f59e0b" stroke-width="1"/>
+                  <text x="416" y="471" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
 
                   <!-- GOOGLE ZONE -->
-                  <rect x="770" y="130" width="240" height="395" rx="12" fill="#0f172a" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="5,3"/>
-                  <text x="890" y="148" text-anchor="middle" fill="#818cf8" font-size="11" font-weight="bold">GOOGLE (External)</text>
+                  <rect x="918" y="130" width="222" height="430" rx="12" fill="#0f172a" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="5,3"/>
+                  <text x="1029" y="148" text-anchor="middle" fill="#818cf8" font-size="11" font-weight="bold">GOOGLE (External)</text>
                   <!-- Gemini API box -->
-                  <rect x="786" y="220" width="208" height="150" rx="8" fill="#1e293b" stroke="#818cf8" stroke-width="1.4"/>
-                  <circle cx="806" cy="260" r="12" fill="none" stroke="#818cf8" stroke-width="1.5"/>
-                  <line x1="806" y1="248" x2="806" y2="272" stroke="#818cf8" stroke-width="1.5"/>
-                  <line x1="794" y1="260" x2="818" y2="260" stroke="#818cf8" stroke-width="1.5"/>
-                  <text x="826" y="253" fill="#e2e8f0" font-size="12" font-weight="bold">Gemini API</text>
-                  <text x="826" y="267" fill="#94a3b8" font-size="9">generativelanguage.googleapis.com</text>
-                  <text x="794" y="298" fill="#94a3b8" font-size="10">text-embedding-004</text>
-                  <text x="794" y="312" fill="#64748b" font-size="9">768-dim · ingest + query embed</text>
-                  <text x="794" y="334" fill="#94a3b8" font-size="10">gemini-2.0-flash</text>
-                  <text x="794" y="348" fill="#64748b" font-size="9">LLM inference · grounded RAG answers</text>
-                  <text x="794" y="362" fill="#64748b" font-size="9">GEMINI_API_KEY (env var)</text>
+                  <rect x="930" y="220" width="200" height="175" rx="8" fill="#1e293b" stroke="#818cf8" stroke-width="1.4"/>
+                  <circle cx="950" cy="260" r="12" fill="none" stroke="#818cf8" stroke-width="1.5"/>
+                  <line x1="950" y1="248" x2="950" y2="272" stroke="#818cf8" stroke-width="1.5"/>
+                  <line x1="938" y1="260" x2="962" y2="260" stroke="#818cf8" stroke-width="1.5"/>
+                  <text x="970" y="253" fill="#e2e8f0" font-size="12" font-weight="bold">Gemini API</text>
+                  <text x="970" y="267" fill="#94a3b8" font-size="9">googleapis.com (REST)</text>
+                  <text x="938" y="298" fill="#94a3b8" font-size="10">text-embedding-004</text>
+                  <text x="938" y="312" fill="#64748b" font-size="9">768-dim · ingest + query embed</text>
+                  <text x="938" y="334" fill="#94a3b8" font-size="10">gemini-2.0-flash</text>
+                  <text x="938" y="348" fill="#64748b" font-size="9">LLM inference · grounded RAG</text>
+                  <text x="938" y="364" fill="#64748b" font-size="9">GEMINI_API_KEY (env var)</text>
 
                   <!-- ARROWS -->
                   <!-- Browser → Vercel CDN -->
-                  <path d="M440,100 L144,162" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
-                  <text x="270" y="124" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
+                  <path d="M510,100 L144,162" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
+                  <text x="300" y="124" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
                   <!-- Browser → API Gateway -->
-                  <path d="M540,100 L524,160" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
-                  <text x="566" y="128" text-anchor="middle" fill="#64748b" font-size="9">REST API</text>
-                  <!-- API GW → Lambda RAG -->
-                  <line x1="524" y1="230" x2="524" y2="252" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arr-amber)"/>
-                  <text x="540" y="246" fill="#64748b" font-size="9">invoke</text>
-                  <!-- API GW → Lambda Maintenance (side path) -->
-                  <path d="M610,230 Q640,300 610,350" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
-                  <text x="648" y="298" fill="#64748b" font-size="9">invoke</text>
-                  <!-- Lambda RAG → S3 -->
-                  <line x1="524" y1="326" x2="524" y2="444" stroke="#22c55e" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-green)"/>
-                  <text x="540" y="390" fill="#64748b" font-size="9">GetObject</text>
-                  <!-- Lambda RAG → Gemini API -->
-                  <path d="M734,290 L784,280" fill="none" stroke="#818cf8" stroke-width="1.8" marker-end="url(#arr-indigo)"/>
-                  <text x="759" y="278" text-anchor="middle" fill="#64748b" font-size="9">HTTPS</text>
+                  <path d="M615,100 L603,162" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
+                  <text x="632" y="128" text-anchor="middle" fill="#64748b" font-size="9">REST API</text>
+                  <!-- API GW → Lambda maintenance_history (LEFT, straight down) -->
+                  <line x1="453" y1="230" x2="453" y2="252" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arr-amber)"/>
+                  <text x="460" y="245" fill="#64748b" font-size="9">invoke</text>
+                  <!-- API GW → Lambda ask_assistant (RIGHT, straight down, dashed) -->
+                  <line x1="747" y1="230" x2="747" y2="252" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
+                  <text x="754" y="245" fill="#64748b" font-size="9">invoke</text>
+                  <!-- Lambda ask_assistant → S3 (straight down) -->
+                  <line x1="747" y1="334" x2="747" y2="350" stroke="#22c55e" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-green)"/>
+                  <text x="754" y="345" fill="#64748b" font-size="9">GetObject</text>
+                  <!-- Lambda ask_assistant → Gemini API (short path, right side of AWS → left of Google) -->
+                  <path d="M886,285 L930,260" fill="none" stroke="#818cf8" stroke-width="1.8" marker-end="url(#arr-indigo)"/>
+                  <text x="908" y="268" text-anchor="middle" fill="#64748b" font-size="9">HTTPS</text>
                   <!-- GitHub Actions → SAM (CI/CD deploys) -->
-                  <path d="M262,292 Q285,545 314,545" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arr-gray)"/>
+                  <path d="M262,292 Q290,490 314,467" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arr-gray)"/>
                   <text x="262" y="440" fill="#64748b" font-size="9">deploys</text>
 
                   <!-- Arrow markers -->
@@ -1137,29 +1137,29 @@
                   </defs>
 
                   <!-- LEGEND -->
-                  <rect x="10" y="580" width="750" height="90" rx="10" fill="#111827" stroke="#1e293b" stroke-width="1"/>
-                  <text x="375" y="598" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">LEGEND</text>
-                  <line x1="30" y1="620" x2="55" y2="620" stroke="#0d9488" stroke-width="2"/>
-                  <polygon points="55,616 55,624 63,620" fill="#0d9488"/>
-                  <text x="70" y="624" fill="#94a3b8" font-size="10">Vercel HTTPS (SPA)</text>
-                  <line x1="200" y1="620" x2="225" y2="620" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="225,616 225,624 233,620" fill="#f59e0b"/>
-                  <text x="240" y="624" fill="#94a3b8" font-size="10">AWS REST / invoke</text>
-                  <line x1="400" y1="620" x2="425" y2="620" stroke="#818cf8" stroke-width="2"/>
-                  <polygon points="425,616 425,624 433,620" fill="#818cf8"/>
-                  <text x="440" y="624" fill="#94a3b8" font-size="10">Gemini API (HTTPS)</text>
-                  <line x1="590" y1="620" x2="615" y2="620" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="615,616 615,624 623,620" fill="#22c55e"/>
-                  <text x="630" y="624" fill="#94a3b8" font-size="10">S3 RAG retrieval</text>
-                  <line x1="30" y1="650" x2="55" y2="650" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="55,646 55,654 63,650" fill="#6b7280"/>
-                  <text x="70" y="654" fill="#94a3b8" font-size="10">CI/CD deploy trigger</text>
-                  <rect x="200" y="644" width="14" height="14" rx="2" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
-                  <text x="220" y="654" fill="#94a3b8" font-size="10">AWS cloud boundary</text>
-                  <rect x="400" y="644" width="14" height="14" rx="2" fill="none" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="3,2"/>
-                  <text x="420" y="654" fill="#94a3b8" font-size="10">Vercel cloud boundary</text>
-                  <rect x="590" y="644" width="14" height="14" rx="2" fill="none" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="3,2"/>
-                  <text x="610" y="654" fill="#94a3b8" font-size="10">Google (external API)</text>
+                  <rect x="10" y="585" width="760" height="90" rx="10" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+                  <text x="375" y="603" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">LEGEND</text>
+                  <line x1="30" y1="625" x2="55" y2="625" stroke="#0d9488" stroke-width="2"/>
+                  <polygon points="55,621 55,629 63,625" fill="#0d9488"/>
+                  <text x="70" y="629" fill="#94a3b8" font-size="10">Vercel HTTPS (SPA)</text>
+                  <line x1="200" y1="625" x2="225" y2="625" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="225,621 225,629 233,625" fill="#f59e0b"/>
+                  <text x="240" y="629" fill="#94a3b8" font-size="10">AWS REST / invoke</text>
+                  <line x1="400" y1="625" x2="425" y2="625" stroke="#818cf8" stroke-width="2"/>
+                  <polygon points="425,621 425,629 433,625" fill="#818cf8"/>
+                  <text x="440" y="629" fill="#94a3b8" font-size="10">Gemini API (HTTPS)</text>
+                  <line x1="590" y1="625" x2="615" y2="625" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="615,621 615,629 623,625" fill="#22c55e"/>
+                  <text x="630" y="629" fill="#94a3b8" font-size="10">S3 RAG retrieval</text>
+                  <line x1="30" y1="655" x2="55" y2="655" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="55,651 55,659 63,655" fill="#6b7280"/>
+                  <text x="70" y="659" fill="#94a3b8" font-size="10">CI/CD deploy trigger</text>
+                  <rect x="200" y="649" width="14" height="14" rx="2" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+                  <text x="220" y="659" fill="#94a3b8" font-size="10">AWS cloud boundary</text>
+                  <rect x="400" y="649" width="14" height="14" rx="2" fill="none" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="3,2"/>
+                  <text x="420" y="659" fill="#94a3b8" font-size="10">Vercel cloud boundary</text>
+                  <rect x="590" y="649" width="14" height="14" rx="2" fill="none" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="3,2"/>
+                  <text x="610" y="659" fill="#94a3b8" font-size="10">Google (external API)</text>
                 </svg>
               </div>
             </div>
@@ -1230,6 +1230,66 @@ watch(archOpen, async (val) => {
     archModalRef.value?.focus()
   }
 })
+
+// ── URL Hash Navigation ───────────────────────────────────────────────────────
+function pushHash(hash) {
+  const url = hash ? location.pathname + hash : location.pathname
+  history.pushState({}, '', url)
+}
+
+function applyHash() {
+  const hash = location.hash
+  if (hash === '#architecture') {
+    archOpen.value = true
+  } else if (hash === '#helper') {
+    assistantOpen.value = true
+    mobileView.value = 'chat'
+  } else if (hash.startsWith('#equipment=')) {
+    const rest = hash.replace('#equipment=', '')
+    const slashIdx = rest.indexOf('/')
+    const rawId = slashIdx >= 0 ? rest.slice(0, slashIdx) : rest
+    const subview = slashIdx >= 0 ? rest.slice(slashIdx + 1) : ''
+    const turbine = turbines.find(t => t.id === rawId)
+    archOpen.value = false
+    if (turbine) {
+      selectedTurbine.value = turbine
+      mobileView.value = 'detail'
+      if (subview === 'history') {
+        openHistoryModal(turbine, false)
+      } else {
+        historyModalTurbine.value = null
+        historyModalData.value = []
+      }
+    } else {
+      selectedTurbine.value = null
+      mobileView.value = 'fleet'
+    }
+  } else {
+    archOpen.value = false
+    if (selectedTurbine.value) {
+      destroyDetailChart()
+      selectedTurbine.value = null
+    }
+    historyModalTurbine.value = null
+    historyModalData.value = []
+    mobileView.value = 'fleet'
+  }
+}
+
+function openArchModal() {
+  archOpen.value = true
+  pushHash('#architecture')
+}
+
+function closeArchModal() {
+  archOpen.value = false
+  pushHash('')
+}
+
+function setMobileChat() {
+  mobileView.value = 'chat'
+  pushHash('#helper')
+}
 
 // ── Mobile Navigation State ───────────────────────────────────────────────────
 const mobileView = ref('fleet')
@@ -1618,11 +1678,13 @@ function getMetricColorClass(turbine, key) {
 function openTurbineSession(turbine) {
   selectedTurbine.value = turbine
   mobileView.value = 'detail'
+  pushHash(`#equipment=${turbine.id}`)
 }
 
 function clearTurbineSelection() {
   selectedTurbine.value = null
   mobileView.value = 'fleet'
+  pushHash('')
 }
 
 function askAboutTurbine(turbine) {
@@ -1640,6 +1702,7 @@ function askAboutTurbine(turbine) {
 function askAboutTurbineMobile(turbine) {
   mobileView.value = 'chat'
   assistantOpen.value = true
+  pushHash('#helper')
   chatContextTurbine.value = turbine
   messages.value.push({
     role: 'system',
@@ -1656,10 +1719,14 @@ function openTurbineWithAssistant(turbine) {
 }
 
 // ── Maintenance History Modal ─────────────────────────────────────────────────
-async function openHistoryModal(turbine) {
+async function openHistoryModal(turbine, pushToHistory = true) {
   historyModalTurbine.value = turbine
   historyModalData.value = []
   historyModalLoading.value = true
+
+  if (pushToHistory) {
+    pushHash(`#equipment=${turbine.id}/history`)
+  }
 
   // Try to fetch from API; fall back to local store data on any error
   try {
@@ -1683,6 +1750,11 @@ async function openHistoryModal(turbine) {
 function closeHistoryModal() {
   historyModalTurbine.value = null
   historyModalData.value = []
+  if (selectedTurbine.value) {
+    pushHash(`#equipment=${selectedTurbine.value.id}`)
+  } else {
+    pushHash('')
+  }
 }
 
 function investigateWithAssistant(turbine, record) {
@@ -1992,6 +2064,12 @@ onMounted(() => {
 
   const initialCritical = turbines.find(t => t.status === 'NOK')
   if (initialCritical) updateDiagnostics(initialCritical)
+
+  // Restore view from URL hash (sharable links)
+  if (location.hash) applyHash()
+
+  // Sync view when the user navigates with browser back/forward
+  window.addEventListener('popstate', applyHash)
 })
 
 onUnmounted(() => {
@@ -1999,6 +2077,7 @@ onUnmounted(() => {
   if (anomalyInterval) clearInterval(anomalyInterval)
   if (loadingMsgInterval) clearInterval(loadingMsgInterval)
   destroyDetailChart()
+  window.removeEventListener('popstate', applyHash)
 })
 </script>
 
