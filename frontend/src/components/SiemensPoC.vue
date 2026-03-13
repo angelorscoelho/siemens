@@ -501,8 +501,7 @@
               </div>
               <div v-else class="flex justify-start">
                 <div class="max-w-[95%] space-y-1">
-                  <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-gray-100 shadow leading-relaxed whitespace-pre-wrap">
-                    {{ msg.content }}
+                  <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-gray-100 shadow leading-relaxed ai-message" v-html="renderMarkdown(msg.content)">
                   </div>
                   <!-- RAG source chips — clickable and consultable -->
                   <div v-if="msg.context" class="flex flex-wrap gap-1.5 px-1">
@@ -561,7 +560,7 @@
                   <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
                   <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
                 </span>
-                <span class="text-xs text-gray-400">Querying…</span>
+                <span class="text-xs text-gray-400">{{ loadingMessage }}</span>
               </div>
             </div>
             <div v-if="error" class="bg-red-900 bg-opacity-40 border border-red-700 rounded-xl px-3 py-2 text-xs text-red-300 flex items-start gap-2">
@@ -641,8 +640,7 @@
             </div>
             <div v-else class="flex justify-start">
               <div class="max-w-[90%] space-y-1">
-                <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-gray-100 shadow leading-relaxed whitespace-pre-wrap">
-                  {{ msg.content }}
+                <div class="bg-gray-800 border border-teal-800 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-gray-100 shadow leading-relaxed ai-message" v-html="renderMarkdown(msg.content)">
                 </div>
                 <!-- RAG source chips — clickable and consultable -->
                 <div v-if="msg.context" class="flex flex-wrap gap-1.5 px-1">
@@ -702,7 +700,7 @@
                 <span class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
                 <span class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
               </span>
-              <span class="text-sm text-gray-400">Querying AI…</span>
+              <span class="text-sm text-gray-400">{{ loadingMessage }}</span>
             </div>
           </div>
 
@@ -1203,6 +1201,8 @@ import {
   generateActionPlan, historyMetricKeys, getMostCriticalMetricKey, getMaintenanceHistory,
 } from '../fleetStore.js'
 import EquipmentCard from './EquipmentCard.vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip)
 
@@ -1880,6 +1880,24 @@ const mobileChatScrollRef = ref(null)
 // Track the turbine currently being discussed so RAG chips can be clickable
 const chatContextTurbine = ref(null)
 
+// ── Rotating loading messages ─────────────────────────────────────────────────
+const LOADING_MESSAGES = [
+  'Fetching user manual…',
+  'Reasoning over problem root cause…',
+  'Forming a structured plan…',
+  'Reviewing maintenance history…',
+  'Cross-referencing technical data…',
+  'Synthesizing recommendations…',
+]
+const loadingMessage = ref(LOADING_MESSAGES[0])
+let loadingMsgInterval = null
+
+// ── Markdown renderer ─────────────────────────────────────────────────────────
+marked.setOptions({ breaks: true })
+function renderMarkdown(text) {
+  return DOMPurify.sanitize(marked.parse(text || ''))
+}
+
 const sampleQuestions = [
   'What are the vibration thresholds for bearing fault detection?',
   'How often should combustion liners be inspected?',
@@ -1910,6 +1928,12 @@ async function sendMessage() {
   messages.value.push({ role: 'user', content: query })
   inputText.value = ''
   loading.value = true
+  loadingMessage.value = LOADING_MESSAGES[0]
+  let msgIdx = 0
+  loadingMsgInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % LOADING_MESSAGES.length
+    loadingMessage.value = LOADING_MESSAGES[msgIdx]
+  }, 2000)
   await scrollToBottom()
 
   // Build turbine context payload if we have a current turbine in focus
@@ -1949,6 +1973,8 @@ async function sendMessage() {
     error.value = err.message || 'An unexpected error occurred. Please try again.'
   } finally {
     loading.value = false
+    clearInterval(loadingMsgInterval)
+    loadingMessage.value = LOADING_MESSAGES[0]
     await scrollToBottom()
   }
 }
@@ -1971,6 +1997,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (updateInterval) clearInterval(updateInterval)
   if (anomalyInterval) clearInterval(anomalyInterval)
+  if (loadingMsgInterval) clearInterval(loadingMsgInterval)
   destroyDetailChart()
 })
 </script>
@@ -2046,5 +2073,97 @@ onUnmounted(() => {
 .arch-fade-enter-from,
 .arch-fade-leave-to {
   opacity: 0;
+}
+
+/* ── AI message markdown styles ───────────────────────────────────────────── */
+.ai-message :deep(h1),
+.ai-message :deep(h2),
+.ai-message :deep(h3),
+.ai-message :deep(h4) {
+  font-weight: 700;
+  color: #5eead4; /* teal-300 */
+  margin-top: 0.75em;
+  margin-bottom: 0.35em;
+  line-height: 1.3;
+}
+.ai-message :deep(h1) { font-size: 1em; }
+.ai-message :deep(h2) { font-size: 0.95em; }
+.ai-message :deep(h3) { font-size: 0.9em; }
+.ai-message :deep(h4) { font-size: 0.85em; }
+
+.ai-message :deep(p) {
+  margin-bottom: 0.5em;
+}
+.ai-message :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.ai-message :deep(ul),
+.ai-message :deep(ol) {
+  padding-left: 1.25em;
+  margin-bottom: 0.5em;
+}
+.ai-message :deep(ul) { list-style-type: disc; }
+.ai-message :deep(ol) { list-style-type: decimal; }
+
+.ai-message :deep(li) {
+  margin-bottom: 0.25em;
+  line-height: 1.5;
+}
+
+.ai-message :deep(strong) {
+  font-weight: 700;
+  color: #f1f5f9; /* slate-100 */
+}
+
+.ai-message :deep(em) {
+  font-style: italic;
+  color: #94a3b8; /* slate-400 */
+}
+
+.ai-message :deep(code) {
+  background: rgba(20, 184, 166, 0.15);
+  color: #5eead4;
+  border-radius: 0.25rem;
+  padding: 0.05em 0.3em;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.875em;
+}
+
+.ai-message :deep(pre) {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #374151;
+  border-radius: 0.5rem;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+  margin-bottom: 0.5em;
+}
+.ai-message :deep(pre code) {
+  background: none;
+  padding: 0;
+  color: #e2e8f0;
+}
+
+.ai-message :deep(hr) {
+  border: none;
+  border-top: 1px solid #374151;
+  margin: 0.75em 0;
+}
+
+.ai-message :deep(blockquote) {
+  border-left: 3px solid #14b8a6;
+  padding-left: 0.75em;
+  color: #94a3b8;
+  margin: 0.5em 0;
+}
+
+.ai-message :deep(a) {
+  color: #5eead4;
+  text-decoration: underline;
+}
+
+/* First child should have no top margin */
+.ai-message :deep(> *:first-child) {
+  margin-top: 0;
 }
 </style>
