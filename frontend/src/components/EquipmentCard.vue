@@ -125,10 +125,10 @@
         <!-- Bot / AI assistant button -->
         <button
           @click.stop="$emit('ask-assistant', turbine)"
-          class="shrink-0 ml-1 p-0.5 rounded transition-colors opacity-60 hover:opacity-100"
+          class="bot-icon-btn shrink-0 ml-1 p-1 rounded-md transition-all duration-200 cursor-pointer"
           :class="turbine.status === 'NOK'
-            ? 'hover:bg-red-700/50 text-red-300'
-            : 'hover:bg-yellow-700/50 text-yellow-300'"
+            ? 'bg-red-900/60 text-red-300 hover:bg-red-700/80 hover:text-red-100 nok-glow'
+            : 'bg-yellow-900/60 text-yellow-300 hover:bg-yellow-700/80 hover:text-yellow-100 risk-glow'"
           title="Ask Assistant for Detailed Analysis"
           aria-label="Ask Assistant for Detailed Analysis"
         >
@@ -482,5 +482,16 @@ function onImageError() {
 }
 .card-focus-ok {
   animation: card-vibrate 0.5s ease-in-out, card-glow-ok 1.5s ease-in-out 2;
+}
+
+/* ── Bot icon button hover glow ── */
+.bot-icon-btn {
+  box-shadow: 0 0 0 0 transparent;
+}
+.bot-icon-btn.nok-glow:hover {
+  box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.55), 0 0 16px 2px rgba(239, 68, 68, 0.25);
+}
+.bot-icon-btn.risk-glow:hover {
+  box-shadow: 0 0 8px 2px rgba(234, 179, 8, 0.55), 0 0 16px 2px rgba(234, 179, 8, 0.25);
 }
 </style>
