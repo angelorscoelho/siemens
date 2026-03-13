@@ -2260,15 +2260,19 @@ async function sendMessage() {
   inputText.value = ''
   loading.value = true
   loadingMessage.value = LOADING_MESSAGES[0]
-  const usedIndices = new Set([0])
+  let shuffledQueue = []
   loadingMsgInterval = setInterval(() => {
-    if (usedIndices.size >= LOADING_MESSAGES.length) usedIndices.clear()
-    let nextIdx
-    do {
-      nextIdx = Math.floor(Math.random() * LOADING_MESSAGES.length)
-    } while (usedIndices.has(nextIdx))
-    usedIndices.add(nextIdx)
-    loadingMessage.value = LOADING_MESSAGES[nextIdx]
+    if (shuffledQueue.length === 0) {
+      shuffledQueue = [...Array(LOADING_MESSAGES.length).keys()]
+      for (let i = shuffledQueue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[shuffledQueue[i], shuffledQueue[j]] = [shuffledQueue[j], shuffledQueue[i]]
+      }
+      if (LOADING_MESSAGES[shuffledQueue[0]] === loadingMessage.value && shuffledQueue.length > 1) {
+        ;[shuffledQueue[0], shuffledQueue[shuffledQueue.length - 1]] = [shuffledQueue[shuffledQueue.length - 1], shuffledQueue[0]]
+      }
+    }
+    loadingMessage.value = LOADING_MESSAGES[shuffledQueue.shift()]
   }, 3500)
   await scrollToBottom()
 
