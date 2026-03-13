@@ -997,16 +997,16 @@
               <!-- Architecture description -->
               <!-- Architecture description -->
               <p class="text-sm text-gray-300 leading-relaxed">
-                This proof-of-concept is a full-stack cloud-native application. The <span class="text-teal-400 font-semibold">Vue 3 + Vite</span> single-page application is deployed on <span class="text-teal-400 font-semibold">Vercel</span> and served directly to users from the global CDN edge. Queries are sent over HTTPS directly to <span class="text-teal-400 font-semibold">Amazon API Gateway</span>, which invokes the <span class="text-teal-400 font-semibold">AWS Lambda</span> ask_assistant function. The Lambda executes a real <span class="text-teal-400 font-semibold">Retrieval-Augmented Generation (RAG)</span> pipeline: it embeds the user query using Google <span class="text-teal-400 font-semibold">text-embedding-004</span>, downloads pre-computed chunk vectors from <span class="text-teal-400 font-semibold">Amazon S3</span>, performs pure-Python cosine similarity to retrieve the top-3 most relevant manual excerpts, then passes the grounded context to <span class="text-teal-400 font-semibold">gemini-2.5-pro</span> for the final answer. No VPC or proxy layer is required — the Lambda calls the Gemini REST API directly via stdlib urllib. Infrastructure is defined as code with <span class="text-teal-400 font-semibold">AWS SAM / CloudFormation</span>.
+                This proof-of-concept is a full-stack cloud-native application. The <span class="text-teal-400 font-semibold">Vue 3 + Vite</span> single-page application is deployed on <span class="text-teal-400 font-semibold">Vercel</span> and served directly to users from the global CDN edge. Queries are sent over HTTPS directly to <span class="text-teal-400 font-semibold">Amazon API Gateway</span>, which invokes the <span class="text-teal-400 font-semibold">AWS Lambda</span> ask_assistant function. The Lambda executes a real <span class="text-teal-400 font-semibold">Retrieval-Augmented Generation (RAG)</span> pipeline: it embeds the user query using Google <span class="text-teal-400 font-semibold">text-embedding-004</span>, downloads pre-computed chunk vectors from <span class="text-teal-400 font-semibold">Amazon S3</span> (cached in <span class="text-teal-400 font-semibold">/tmp</span> across warm invocations), performs pure-Python cosine similarity to retrieve the top-3 most relevant manual excerpts, then passes the grounded context to <span class="text-teal-400 font-semibold">gemini-2.0-flash</span> for the final answer. No VPC or proxy layer is required — the Lambda calls the Gemini REST API directly via stdlib urllib. Infrastructure is defined as code with <span class="text-teal-400 font-semibold">AWS SAM / CloudFormation</span>.
               </p>
 
               <!-- Architecture SVG Diagram -->
               <div class="w-full overflow-x-auto">
-                <svg viewBox="0 0 1020 660" xmlns="http://www.w3.org/2000/svg"
+                <svg viewBox="0 0 1020 685" xmlns="http://www.w3.org/2000/svg"
                   class="w-full min-w-[720px] rounded-xl border border-gray-800 bg-gray-900"
                   font-family="ui-monospace, monospace" font-size="12"
                   role="img" aria-labelledby="arch-svg-title">
-                  <title id="arch-svg-title">System architecture: User browser loads Vue 3 SPA from Vercel CDN. Browser calls AWS API Gateway (REST API) directly via HTTPS. API Gateway invokes Lambda ask_assistant which runs a RAG pipeline: embeds query with text-embedding-004, retrieves top-3 chunk vectors from S3 via cosine similarity, calls gemini-2.5-pro for the grounded answer. API Gateway also invokes Lambda maintenance_history. Infrastructure deployed via AWS SAM. GitHub Actions provides CI/CD.</title>
+                  <title id="arch-svg-title">System architecture: User browser loads Vue 3 SPA from Vercel CDN. Browser calls AWS API Gateway (REST API) directly via HTTPS. API Gateway invokes Lambda ask_assistant which runs a RAG pipeline: embeds query with text-embedding-004, retrieves top-3 chunk vectors from S3 via cosine similarity (/tmp cached), calls gemini-2.0-flash for the grounded answer. API Gateway also invokes Lambda maintenance_history. Infrastructure deployed via AWS SAM / CloudFormation. GitHub Actions provides CI/CD.</title>
 
                   <!-- USER ZONE -->
                   <rect x="10" y="10" width="1000" height="100" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
@@ -1057,8 +1057,8 @@
                   <text x="340" y="283" text-anchor="middle" fill="#1e293b" font-size="14" font-weight="bold">λ</text>
                   <text x="362" y="275" fill="#e2e8f0" font-size="12" font-weight="bold">Lambda — ask_assistant</text>
                   <text x="362" y="289" fill="#94a3b8" font-size="10">Python 3.11 · Real RAG pipeline · Gemini embeddings + LLM</text>
-                  <text x="362" y="303" fill="#94a3b8" font-size="10">S3 cosine retrieval → top-3 context → gemini-2.5-pro answer</text>
-                  <text x="362" y="317" fill="#64748b" font-size="9">stdlib urllib only · zero external SDK · 256 MB · 30 s timeout</text>
+                  <text x="362" y="303" fill="#94a3b8" font-size="10">S3 cosine retrieval → top-3 context → gemini-2.0-flash answer</text>
+                  <text x="362" y="317" fill="#64748b" font-size="9">stdlib urllib only · zero SDK · /tmp caching · 256 MB · 30 s timeout</text>
                   <!-- Lambda Maintenance box -->
                   <rect x="314" y="352" width="420" height="68" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
                   <rect x="328" y="364" width="24" height="24" rx="3" fill="#f59e0b"/>
@@ -1090,7 +1090,7 @@
                   <text x="826" y="267" fill="#94a3b8" font-size="9">generativelanguage.googleapis.com</text>
                   <text x="794" y="298" fill="#94a3b8" font-size="10">text-embedding-004</text>
                   <text x="794" y="312" fill="#64748b" font-size="9">768-dim · ingest + query embed</text>
-                  <text x="794" y="334" fill="#94a3b8" font-size="10">gemini-2.5-pro</text>
+                  <text x="794" y="334" fill="#94a3b8" font-size="10">gemini-2.0-flash</text>
                   <text x="794" y="348" fill="#64748b" font-size="9">LLM inference · grounded RAG answers</text>
                   <text x="794" y="362" fill="#64748b" font-size="9">GEMINI_API_KEY (env var)</text>
 
@@ -1137,29 +1137,29 @@
                   </defs>
 
                   <!-- LEGEND -->
-                  <rect x="10" y="555" width="750" height="90" rx="10" fill="#111827" stroke="#1e293b" stroke-width="1"/>
-                  <text x="375" y="573" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">LEGEND</text>
-                  <line x1="30" y1="595" x2="55" y2="595" stroke="#0d9488" stroke-width="2"/>
-                  <polygon points="55,591 55,599 63,595" fill="#0d9488"/>
-                  <text x="70" y="599" fill="#94a3b8" font-size="10">Vercel HTTPS (SPA)</text>
-                  <line x1="200" y1="595" x2="225" y2="595" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="225,591 225,599 233,595" fill="#f59e0b"/>
-                  <text x="240" y="599" fill="#94a3b8" font-size="10">AWS REST / invoke</text>
-                  <line x1="400" y1="595" x2="425" y2="595" stroke="#818cf8" stroke-width="2"/>
-                  <polygon points="425,591 425,599 433,595" fill="#818cf8"/>
-                  <text x="440" y="599" fill="#94a3b8" font-size="10">Gemini API (HTTPS)</text>
-                  <line x1="590" y1="595" x2="615" y2="595" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="615,591 615,599 623,595" fill="#22c55e"/>
-                  <text x="630" y="599" fill="#94a3b8" font-size="10">S3 RAG retrieval</text>
-                  <line x1="30" y1="625" x2="55" y2="625" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="55,621 55,629 63,625" fill="#6b7280"/>
-                  <text x="70" y="629" fill="#94a3b8" font-size="10">CI/CD deploy trigger</text>
-                  <rect x="200" y="619" width="14" height="14" rx="2" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
-                  <text x="220" y="629" fill="#94a3b8" font-size="10">AWS cloud boundary</text>
-                  <rect x="400" y="619" width="14" height="14" rx="2" fill="none" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="3,2"/>
-                  <text x="420" y="629" fill="#94a3b8" font-size="10">Vercel cloud boundary</text>
-                  <rect x="590" y="619" width="14" height="14" rx="2" fill="none" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="3,2"/>
-                  <text x="610" y="629" fill="#94a3b8" font-size="10">Google (external API)</text>
+                  <rect x="10" y="580" width="750" height="90" rx="10" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+                  <text x="375" y="598" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">LEGEND</text>
+                  <line x1="30" y1="620" x2="55" y2="620" stroke="#0d9488" stroke-width="2"/>
+                  <polygon points="55,616 55,624 63,620" fill="#0d9488"/>
+                  <text x="70" y="624" fill="#94a3b8" font-size="10">Vercel HTTPS (SPA)</text>
+                  <line x1="200" y1="620" x2="225" y2="620" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="225,616 225,624 233,620" fill="#f59e0b"/>
+                  <text x="240" y="624" fill="#94a3b8" font-size="10">AWS REST / invoke</text>
+                  <line x1="400" y1="620" x2="425" y2="620" stroke="#818cf8" stroke-width="2"/>
+                  <polygon points="425,616 425,624 433,620" fill="#818cf8"/>
+                  <text x="440" y="624" fill="#94a3b8" font-size="10">Gemini API (HTTPS)</text>
+                  <line x1="590" y1="620" x2="615" y2="620" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="615,616 615,624 623,620" fill="#22c55e"/>
+                  <text x="630" y="624" fill="#94a3b8" font-size="10">S3 RAG retrieval</text>
+                  <line x1="30" y1="650" x2="55" y2="650" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="55,646 55,654 63,650" fill="#6b7280"/>
+                  <text x="70" y="654" fill="#94a3b8" font-size="10">CI/CD deploy trigger</text>
+                  <rect x="200" y="644" width="14" height="14" rx="2" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+                  <text x="220" y="654" fill="#94a3b8" font-size="10">AWS cloud boundary</text>
+                  <rect x="400" y="644" width="14" height="14" rx="2" fill="none" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="3,2"/>
+                  <text x="420" y="654" fill="#94a3b8" font-size="10">Vercel cloud boundary</text>
+                  <rect x="590" y="644" width="14" height="14" rx="2" fill="none" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="3,2"/>
+                  <text x="610" y="654" fill="#94a3b8" font-size="10">Google (external API)</text>
                 </svg>
               </div>
             </div>
