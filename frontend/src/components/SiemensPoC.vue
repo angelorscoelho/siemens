@@ -21,26 +21,20 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
           <div>
-            <h1 class="text-base font-bold tracking-tight text-white leading-tight">
+            <a href="https://www.angelorscoelho.dev/siemens"
+               class="text-base font-bold tracking-tight text-white leading-tight hover:text-teal-400 transition-colors">
               Siemens Energy — AI Maintenance Dashboard
-            </h1>
+            </a>
             <p class="text-xs text-teal-400 leading-tight">PoC · Distributed AI Factory · Industrial RAG</p>
           </div>
         </div>
         <div class="ml-auto flex items-center gap-2">
-          <span class="px-2 py-0.5 text-xs bg-teal-900 text-teal-300 rounded-full border border-teal-700 font-semibold uppercase tracking-wider">
-            v2.0
-          </span>
           <button @click="openArchModal()"
-            class="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-teal-600 to-cyan-600 border border-teal-400 rounded-lg text-white hover:from-teal-500 hover:to-cyan-500 hover:shadow-lg hover:shadow-teal-500/25 transition-all duration-300 cursor-pointer flex items-center gap-1.5 animate-pulse-slow"
+            class="px-3 py-1.5 text-xs font-semibold bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5"
             title="Explore the system architecture">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-            </svg>
-            🏗️ See Project Architecture
+            See Project Architecture
           </button>
-          <button @click="howToUseOpen = true"
+          <button @click="openHowToUse()"
             class="px-2.5 py-1 text-xs bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5"
             title="How to use this tool">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -48,14 +42,6 @@
                 d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             How to Use
-          </button>
-          <button @click="toggleAssistant"
-            class="px-2.5 py-1 text-xs bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            {{ assistantOpen ? 'Hide' : 'Show' }} Assistant
           </button>
         </div>
       </div>
@@ -67,7 +53,7 @@
         </svg>
         <div class="flex-1 min-w-0">
           <h1 class="text-sm font-bold text-white leading-tight truncate">GT AI Maintenance</h1>
-          <p class="text-xs text-teal-400 leading-tight">Siemens Energy · PoC v2.0</p>
+          <p class="text-xs text-teal-400 leading-tight">Siemens Energy · PoC</p>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
           <span v-if="criticalCount > 0"
@@ -86,14 +72,14 @@
             OK
           </span>
           <button @click="openArchModal()"
-            class="p-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 border border-teal-400 text-white hover:shadow-lg hover:shadow-teal-500/25 transition-all duration-300 cursor-pointer animate-pulse-slow"
+            class="p-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer"
             title="View Architecture">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
             </svg>
           </button>
-          <button @click="howToUseOpen = true"
+          <button @click="openHowToUse()"
             class="p-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer"
             title="How to use this tool">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -104,6 +90,29 @@
         </div>
       </div>
     </header>
+
+    <!-- ── Floating "Show AI" button — appears when assistant sidebar is closed ── -->
+    <Teleport to="body">
+      <transition name="balloon">
+        <button
+          v-if="!assistantOpen"
+          @click="assistantOpen = true"
+          class="hidden md:flex fixed right-4 top-1/2 -translate-y-1/2 p-3 bg-teal-700 hover:bg-teal-600 text-white rounded-full shadow-2xl transition-all cursor-pointer z-30 items-center justify-center"
+          title="Show AI Maintenance Assistant sidebar"
+          aria-label="Show AI Maintenance Assistant sidebar"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="8" width="18" height="12" rx="2"/>
+            <path d="M12 2v4"/>
+            <circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/>
+            <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+            <path d="M9 17h6"/>
+            <path d="M3 12H1m22 0h-2"/>
+          </svg>
+        </button>
+      </transition>
+    </Teleport>
 
     <!-- ═══════════════════════════════════════════════════════════════
          ALERT BALLOON — clickable, focuses the card
@@ -981,8 +990,8 @@
         <div v-if="howToUseOpen"
           ref="howToUseModalRef"
           class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-          @click.self="howToUseOpen = false"
-          @keydown.esc="howToUseOpen = false"
+          @click.self="closeHowToUse()"
+          @keydown.esc="closeHowToUse()"
           tabindex="-1"
         >
           <div class="relative bg-gray-950 border border-teal-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col overflow-hidden">
@@ -998,7 +1007,7 @@
                 <p class="text-xs text-gray-400">Siemens Energy · AI Maintenance Dashboard · User Guide</p>
               </div>
               <button
-                @click="howToUseOpen = false"
+                @click="closeHowToUse()"
                 class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer p-1 rounded-lg hover:bg-gray-800"
                 aria-label="Close guide"
               >
@@ -1125,35 +1134,21 @@
                     <path d="M9 17h6"/>
                     <path d="M3 12H1m22 0h-2"/>
                   </svg>
-                  Three Ways to Trigger the AI Assistant
+                  Two Ways to Trigger the AI Assistant
                 </h3>
                 <div class="space-y-3">
                   <div class="flex items-start gap-3 p-3 rounded-lg bg-gray-900 border border-gray-800">
                     <span class="shrink-0 mt-1 flex items-center justify-center w-6 h-6 rounded-full bg-teal-900 text-teal-300 text-xs font-bold">1</span>
                     <div>
                       <p class="text-white font-semibold text-xs mb-1">Chat Panel (Right Sidebar)</p>
-                      <p class="text-gray-400 text-xs">Open the AI assistant panel using the
-                        <svg class="w-3 h-3 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                        button in the header. Type any question about turbine maintenance, anomaly diagnosis, or operating procedures. The AI will retrieve relevant documentation and provide a structured answer.</p>
+                      <p class="text-gray-400 text-xs">Open the AI assistant panel using the robot icon button that floats on the right edge of the screen. Type any question about turbine maintenance, anomaly diagnosis, or operating procedures. The AI will retrieve relevant documentation and provide a structured answer.</p>
                     </div>
                   </div>
                   <div class="flex items-start gap-3 p-3 rounded-lg bg-gray-900 border border-gray-800">
                     <span class="shrink-0 mt-1 flex items-center justify-center w-6 h-6 rounded-full bg-teal-900 text-teal-300 text-xs font-bold">2</span>
                     <div>
-                      <p class="text-white font-semibold text-xs mb-1">Alert Robot Icon (Card Footer)</p>
-                      <p class="text-gray-400 text-xs">When an equipment card shows a
-                        <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-yellow-900 text-yellow-300 border border-yellow-700">RISK</span> or
-                        <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-red-900 text-red-300 border border-red-700">NOK</span>
-                        banner, click the
-                        <svg class="w-3.5 h-3.5 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 2v4"/><circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/><path d="M9 17h6"/><path d="M3 12H1m22 0h-2"/></svg>
-                        robot icon to automatically send the anomaly details to the AI for instant analysis.</p>
-                    </div>
-                  </div>
-                  <div class="flex items-start gap-3 p-3 rounded-lg bg-gray-900 border border-gray-800">
-                    <span class="shrink-0 mt-1 flex items-center justify-center w-6 h-6 rounded-full bg-teal-900 text-teal-300 text-xs font-bold">3</span>
-                    <div>
-                      <p class="text-white font-semibold text-xs mb-1">Detail View — "Request AI Analysis" Button</p>
-                      <p class="text-gray-400 text-xs">Click any equipment name to open the full detail view. At the bottom of the metrics panel you'll find the <span class="text-teal-300 font-semibold">"Request AI Assistant Analysis"</span> button, which sends the full context (all current readings, anomalies, equipment model) to the AI for a comprehensive diagnosis and action plan.</p>
+                      <p class="text-white font-semibold text-xs mb-1">One-click AI Analysis from Alert Banner or Detail View</p>
+                      <p class="text-gray-400 text-xs">When an equipment card shows a <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-yellow-900 text-yellow-300 border border-yellow-700">RISK</span> or <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-red-900 text-red-300 border border-red-700">NOK</span> banner, click the <svg class="w-3.5 h-3.5 inline text-gray-300 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 2v4"/><circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/><path d="M9 17h6"/><path d="M3 12H1m22 0h-2"/></svg> robot icon to instantly send the anomaly details to the AI. The same robot icon is also available in the full detail view as a "Request AI Assistant Analysis" button, which sends all current readings, anomalies, and equipment model for a comprehensive diagnosis and action plan.</p>
                     </div>
                   </div>
                 </div>
@@ -1211,9 +1206,7 @@
                     <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-teal-900 text-teal-300 text-xs font-bold border border-teal-700">3</span>
                     <div>
                       <p class="text-white font-semibold text-xs">Request AI analysis</p>
-                      <p class="text-gray-400 text-xs">Click the
-                        <svg class="w-3 h-3 text-red-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 2v4"/><circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/><path d="M9 17h6"/><path d="M3 12H1m22 0h-2"/></svg>
-                        robot icon on the NOK banner — the AI instantly receives the anomaly data, searches the Siemens manuals, and returns a root-cause analysis with recommended actions.</p>
+                      <p class="text-gray-400 text-xs">Click the <svg class="w-3 h-3 inline text-red-300 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 2v4"/><circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/><path d="M9 17h6"/><path d="M3 12H1m22 0h-2"/></svg> robot icon on the NOK banner — the AI instantly receives the anomaly data, searches the Siemens manuals, and returns a root-cause analysis with recommended actions.</p>
                     </div>
                   </div>
                   <div class="flex items-start gap-3">
@@ -1234,7 +1227,7 @@
                 Need more help? Ask the AI assistant any question about maintenance procedures.
               </p>
               <button
-                @click="howToUseOpen = false"
+                @click="closeHowToUse()"
                 class="px-4 py-1.5 text-xs font-semibold bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer"
               >
                 Got it
@@ -1318,7 +1311,7 @@
 
                   <!-- ═══ USER ZONE ═══ -->
                   <rect x="10" y="10" width="1000" height="90" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
-                  <text x="510" y="28" text-anchor="middle" fill="#64748b" font-size="11" font-weight="bold">USER</text>
+                  <text x="510" y="20" text-anchor="middle" fill="#64748b" font-size="11" font-weight="bold">USER</text>
                   <rect x="390" y="26" width="240" height="64" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.4"/>
                   <rect x="404" y="36" width="32" height="22" rx="3" fill="none" stroke="#94a3b8" stroke-width="1.3"/>
                   <line x1="404" y1="42" x2="436" y2="42" stroke="#94a3b8" stroke-width="1.3"/>
@@ -1348,7 +1341,7 @@
                   <text x="64" y="269" fill="#94a3b8" font-size="9">deploy triggers · workflows</text>
 
                   <!-- ═══ AWS CLOUD ZONE ═══ -->
-                  <rect x="270" y="120" width="472" height="280" rx="12" fill="#0f172a" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="5,3"/>
+                  <rect x="270" y="120" width="472" height="295" rx="12" fill="#0f172a" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="5,3"/>
                   <text x="506" y="138" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="bold">AWS CLOUD (us-east-1)</text>
                   <!-- API Gateway -->
                   <rect x="286" y="150" width="440" height="50" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
@@ -1358,30 +1351,30 @@
                   <line x1="308" y1="170" x2="320" y2="170" stroke="white" stroke-width="1.2"/>
                   <text x="336" y="170" fill="#e2e8f0" font-size="11" font-weight="bold">Amazon API Gateway</text>
                   <text x="336" y="183" fill="#94a3b8" font-size="9">HTTP API · CORS · prod · POST /ask-assistant · GET /maintenance-history</text>
-                  <!-- Lambda ask_assistant (left) -->
-                  <rect x="286" y="222" width="210" height="72" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
-                  <rect x="300" y="233" width="22" height="22" rx="3" fill="#f59e0b"/>
-                  <text x="311" y="249" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="bold">λ</text>
-                  <text x="330" y="243" fill="#e2e8f0" font-size="10" font-weight="bold">ask_assistant</text>
-                  <text x="330" y="257" fill="#94a3b8" font-size="9">Python 3.11 · RAG pipeline</text>
-                  <text x="330" y="269" fill="#94a3b8" font-size="9">Gemini embed + LLM</text>
-                  <text x="330" y="281" fill="#64748b" font-size="8">cosine sim · /tmp cache</text>
-                  <!-- Lambda maintenance_history (right) -->
-                  <rect x="516" y="222" width="210" height="72" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
-                  <rect x="530" y="233" width="22" height="22" rx="3" fill="#f59e0b"/>
-                  <text x="541" y="249" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="bold">λ</text>
-                  <text x="560" y="243" fill="#e2e8f0" font-size="10" font-weight="bold">maintenance_history</text>
-                  <text x="560" y="257" fill="#94a3b8" font-size="9">Python 3.11</text>
-                  <text x="560" y="269" fill="#94a3b8" font-size="9">GET /maintenance-history</text>
-                  <text x="560" y="281" fill="#64748b" font-size="8">Records per equipment ID</text>
-                  <!-- Amazon S3 (below ask_assistant) -->
-                  <rect x="286" y="316" width="210" height="60" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="1.4"/>
-                  <rect x="300" y="326" width="24" height="20" rx="2" fill="#22c55e"/>
-                  <ellipse cx="312" cy="326" rx="12" ry="4" fill="#16a34a"/>
-                  <ellipse cx="312" cy="346" rx="12" ry="4" fill="#16a34a"/>
-                  <text x="334" y="340" fill="#e2e8f0" font-size="10" font-weight="bold">Amazon S3</text>
-                  <text x="334" y="353" fill="#94a3b8" font-size="9">Knowledge Base · 768-dim vectors</text>
-                  <text x="334" y="365" fill="#94a3b8" font-size="9">Pure-Python cosine similarity</text>
+                  <!-- Lambda maintenance_history (left) -->
+                  <rect x="286" y="235" width="210" height="72" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
+                  <rect x="300" y="246" width="22" height="22" rx="3" fill="#f59e0b"/>
+                  <text x="311" y="262" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="bold">λ</text>
+                  <text x="330" y="256" fill="#e2e8f0" font-size="10" font-weight="bold">maintenance_history</text>
+                  <text x="330" y="270" fill="#94a3b8" font-size="9">Python 3.11</text>
+                  <text x="330" y="282" fill="#94a3b8" font-size="9">GET /maintenance-history</text>
+                  <text x="330" y="294" fill="#64748b" font-size="8">Records per equipment ID</text>
+                  <!-- Lambda ask_assistant (right) -->
+                  <rect x="516" y="235" width="210" height="72" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.4"/>
+                  <rect x="530" y="246" width="22" height="22" rx="3" fill="#f59e0b"/>
+                  <text x="541" y="262" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="bold">λ</text>
+                  <text x="560" y="256" fill="#e2e8f0" font-size="10" font-weight="bold">ask_assistant</text>
+                  <text x="560" y="270" fill="#94a3b8" font-size="9">Python 3.11 · RAG pipeline</text>
+                  <text x="560" y="282" fill="#94a3b8" font-size="9">Gemini embed + LLM</text>
+                  <text x="560" y="294" fill="#64748b" font-size="8">cosine sim · /tmp cache</text>
+                  <!-- Amazon S3 (below ask_assistant, right side) -->
+                  <rect x="516" y="342" width="210" height="60" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="1.4"/>
+                  <rect x="530" y="352" width="24" height="20" rx="2" fill="#22c55e"/>
+                  <ellipse cx="542" cy="352" rx="12" ry="4" fill="#16a34a"/>
+                  <ellipse cx="542" cy="372" rx="12" ry="4" fill="#16a34a"/>
+                  <text x="564" y="366" fill="#e2e8f0" font-size="10" font-weight="bold">Amazon S3</text>
+                  <text x="564" y="379" fill="#94a3b8" font-size="9">Knowledge Base · 768-dim vectors</text>
+                  <text x="564" y="391" fill="#94a3b8" font-size="9">Pure-Python cosine similarity</text>
 
                   <!-- ═══ GOOGLE ZONE ═══ -->
                   <rect x="760" y="120" width="250" height="210" rx="12" fill="#0f172a" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="5,3"/>
@@ -1400,57 +1393,60 @@
                   <text x="790" y="270" fill="#64748b" font-size="9">LLM · grounded RAG answers</text>
                   <text x="790" y="290" fill="#64748b" font-size="8">GEMINI_API_KEY (env var)</text>
 
-                  <!-- ═══ AWS SAM / CloudFormation (outside AWS boundary) ═══ -->
-                  <rect x="286" y="416" width="180" height="30" rx="6" fill="#1a2332" stroke="#f59e0b" stroke-width="1"/>
-                  <text x="376" y="435" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
+                  <!-- ═══ AWS SAM / CloudFormation (centered below AWS boundary) ═══ -->
+                  <rect x="416" y="425" width="180" height="30" rx="6" fill="#1a2332" stroke="#f59e0b" stroke-width="1"/>
+                  <text x="506" y="444" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
 
-                  <!-- ═══ ARROWS (all 90° angles, no box crossings) ═══ -->
-                  <!-- Browser → Vercel CDN (left then down) -->
-                  <path d="M390,58 L132,58 L132,150" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
-                  <text x="260" y="52" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
-                  <!-- Browser → API Gateway (straight down) -->
-                  <line x1="510" y1="90" x2="510" y2="150" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
-                  <text x="526" y="125" fill="#64748b" font-size="9">REST API</text>
-                  <!-- API GW → Lambda ask_assistant (straight down) -->
-                  <line x1="391" y1="200" x2="391" y2="222" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arr-amber)"/>
-                  <text x="398" y="215" fill="#64748b" font-size="8">invoke</text>
-                  <!-- API GW → Lambda maintenance_history (straight down) -->
-                  <line x1="621" y1="200" x2="621" y2="222" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
-                  <text x="628" y="215" fill="#64748b" font-size="8">invoke</text>
-                  <!-- Lambda ask_assistant → S3 (straight down) -->
-                  <line x1="391" y1="294" x2="391" y2="316" stroke="#22c55e" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-green)"/>
-                  <text x="398" y="309" fill="#64748b" font-size="8">GetObject</text>
-                  <!-- Lambda ask_assistant → Gemini API (right through gap, 90° turns) -->
-                  <path d="M496,240 L506,240 L506,211 L774,211" fill="none" stroke="#818cf8" stroke-width="1.8" marker-end="url(#arr-indigo)"/>
-                  <text x="640" y="206" text-anchor="middle" fill="#64748b" font-size="9">HTTPS</text>
-                  <!-- GitHub Actions → SAM (down then right) -->
-                  <path d="M132,278 L132,431 L286,431" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arr-gray)"/>
+                  <!-- ═══ ARROWS ═══ -->
+                  <!-- Browser → Vercel CDN: route left along edge then down to triangle icon -->
+                  <path d="M390,65 L8,65 L8,172 L38,172" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
+                  <text x="199" y="60" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
+                  <!-- Browser → API Gateway: route to left part of API GW -->
+                  <path d="M390,90 L310,90 L310,150" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
+                  <text x="347" y="86" fill="#64748b" font-size="9">REST API</text>
+                  <!-- API GW → Lambda maintenance_history (left, dashed) -->
+                  <line x1="391" y1="200" x2="391" y2="235" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
+                  <text x="299" y="220" fill="#64748b" font-size="8">invoke</text>
+                  <!-- API GW → Lambda ask_assistant (right, solid) -->
+                  <line x1="621" y1="200" x2="621" y2="235" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arr-amber)"/>
+                  <text x="629" y="220" fill="#64748b" font-size="8">invoke</text>
+                  <!-- Lambda ask_assistant → S3 (straight down, right side) -->
+                  <line x1="621" y1="307" x2="621" y2="342" stroke="#22c55e" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-green)"/>
+                  <text x="629" y="328" fill="#64748b" font-size="8">GetObject</text>
+                  <!-- Lambda ask_assistant → Gemini API (straight right) -->
+                  <path d="M726,271 L774,271" fill="none" stroke="#818cf8" stroke-width="1.8" marker-end="url(#arr-indigo)"/>
+                  <text x="750" y="266" text-anchor="middle" fill="#64748b" font-size="9">HTTPS</text>
+                  <!-- GitHub Actions → SAM (down then right to centered SAM) -->
+                  <path d="M132,278 L132,440 L416,440" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arr-gray)"/>
                   <text x="140" y="370" fill="#64748b" font-size="9">deploys</text>
+                  <!-- AWS SAM → AWS CLOUD boundary (IaC setup, upward) -->
+                  <line x1="506" y1="425" x2="506" y2="415" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+                  <text x="514" y="422" fill="#64748b" font-size="8">IaC setup</text>
 
-                  <!-- ═══ LEGEND ═══ -->
-                  <rect x="10" y="470" width="760" height="80" rx="10" fill="#111827" stroke="#1e293b" stroke-width="1"/>
-                  <text x="390" y="488" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">LEGEND</text>
-                  <line x1="30" y1="510" x2="55" y2="510" stroke="#0d9488" stroke-width="2"/>
-                  <polygon points="55,506 55,514 63,510" fill="#0d9488"/>
-                  <text x="70" y="514" fill="#94a3b8" font-size="10">Vercel HTTPS (SPA)</text>
-                  <line x1="200" y1="510" x2="225" y2="510" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="225,506 225,514 233,510" fill="#f59e0b"/>
-                  <text x="240" y="514" fill="#94a3b8" font-size="10">AWS REST / invoke</text>
-                  <line x1="400" y1="510" x2="425" y2="510" stroke="#818cf8" stroke-width="2"/>
-                  <polygon points="425,506 425,514 433,510" fill="#818cf8"/>
-                  <text x="440" y="514" fill="#94a3b8" font-size="10">Gemini API (HTTPS)</text>
-                  <line x1="590" y1="510" x2="615" y2="510" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="615,506 615,514 623,510" fill="#22c55e"/>
-                  <text x="630" y="514" fill="#94a3b8" font-size="10">S3 RAG retrieval</text>
-                  <line x1="30" y1="536" x2="55" y2="536" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,3"/>
-                  <polygon points="55,532 55,540 63,536" fill="#6b7280"/>
-                  <text x="70" y="540" fill="#94a3b8" font-size="10">CI/CD deploy trigger</text>
-                  <rect x="200" y="530" width="14" height="14" rx="2" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
-                  <text x="220" y="540" fill="#94a3b8" font-size="10">AWS cloud boundary</text>
-                  <rect x="400" y="530" width="14" height="14" rx="2" fill="none" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="3,2"/>
-                  <text x="420" y="540" fill="#94a3b8" font-size="10">Vercel cloud boundary</text>
-                  <rect x="590" y="530" width="14" height="14" rx="2" fill="none" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="3,2"/>
-                  <text x="610" y="540" fill="#94a3b8" font-size="10">Google (external API)</text>
+                  <!-- ═══ LEGEND (horizontally centred) ═══ -->
+                  <rect x="130" y="470" width="760" height="80" rx="10" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+                  <text x="510" y="488" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">LEGEND</text>
+                  <line x1="150" y1="510" x2="175" y2="510" stroke="#0d9488" stroke-width="2"/>
+                  <polygon points="175,506 175,514 183,510" fill="#0d9488"/>
+                  <text x="190" y="514" fill="#94a3b8" font-size="10">Vercel HTTPS (SPA)</text>
+                  <line x1="320" y1="510" x2="345" y2="510" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="345,506 345,514 353,510" fill="#f59e0b"/>
+                  <text x="360" y="514" fill="#94a3b8" font-size="10">AWS REST / invoke</text>
+                  <line x1="520" y1="510" x2="545" y2="510" stroke="#818cf8" stroke-width="2"/>
+                  <polygon points="545,506 545,514 553,510" fill="#818cf8"/>
+                  <text x="560" y="514" fill="#94a3b8" font-size="10">Gemini API (HTTPS)</text>
+                  <line x1="710" y1="510" x2="735" y2="510" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="735,506 735,514 743,510" fill="#22c55e"/>
+                  <text x="750" y="514" fill="#94a3b8" font-size="10">S3 RAG retrieval</text>
+                  <line x1="150" y1="536" x2="175" y2="536" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,3"/>
+                  <polygon points="175,532 175,540 183,536" fill="#6b7280"/>
+                  <text x="190" y="540" fill="#94a3b8" font-size="10">CI/CD deploy trigger</text>
+                  <rect x="320" y="530" width="14" height="14" rx="2" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+                  <text x="340" y="540" fill="#94a3b8" font-size="10">AWS cloud boundary</text>
+                  <rect x="520" y="530" width="14" height="14" rx="2" fill="none" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="3,2"/>
+                  <text x="540" y="540" fill="#94a3b8" font-size="10">Vercel cloud boundary</text>
+                  <rect x="710" y="530" width="14" height="14" rx="2" fill="none" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="3,2"/>
+                  <text x="730" y="540" fill="#94a3b8" font-size="10">Google (external API)</text>
                 </svg>
               </div>
             </div>
@@ -1542,6 +1538,8 @@ function applyHash() {
   const hash = location.hash
   if (hash === '#architecture') {
     archOpen.value = true
+  } else if (hash === '#how-to-use') {
+    howToUseOpen.value = true
   } else if (hash === '#helper') {
     assistantOpen.value = true
     mobileView.value = 'chat'
@@ -1553,13 +1551,27 @@ function applyHash() {
     const turbine = turbines.find(t => t.id === rawId)
     archOpen.value = false
     if (turbine) {
-      selectedTurbine.value = turbine
       mobileView.value = 'detail'
       if (subview === 'history') {
+        selectedTurbine.value = turbine
         openHistoryModal(turbine, false)
+      } else if (subview.startsWith('param=')) {
+        const paramKey = subview.slice(6)
+        historyModalTurbine.value = null
+        historyModalData.value = []
+        if (selectedTurbine.value === turbine) {
+          // Same turbine — watch won't fire; set metric directly
+          detailMetricKey.value = paramKey
+        } else {
+          pendingMetricKey = paramKey
+          selectedTurbine.value = turbine
+        }
       } else {
         historyModalTurbine.value = null
         historyModalData.value = []
+        if (selectedTurbine.value !== turbine) {
+          selectedTurbine.value = turbine
+        }
       }
     } else {
       selectedTurbine.value = null
@@ -1567,6 +1579,7 @@ function applyHash() {
     }
   } else {
     archOpen.value = false
+    howToUseOpen.value = false
     if (selectedTurbine.value) {
       destroyDetailChart()
       selectedTurbine.value = null
@@ -1584,6 +1597,16 @@ function openArchModal() {
 
 function closeArchModal() {
   archOpen.value = false
+  pushHash('')
+}
+
+function openHowToUse() {
+  howToUseOpen.value = true
+  pushHash('#how-to-use')
+}
+
+function closeHowToUse() {
+  howToUseOpen.value = false
   pushHash('')
 }
 
@@ -1661,11 +1684,21 @@ const detailSparklineColor = computed(() => {
 
 function selectDetailMetric(key) {
   detailMetricKey.value = (detailMetricKey.value === key) ? null : key
+  if (selectedTurbine.value) {
+    const paramStr = detailMetricKey.value ? `/param=${detailMetricKey.value}` : ''
+    pushHash(`#equipment=${selectedTurbine.value.id}${paramStr}`)
+  }
 }
+
+// Plain `let` is intentional: this is set synchronously just before
+// `selectedTurbine.value = turbine` triggers the watch, so it must not be
+// reactive (a ref would risk being seen in a different microtask tick).
+let pendingMetricKey = null
 
 // Reset detail metric selection when switching turbines and manage chart
 watch(selectedTurbine, async (newVal) => {
-  detailMetricKey.value = null
+  detailMetricKey.value = pendingMetricKey
+  pendingMetricKey = null
   destroyDetailChart()
   if (newVal) {
     await nextTick()
@@ -1919,16 +1952,22 @@ function showAlertBalloon(turbine) {
 function focusAlertCard() {
   if (!alertBalloon.value?.turbineId) return
   const turbineId = alertBalloon.value.turbineId
+  const turbine = turbines.find(t => t.id === turbineId)
   alertBalloon.value = null
+
+  // If filters are active and the turbine would be hidden, clear status filters
+  if (anyFilterActive.value && turbine && !statusFilters[turbine.status]) {
+    clearFilters()
+  }
 
   // Clear any previous focus, then set the new one
   focusedCardId.value = null
   nextTick(() => {
     focusedCardId.value = turbineId
-    // Reset after animation
+    // Reset after animation (4 glow pulses × 2s each + 0.8s vibrate)
     setTimeout(() => {
       focusedCardId.value = null
-    }, 4000)
+    }, 8800)
   })
 
   // If we're in detail view, go back to fleet first
@@ -1976,10 +2015,12 @@ function getMetricColorClass(turbine, key) {
 }
 
 // ── Turbine Session ───────────────────────────────────────────────────────────
-function openTurbineSession(turbine) {
+function openTurbineSession(turbine, metricKey = null) {
+  pendingMetricKey = metricKey
   selectedTurbine.value = turbine
   mobileView.value = 'detail'
-  pushHash(`#equipment=${turbine.id}`)
+  const paramStr = metricKey ? `/param=${metricKey}` : ''
+  pushHash(`#equipment=${turbine.id}${paramStr}`)
 }
 
 function clearTurbineSelection() {
@@ -2052,7 +2093,8 @@ function closeHistoryModal() {
   historyModalTurbine.value = null
   historyModalData.value = []
   if (selectedTurbine.value) {
-    pushHash(`#equipment=${selectedTurbine.value.id}`)
+    const paramStr = detailMetricKey.value ? `/param=${detailMetricKey.value}` : ''
+    pushHash(`#equipment=${selectedTurbine.value.id}${paramStr}`)
   } else {
     pushHash('')
   }
@@ -2282,6 +2324,7 @@ const API_URL = '/api'
 
 function useQuestion(q) {
   inputText.value = q
+  nextTick(() => sendMessage())
 }
 
 function toggleAssistant() {

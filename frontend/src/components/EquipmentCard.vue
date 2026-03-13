@@ -21,7 +21,7 @@
         </div>
 
         <!-- Name + Location (clickable → drill-in) -->
-        <div class="flex-1 min-w-0 cursor-pointer" @click.stop="$emit('select', turbine)">
+        <div class="flex-1 min-w-0 cursor-pointer" @click.stop="$emit('select', turbine, activeMetricKey)">
           <p class="text-xs text-gray-500 uppercase tracking-widest font-medium leading-none mb-0.5 truncate">
             {{ turbine.location }}
           </p>
@@ -106,7 +106,7 @@
             ↓{{ chartMin }} · ↑{{ chartMax }} {{ activeParam.unit }}
           </span>
         </div>
-        <div class="h-16 md:h-20 relative">
+        <div class="h-16 md:h-20 relative cursor-pointer" @click.stop="$emit('select', turbine, activeMetricKey)" title="Click to open full detail view">
           <canvas ref="chartCanvas"></canvas>
         </div>
       </div>
@@ -118,7 +118,7 @@
         :class="turbine.status === 'NOK'
           ? 'bg-red-900/40 border border-red-700 text-red-300 hover:bg-red-900/60'
           : 'bg-yellow-900/40 border border-yellow-700 text-yellow-300 hover:bg-yellow-900/60'"
-        @click.stop="$emit('select', turbine)"
+        @click.stop="$emit('select', turbine, activeMetricKey)"
         :title="'Click to open full detail view'"
       >
         <span class="flex-1">⚠ {{ turbine.alert }}</span>
@@ -192,7 +192,7 @@ watch(() => props.focused, (val) => {
   if (val) {
     isFocused.value = true
     if (focusTimeout) clearTimeout(focusTimeout)
-    focusTimeout = setTimeout(() => { isFocused.value = false }, 3000)
+    focusTimeout = setTimeout(() => { isFocused.value = false }, 8800)
     // Scroll into view
     if (cardRef.value) {
       cardRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -475,13 +475,13 @@ function onImageError() {
 }
 
 .card-focus-nok {
-  animation: card-vibrate 0.5s ease-in-out, card-glow-nok 1.5s ease-in-out 2;
+  animation: card-vibrate 0.8s ease-in-out, card-glow-nok 2s ease-in-out 4;
 }
 .card-focus-risk {
-  animation: card-vibrate 0.5s ease-in-out, card-glow-risk 1.5s ease-in-out 2;
+  animation: card-vibrate 0.8s ease-in-out, card-glow-risk 2s ease-in-out 4;
 }
 .card-focus-ok {
-  animation: card-vibrate 0.5s ease-in-out, card-glow-ok 1.5s ease-in-out 2;
+  animation: card-vibrate 0.8s ease-in-out, card-glow-ok 2s ease-in-out 4;
 }
 
 /* ── Bot icon button hover glow ── */
