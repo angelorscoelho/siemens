@@ -6,8 +6,8 @@ Description: >
 
 Globals:
   Function:
-    Timeout: 30
-    MemorySize: 256
+    Timeout: 90
+    MemorySize: 768
     Runtime: python3.11
     Environment:
       Variables:
@@ -24,13 +24,14 @@ Parameters:
 
   GeminiModel:
     Type: String
-    Default: gemini-2.5-pro
+    Default: gemini-2.0-flash
     AllowedValues:
-      - gemini-2.5-pro
       - gemini-2.0-flash
+      - gemini-2.5-flash
+      - gemini-2.5-pro
     Description: >
-      Gemini chat model. gemini-2.5-pro delivers the highest reasoning quality
-      for complex industrial maintenance queries.
+      Gemini chat model. gemini-2.0-flash is the fastest and recommended
+      default. gemini-2.5-pro delivers higher reasoning quality but is slower.
 
   S3BucketName:
     Type: String

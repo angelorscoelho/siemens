@@ -8,7 +8,7 @@ Real RAG Pipeline (S3 + Gemini Embeddings + Cosine Similarity)
 2. Embed the query using Google text-embedding-004 (768-dim vector)
 3. Download pre-computed chunk embeddings from S3 (single JSON manifest)
 4. Rank chunks by cosine similarity; inject top-K into the system prompt
-5. Call gemini-2.5-pro with the grounded context
+5. Call gemini-2.0-flash with the grounded context
 6. Return {"answer": "...", "sources": [...], "model": "..."} to the client
 
 No external SDK required — both APIs called via stdlib urllib.
@@ -24,7 +24,7 @@ Run ingest_manuals.py once locally to populate the bucket before first use.
 Environment variables (set via SAM template.yaml)
 --------------------------------------------------
   GEMINI_API_KEY  -- Google AI Studio / Vertex AI key
-  GEMINI_MODEL    -- chat model (default: gemini-2.5-pro)
+  GEMINI_MODEL    -- chat model (default: gemini-2.0-flash)
   S3_BUCKET_NAME  -- bucket containing chunks/embeddings.json
   RAG_TOP_K       -- number of chunks to retrieve (default: 3)
 """
@@ -32,6 +32,7 @@ Environment variables (set via SAM template.yaml)
 import json
 import math
 import os
+import time
 import logging
 import urllib.request
 import urllib.error
@@ -47,6 +48,10 @@ GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 S3_EMBEDDINGS_KEY = "chunks/embeddings.json" # single manifest downloaded per request
 DEFAULT_TOP_K = 3                            # context chunks injected into the prompt
 
+# /tmp cache for embeddings (survives across warm Lambda invocations)
+_CACHE_PATH = "/tmp/embeddings_cache.json"
+_CACHE_TTL_SECONDS = 3600  # 1 hour
+
 SYSTEM_PROMPT = (
     "You are an expert gas turbine maintenance engineer at Siemens Energy. "
     "You are given retrieved excerpts from the official Siemens SGT-series Maintenance Manual "
@@ -57,11 +62,34 @@ SYSTEM_PROMPT = (
     "Use precise engineering terminology appropriate for a field maintenance technician."
 )
 
+FALLBACK_SYSTEM_PROMPT = (
+    "You are an expert gas turbine maintenance engineer at Siemens Energy. "
+    "Answer the following question using your general engineering knowledge. "
+    "Note: the retrieval-augmented context was unavailable for this request, "
+    "so state clearly that the answer is based on general knowledge and the user "
+    "should verify against the official Siemens SGT-series Maintenance Manual."
+)
+
 # S3 client (module-level for Lambda container reuse)
 _s3 = boto3.client("s3")
 
 
-# Vector helpers
+# ── Timing helpers ────────────────────────────────────────────────────────────
+
+def _remaining_ms(context) -> int:
+    """Return remaining Lambda execution time in ms, or a large value if unavailable."""
+    try:
+        return context.get_remaining_time_in_millis()
+    except Exception:
+        return 300_000  # 5 min fallback for local testing
+
+
+def _elapsed_since(start: float) -> float:
+    """Return seconds elapsed since *start*."""
+    return time.time() - start
+
+
+# ── Vector helpers ────────────────────────────────────────────────────────────
 
 def _dot(a: list, b: list) -> float:
     """Dot product of two equal-length vectors."""
@@ -79,7 +107,7 @@ def _cosine_similarity(a: list, b: list) -> float:
     return _dot(a, b) / denom if denom else 0.0
 
 
-# RAG retrieval
+# ── RAG retrieval ─────────────────────────────────────────────────────────────
 
 def _embed_query(api_key: str, query: str) -> list:
     """
@@ -95,7 +123,7 @@ def _embed_query(api_key: str, query: str) -> list:
         url, data=payload,
         headers={"Content-Type": "application/json"}, method="POST",
     )
-    with urllib.request.urlopen(req, timeout=10) as resp:
+    with urllib.request.urlopen(req, timeout=15) as resp:
         body = json.loads(resp.read().decode("utf-8"))
     return body["embedding"]["values"]
 
@@ -103,16 +131,36 @@ def _embed_query(api_key: str, query: str) -> list:
 def _load_chunks_from_s3(bucket: str) -> list:
     """
     Download the pre-computed embeddings manifest from S3.
-    The manifest is a JSON array of chunk objects:
-      [{"id": "...", "text": "...", "embedding": [...], "metadata": {...}}, ...]
-
-    Downloading a single file keeps cold-start latency low -- typically < 100 ms
-    for a knowledge base of ~200 chunks (< 5 MB compressed).
+    Uses /tmp cache with a 1-hour TTL to avoid repeated downloads on warm starts.
     """
+    # Check /tmp cache first
+    try:
+        if os.path.exists(_CACHE_PATH):
+            age = time.time() - os.path.getmtime(_CACHE_PATH)
+            if age < _CACHE_TTL_SECONDS:
+                logger.info("Loading embeddings from /tmp cache (age=%.1fs)", age)
+                with open(_CACHE_PATH, "r", encoding="utf-8") as f:
+                    chunks = json.load(f)
+                logger.info("Loaded %d chunks from cache.", len(chunks))
+                return chunks
+            logger.info("Cache expired (age=%.1fs), re-downloading.", age)
+    except Exception as exc:
+        logger.warning("Cache read failed: %s — falling back to S3.", exc)
+
     logger.info("Downloading embeddings manifest from s3://%s/%s", bucket, S3_EMBEDDINGS_KEY)
     obj = _s3.get_object(Bucket=bucket, Key=S3_EMBEDDINGS_KEY)
-    chunks = json.loads(obj["Body"].read().decode("utf-8"))
+    raw = obj["Body"].read().decode("utf-8")
+    chunks = json.loads(raw)
     logger.info("Loaded %d chunks from S3.", len(chunks))
+
+    # Write to /tmp cache
+    try:
+        with open(_CACHE_PATH, "w", encoding="utf-8") as f:
+            f.write(raw)
+        logger.info("Embeddings cached to %s", _CACHE_PATH)
+    except Exception as exc:
+        logger.warning("Failed to write cache: %s", exc)
+
     return chunks
 
 
@@ -130,24 +178,26 @@ def _retrieve_top_k(query_embedding: list, chunks: list, top_k: int) -> list:
     return scored[:top_k]
 
 
-# Gemini chat
+# ── Gemini chat ───────────────────────────────────────────────────────────────
 
-def _call_gemini_chat(api_key: str, model: str, context_text: str, query: str) -> str:
+def _call_gemini_chat(api_key: str, model: str, context_text: str, query: str,
+                      *, system_prompt: str = SYSTEM_PROMPT) -> str:
     """
     Call the Gemini generateContent REST endpoint with retrieved context.
     Uses stdlib urllib -- zero external dependencies.
-    gemini-2.5-pro is the default: highest reasoning quality for complex
-    industrial maintenance queries.
     """
     url = f"{GEMINI_API_BASE}/{model}:generateContent?key={api_key}"
-    user_message = (
-        f"[CONTEXT -- retrieved from Siemens SGT Maintenance Manual]\n"
-        f"{context_text}\n\n"
-        f"[QUESTION]\n{query}"
-    )
+    if context_text:
+        user_message = (
+            f"[CONTEXT -- retrieved from Siemens SGT Maintenance Manual]\n"
+            f"{context_text}\n\n"
+            f"[QUESTION]\n{query}"
+        )
+    else:
+        user_message = f"[QUESTION]\n{query}"
     payload = json.dumps({
         "contents": [{"role": "user", "parts": [{"text": user_message}]}],
-        "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+        "systemInstruction": {"parts": [{"text": system_prompt}]},
         "generationConfig": {
             "temperature": 0.2,
             "maxOutputTokens": 1200,
@@ -164,7 +214,7 @@ def _call_gemini_chat(api_key: str, model: str, context_text: str, query: str) -
         url, data=payload,
         headers={"Content-Type": "application/json"}, method="POST",
     )
-    with urllib.request.urlopen(req, timeout=25) as resp:
+    with urllib.request.urlopen(req, timeout=30) as resp:
         body = json.loads(resp.read().decode("utf-8"))
     candidates = body.get("candidates", [])
     if not candidates:
@@ -175,7 +225,7 @@ def _call_gemini_chat(api_key: str, model: str, context_text: str, query: str) -
     return parts[0].get("text", "").strip()
 
 
-# CORS helpers
+# ── CORS helpers ──────────────────────────────────────────────────────────────
 
 def _build_cors_headers(event: dict) -> dict:
     """Return CORS headers. Echoes the request Origin if present."""
@@ -196,9 +246,10 @@ def _error(status: int, message: str, headers: dict) -> dict:
     }
 
 
-# Lambda entry point
+# ── Lambda entry point ────────────────────────────────────────────────────────
 
 def lambda_handler(event: dict, context) -> dict:  # noqa: ANN001
+    handler_start = time.time()
     cors_headers = _build_cors_headers(event)
 
     # Handle CORS preflight
@@ -222,18 +273,26 @@ def lambda_handler(event: dict, context) -> dict:  # noqa: ANN001
         logger.error("GEMINI_API_KEY environment variable is not set.")
         return _error(500, "Server configuration error: Gemini API key not set.", cors_headers)
 
-    chat_model = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
+    chat_model = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
     bucket = os.environ.get("S3_BUCKET_NAME", "")
     if not bucket:
         logger.error("S3_BUCKET_NAME environment variable is not set.")
         return _error(500, "Server configuration error: S3 bucket name not set.", cors_headers)
 
     top_k = int(os.environ.get("RAG_TOP_K", DEFAULT_TOP_K))
+    timings = {}
 
-    # Step 1: Embed the user query
+    # ── Step 1: Embed the user query ──────────────────────────────────────
+    if _remaining_ms(context) < 15_000:
+        logger.warning("EARLY BAILOUT before embed — only %d ms left", _remaining_ms(context))
+        return _error(504, "Insufficient time remaining for processing.", cors_headers)
+
     try:
-        logger.info("Embedding query with %s...", EMBEDDING_MODEL)
+        t0 = time.time()
+        logger.info("[step=embed] start model=%s remaining_ms=%d", EMBEDDING_MODEL, _remaining_ms(context))
         query_embedding = _embed_query(api_key, query)
+        timings["embed_s"] = round(_elapsed_since(t0), 2)
+        logger.info("[step=embed] done in %.2fs", timings["embed_s"])
     except urllib.error.HTTPError as exc:
         logger.exception("Gemini embedding HTTP error %d", exc.code)
         return _error(502, f"Embedding service error (HTTP {exc.code}).", cors_headers)
@@ -241,32 +300,64 @@ def lambda_handler(event: dict, context) -> dict:  # noqa: ANN001
         logger.exception("Gemini embedding error: %s", exc)
         return _error(502, f"Embedding service error: {exc}", cors_headers)
 
-    # Step 2: Download chunk embeddings from S3
+    # ── Step 2: Download chunk embeddings from S3 ─────────────────────────
+    rag_skipped = False
+    top_chunks = []
+    context_text = ""
+
+    if _remaining_ms(context) < 15_000:
+        logger.warning("EARLY BAILOUT before S3 — only %d ms left, skipping RAG", _remaining_ms(context))
+        rag_skipped = True
+    else:
+        try:
+            t0 = time.time()
+            logger.info("[step=s3_load] start remaining_ms=%d", _remaining_ms(context))
+            chunks = _load_chunks_from_s3(bucket)
+            timings["s3_load_s"] = round(_elapsed_since(t0), 2)
+            logger.info("[step=s3_load] done in %.2fs (%d chunks)", timings["s3_load_s"], len(chunks))
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("S3 retrieval error: %s — falling back to no-RAG", exc)
+            rag_skipped = True
+
+    # ── Step 3: Cosine similarity -> top-K retrieval ──────────────────────
+    if not rag_skipped:
+        t0 = time.time()
+        top_chunks = _retrieve_top_k(query_embedding, chunks, top_k)
+        timings["similarity_s"] = round(_elapsed_since(t0), 2)
+        logger.info(
+            "[step=similarity] done in %.2fs — top-%d scores: %s",
+            timings["similarity_s"], top_k,
+            [round(c["_score"], 4) for c in top_chunks],
+        )
+
+        context_text = "\n\n---\n\n".join(
+            f"[Source: {c.get('metadata', {}).get('section', c['id'])}]\n{c['text']}"
+            for c in top_chunks
+        )
+
+    # ── Fallback check: if total RAG time > 30 s, skip context ────────────
+    total_rag_time = _elapsed_since(handler_start)
+    if total_rag_time > 30 and not rag_skipped:
+        logger.warning("RAG pipeline took %.1fs — skipping context for Gemini call", total_rag_time)
+        rag_skipped = True
+        context_text = ""
+        top_chunks = []
+
+    # ── Step 4: Call Gemini chat ──────────────────────────────────────────
+    if _remaining_ms(context) < 15_000:
+        logger.warning("EARLY BAILOUT before Gemini — only %d ms left", _remaining_ms(context))
+        return _error(504, "Insufficient time remaining for LLM call.", cors_headers)
+
+    system_prompt = FALLBACK_SYSTEM_PROMPT if rag_skipped else SYSTEM_PROMPT
+
     try:
-        chunks = _load_chunks_from_s3(bucket)
-    except Exception as exc:  # noqa: BLE001
-        logger.exception("S3 retrieval error: %s", exc)
-        return _error(502, f"Knowledge base retrieval error: {exc}", cors_headers)
-
-    # Step 3: Cosine similarity -> top-K retrieval
-    top_chunks = _retrieve_top_k(query_embedding, chunks, top_k)
-    logger.info(
-        "Top-%d chunks retrieved -- scores: %s",
-        top_k,
-        [round(c["_score"], 4) for c in top_chunks],
-    )
-
-    # Build a single context block from the retrieved chunks
-    context_text = "\n\n---\n\n".join(
-        f"[Source: {c.get('metadata', {}).get('section', c['id'])}]\n{c['text']}"
-        for c in top_chunks
-    )
-
-    # Step 4: Call Gemini chat
-    try:
-        logger.info("Calling Gemini chat model: %s", chat_model)
-        answer = _call_gemini_chat(api_key, chat_model, context_text, query)
-        logger.info("Answer generated successfully.")
+        t0 = time.time()
+        logger.info("[step=gemini] start model=%s rag_skipped=%s remaining_ms=%d",
+                     chat_model, rag_skipped, _remaining_ms(context))
+        answer = _call_gemini_chat(api_key, chat_model, context_text, query,
+                                   system_prompt=system_prompt)
+        timings["gemini_s"] = round(_elapsed_since(t0), 2)
+        logger.info("[step=gemini] done in %.2fs", timings["gemini_s"])
     except urllib.error.HTTPError as exc:
         error_body = exc.read().decode("utf-8", errors="replace")
         logger.exception("Gemini chat HTTP error %d: %s", exc.code, error_body)
@@ -279,7 +370,10 @@ def lambda_handler(event: dict, context) -> dict:  # noqa: ANN001
         logger.exception("Gemini chat error: %s", exc)
         return _error(502, f"LLM service error: {exc}", cors_headers)
 
-    # Step 5: Return result
+    # ── Step 5: Return result ─────────────────────────────────────────────
+    timings["total_s"] = round(_elapsed_since(handler_start), 2)
+    logger.info("[step=done] total=%.2fs timings=%s", timings["total_s"], json.dumps(timings))
+
     sources = [
         {
             "id": c["id"],
@@ -291,10 +385,15 @@ def lambda_handler(event: dict, context) -> dict:  # noqa: ANN001
     ]
     payload = {
         "answer": answer,
-        "sources": sources,           # chunk provenance exposed to the frontend
+        "sources": sources,
         "model": chat_model,
         "embedding_model": EMBEDDING_MODEL,
         "top_k": top_k,
+        "diagnostics": {
+            "timings": timings,
+            "rag_skipped": rag_skipped,
+            "chunk_count": len(top_chunks),
+        },
     }
     return {
         "statusCode": 200,
