@@ -371,6 +371,7 @@
               :focused="focusedCardId === turbine.id"
               @select="openTurbineSession"
               @show-history="openHistoryModal"
+              @ask-assistant="openTurbineWithAssistant"
             />
           </div>
 
@@ -1647,6 +1648,11 @@ function askAboutTurbineMobile(turbine) {
   const query = `Analyze the current status of ${turbine.name} ${turbine.type} (Unit ${turbine.id}): vibration is ${turbine.vibration.toFixed(3)} mm/s, exhaust temperature is ${turbine.exhaustTemp.toFixed(1)}°C, and it has ${Math.floor(turbine.hoursSinceOverhaul).toLocaleString()} hours since last overhaul. What maintenance actions should be taken?`
   inputText.value = query
   nextTick(() => sendMessage())
+}
+
+function openTurbineWithAssistant(turbine) {
+  openTurbineSession(turbine)
+  askAboutTurbine(turbine)
 }
 
 // ── Maintenance History Modal ─────────────────────────────────────────────────

@@ -114,12 +114,35 @@
       <!-- ── Alert Banner ── -->
       <div
         v-if="turbine.alert"
-        class="mt-2 p-2 rounded text-xs leading-snug"
+        class="mt-2 p-2 rounded text-xs leading-snug relative flex items-start gap-1 cursor-pointer group/alert"
         :class="turbine.status === 'NOK'
-          ? 'bg-red-900/40 border border-red-700 text-red-300'
-          : 'bg-yellow-900/40 border border-yellow-700 text-yellow-300'"
+          ? 'bg-red-900/40 border border-red-700 text-red-300 hover:bg-red-900/60'
+          : 'bg-yellow-900/40 border border-yellow-700 text-yellow-300 hover:bg-yellow-900/60'"
+        @click.stop="$emit('select', turbine)"
+        :title="'Click to open full detail view'"
       >
-        ⚠ {{ turbine.alert }}
+        <span class="flex-1">⚠ {{ turbine.alert }}</span>
+        <!-- Bot / AI assistant button -->
+        <button
+          @click.stop="$emit('ask-assistant', turbine)"
+          class="shrink-0 ml-1 p-0.5 rounded transition-colors opacity-60 hover:opacity-100"
+          :class="turbine.status === 'NOK'
+            ? 'hover:bg-red-700/50 text-red-300'
+            : 'hover:bg-yellow-700/50 text-yellow-300'"
+          title="Ask Assistant for Detailed Analysis"
+          aria-label="Ask Assistant for Detailed Analysis"
+        >
+          <!-- Bot icon -->
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="8" width="18" height="12" rx="2"/>
+            <path d="M12 2v4"/>
+            <circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/>
+            <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+            <path d="M9 17h6"/>
+            <path d="M3 12H1m22 0h-2"/>
+          </svg>
+        </button>
       </div>
 
       <!-- Mobile tap hint -->
@@ -144,7 +167,7 @@ const props = defineProps({
   focused: { type: Boolean, default: false },
 })
 
-defineEmits(['select', 'show-history'])
+defineEmits(['select', 'show-history', 'ask-assistant'])
 
 // ── Equipment image with reactive fallback ────────────────────────────────────
 // Use a ref so the fallback SVG survives Vue re-renders triggered by telemetry
