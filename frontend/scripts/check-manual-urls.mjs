@@ -10,7 +10,6 @@
  */
 
 import { readFileSync } from 'fs'
-import { createRequire } from 'module'
 
 const args = process.argv.slice(2)
 const failOnError = args.includes('--fail-on-error')

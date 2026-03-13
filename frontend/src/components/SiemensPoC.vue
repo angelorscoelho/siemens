@@ -1690,7 +1690,9 @@ function selectDetailMetric(key) {
   }
 }
 
-// Pending metric key to carry over when drilling into a card from the fleet view
+// Plain `let` is intentional: this is set synchronously just before
+// `selectedTurbine.value = turbine` triggers the watch, so it must not be
+// reactive (a ref would risk being seen in a different microtask tick).
 let pendingMetricKey = null
 
 // Reset detail metric selection when switching turbines and manage chart
