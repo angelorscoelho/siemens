@@ -23,10 +23,11 @@ Run ingest_manuals.py once locally to populate the bucket before first use.
 
 Environment variables (set via SAM template.yaml)
 --------------------------------------------------
-  GEMINI_API_KEY  -- Google AI Studio / Vertex AI key
-  GEMINI_MODEL    -- chat model (default: gemini-2.0-flash)
-  S3_BUCKET_NAME  -- bucket containing chunks/embeddings.json
-  RAG_TOP_K       -- number of chunks to retrieve (default: 3)
+    GEMINI_API_KEY  -- Google AI Studio / Vertex AI key
+    GEMINI_MODEL    -- chat model (default: gemini-2.0-flash)
+            Fallback order: gemini-2.0-flash → gemini-2.5-flash → gemini-2.5-pro
+    S3_BUCKET_NAME  -- bucket containing chunks/embeddings.json
+    RAG_TOP_K       -- number of chunks to retrieve (default: 3)
 """
 
 import json
@@ -275,7 +276,8 @@ def lambda_handler(event: dict, context) -> dict:  # noqa: ANN001
         logger.error("GEMINI_API_KEY environment variable is not set.")
         return _error(500, "Server configuration error: Gemini API key not set.", cors_headers)
 
-    chat_model = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+    # Fallback tactic: try 2.5-flash, then 2.0-flash, then 2.5-pro
+    chat_model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
     bucket = os.environ.get("S3_BUCKET_NAME", "")
     if not bucket:
         logger.error("S3_BUCKET_NAME environment variable is not set.")

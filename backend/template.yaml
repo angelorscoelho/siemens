@@ -24,14 +24,13 @@ Parameters:
 
   GeminiModel:
     Type: String
-    Default: gemini-2.0-flash
+    Default: gemini-2.5-flash
     AllowedValues:
-      - gemini-2.0-flash
       - gemini-2.5-flash
+      - gemini-2.0-flash
       - gemini-2.5-pro
     Description: >
-      Gemini chat model. gemini-2.0-flash is the fastest and recommended
-      default. gemini-2.5-pro delivers higher reasoning quality but is slower.
+      Gemini chat model. gemini-2.0-flash is the fastest and recommended default. gemini-2.5-flash is faster than pro, and gemini-2.5-pro delivers the highest reasoning quality but is slower.
 
   S3BucketName:
     Type: String

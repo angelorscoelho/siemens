@@ -245,7 +245,7 @@ sam deploy --guided
 | **Stack Name** | `siemens-poc` | Identifies your CloudFormation stack |
 | **AWS Region** | `us-east-1` | (or your preferred region) |
 | **GeminiApiKey** | `AIza_...` | Your actual API key — marked `NoEcho` in UI |
-| **GeminiModel** | `gemini-2.5-pro` | Default; `gemini-2.5-flash` is faster but less capable |
+| **GeminiModel** | `gemini-2.5-flash` | Default; `gemini-2.0-flash` is fallback; `gemini-2.5-pro` is highest quality but slower |
 | **S3BucketName** | `siemens-rag-knowledge-base` | Must be globally unique; append suffix if collision |
 | **AllowedOrigin** | `*` | For testing; set to your Vercel URL in production |
 | **Confirm changeset?** | `y` | Review and apply CloudFormation changes |
@@ -317,7 +317,8 @@ curl -s -X POST "$API_URL/ask-assistant" \
       "preview": "SIEMENS SGT-SERIES — SECTION 7: VIBRATION THRESHOLDS..."
     }
   ],
-  "model": "gemini-2.5-pro",
+  "model": "gemini-2.0-flash",  // default
+  // Fallback order: gemini-2.0-flash → gemini-2.5-flash → gemini-2.5-pro
   "embedding_model": "text-embedding-004",
   "top_k": 3,
   "diagnostics": {
@@ -522,7 +523,8 @@ curl -X POST "https://<api-id>.execute-api.us-east-1.amazonaws.com/ask-assistant
       "preview": "SIEMENS SGT-SERIES — SECTION 7: VIBRATION THRESHOLDS Bearing Vibration Alert Levels..."
     }
   ],
-  "model": "gemini-2.5-pro",
+  "model": "gemini-2.0-flash",  // default
+  // Fallback order: gemini-2.0-flash → gemini-2.5-flash → gemini-2.5-pro
   "embedding_model": "text-embedding-004",
   "top_k": 3,
   "diagnostics": {
