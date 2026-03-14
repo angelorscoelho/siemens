@@ -1,7 +1,7 @@
 <template>
   <transition name="balloon">
     <div v-if="balloon"
-      class="fixed top-[3.5rem] z-50 max-w-[calc(100vw-1.5rem)] md:max-w-[280px] rounded-xl border shadow-2xl backdrop-blur-sm overflow-hidden cursor-pointer"
+      class="fixed top-[60px] z-50 max-w-[calc(100vw-1.5rem)] md:max-w-[280px] rounded-xl border shadow-2xl backdrop-blur-sm overflow-hidden cursor-pointer"
       :class="balloonClass"
       :style="{ right: assistantOpen ? 'calc(clamp(300px, 25%, 400px) + 1.5rem)' : '1.5rem' }"
       @click="$emit('focus')"
