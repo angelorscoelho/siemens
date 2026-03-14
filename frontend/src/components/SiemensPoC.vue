@@ -1380,6 +1380,7 @@
       :rendered-summary="fleetOverview.aiSummary ? renderMarkdown(fleetOverview.aiSummary) : ''"
       :turbines="turbines"
       @close="closeFleetOverviewModal"
+      @open-turbine="onOpenTurbineFromOverview"
       @refresh="loadFleetOverview"
     />
 

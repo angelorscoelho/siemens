@@ -95,7 +95,7 @@
                     </svg>
                   </button>
                   <div v-show="!nokCollapsed" class="divide-y divide-red-900/30">
-                    <div v-for="t in nokTurbines" :key="t.id" class="px-4 py-3 bg-gray-950/80">
+                    <div v-for="t in nokTurbines" :key="t.id" class="px-4 py-3 bg-gray-950/80 cursor-pointer hover:bg-gray-900 transition-colors" @click="$emit('open-turbine', t.id, 'NOK')">
                       <div class="flex items-center gap-2 mb-1.5">
                         <span class="text-sm font-bold text-red-300">{{ t.name }}</span>
                         <span class="text-xs text-gray-500 font-mono">{{ t.id }}</span>
@@ -126,7 +126,7 @@
                     </svg>
                   </button>
                   <div v-show="!riskCollapsed" class="divide-y divide-yellow-900/20">
-                    <div v-for="t in riskTurbines" :key="t.id" class="px-4 py-3 bg-gray-950/80">
+                    <div v-for="t in riskTurbines" :key="t.id" class="px-4 py-3 bg-gray-950/80 cursor-pointer hover:bg-gray-900 transition-colors" @click="$emit('open-turbine', t.id, 'RISK')">
                       <div class="flex items-center gap-2 mb-1.5">
                         <span class="text-sm font-bold text-yellow-300">{{ t.name }}</span>
                         <span class="text-xs text-gray-500 font-mono">{{ t.id }}</span>
@@ -237,7 +237,7 @@ const props = defineProps({
   turbines: { type: Array, default: () => [] },
 })
 
-defineEmits(['close', 'refresh'])
+defineEmits(['close', 'refresh', 'open-turbine'])
 
 const modalRef = ref(null)
 
