@@ -77,8 +77,93 @@
               <span class="text-xs text-amber-300">{{ stateChanges }} state change{{ stateChanges !== 1 ? 's' : '' }} since last overview</span>
             </div>
 
+            <!-- ── NOK Section ── -->
+            <div v-if="nokTurbines.length > 0" class="rounded-xl border border-red-800/60 overflow-hidden">
+              <div class="px-4 py-2.5 bg-red-900/30 border-b border-red-800/40 flex items-center gap-2">
+                <span class="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
+                <span class="text-xs font-bold text-red-300 uppercase tracking-wider">Critical — Immediate Action Required</span>
+                <span class="ml-auto text-xs text-red-400 font-mono">{{ nokTurbines.length }} unit{{ nokTurbines.length !== 1 ? 's' : '' }}</span>
+              </div>
+              <div class="divide-y divide-red-900/30">
+                <div v-for="t in nokTurbines" :key="t.id" class="px-4 py-3 bg-gray-950/80">
+                  <div class="flex items-center gap-2 mb-1.5">
+                    <span class="text-sm font-bold text-red-300">{{ t.name }}</span>
+                    <span class="text-xs text-gray-500 font-mono">{{ t.id }}</span>
+                    <span class="text-xs text-gray-600">·</span>
+                    <span class="text-xs text-gray-400">{{ t.type }}</span>
+                  </div>
+                  <p class="text-xs text-red-200/80 leading-relaxed">{{ t.alert || 'Critical condition — parameters exceed safe operating limits.' }}</p>
+                  <div class="flex flex-wrap gap-3 mt-2 text-[11px] text-gray-400">
+                    <span>Vibration: <strong class="text-red-300">{{ t.vibration?.toFixed(1) }} mm/s</strong></span>
+                    <span>Exhaust: <strong class="text-red-300">{{ t.exhaustTemp?.toFixed(0) }}°C</strong></span>
+                    <span>Hours: <strong class="text-gray-300">{{ Math.floor(t.hoursSinceOverhaul).toLocaleString() }}h</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── RISK Section ── -->
+            <div v-if="riskTurbines.length > 0" class="rounded-xl border border-yellow-800/60 overflow-hidden">
+              <div class="px-4 py-2.5 bg-yellow-900/20 border-b border-yellow-800/40 flex items-center gap-2">
+                <span class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+                <span class="text-xs font-bold text-yellow-300 uppercase tracking-wider">Warning — Monitor Closely</span>
+                <span class="ml-auto text-xs text-yellow-400 font-mono">{{ riskTurbines.length }} unit{{ riskTurbines.length !== 1 ? 's' : '' }}</span>
+              </div>
+              <div class="divide-y divide-yellow-900/20">
+                <div v-for="t in riskTurbines" :key="t.id" class="px-4 py-3 bg-gray-950/80">
+                  <div class="flex items-center gap-2 mb-1.5">
+                    <span class="text-sm font-bold text-yellow-300">{{ t.name }}</span>
+                    <span class="text-xs text-gray-500 font-mono">{{ t.id }}</span>
+                    <span class="text-xs text-gray-600">·</span>
+                    <span class="text-xs text-gray-400">{{ t.type }}</span>
+                  </div>
+                  <p class="text-xs text-yellow-200/80 leading-relaxed">{{ t.alert || 'Elevated readings — schedule preventive review.' }}</p>
+                  <div class="flex flex-wrap gap-3 mt-2 text-[11px] text-gray-400">
+                    <span>Vibration: <strong :class="t.vibrationAlert ? 'text-yellow-300' : 'text-gray-300'">{{ t.vibration?.toFixed(1) }} mm/s</strong></span>
+                    <span>Exhaust: <strong :class="t.tempAlert ? 'text-yellow-300' : 'text-gray-300'">{{ t.exhaustTemp?.toFixed(0) }}°C</strong></span>
+                    <span>Hours: <strong class="text-gray-300">{{ Math.floor(t.hoursSinceOverhaul).toLocaleString() }}h</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── OK Section ── -->
+            <div v-if="okTurbines.length > 0" class="rounded-xl border border-teal-800/40 overflow-hidden">
+              <div class="px-4 py-2.5 bg-teal-900/20 border-b border-teal-800/30 flex items-center gap-2">
+                <span class="w-2 h-2 bg-teal-400 rounded-full"></span>
+                <span class="text-xs font-bold text-teal-300 uppercase tracking-wider">Operational — Normal</span>
+                <span class="ml-auto text-xs text-teal-400 font-mono">{{ okTurbines.length }} unit{{ okTurbines.length !== 1 ? 's' : '' }}</span>
+              </div>
+              <div class="divide-y divide-teal-900/20">
+                <div v-for="t in okTurbines" :key="t.id" class="px-4 py-2.5 bg-gray-950/80 flex items-center gap-3">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-semibold text-teal-300">{{ t.name }}</span>
+                      <span class="text-xs text-gray-500 font-mono">{{ t.id }}</span>
+                      <span class="text-xs text-gray-600">·</span>
+                      <span class="text-xs text-gray-400">{{ t.type }}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-3 mt-1 text-[11px] text-gray-500">
+                      <span>Vib: {{ t.vibration?.toFixed(1) }} mm/s</span>
+                      <span>Exh: {{ t.exhaustTemp?.toFixed(0) }}°C</span>
+                      <span>{{ Math.floor(t.hoursSinceOverhaul).toLocaleString() }}h since overhaul</span>
+                    </div>
+                  </div>
+                  <span class="shrink-0 px-2 py-0.5 text-[10px] font-bold rounded-full bg-teal-900/60 text-teal-400 border border-teal-800">OK</span>
+                </div>
+              </div>
+            </div>
+
             <!-- AI summary -->
             <div class="bg-gray-900/60 rounded-xl border border-gray-800 p-5">
+              <h3 class="text-xs font-bold text-teal-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 2v4"/><circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/>
+                  <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+                  <path d="M9 17h6"/>
+                </svg>
+                AI Fleet Assessment
+              </h3>
               <div v-if="overview.loading" class="flex items-center gap-3 text-gray-400 py-4">
                 <span class="flex gap-1.5">
                   <span class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay:0ms"></span>
@@ -112,7 +197,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -123,11 +208,16 @@ const props = defineProps({
   totalCount: { type: Number, default: 0 },
   stateChanges: { type: Number, default: 0 },
   renderedSummary: { type: String, default: '' },
+  turbines: { type: Array, default: () => [] },
 })
 
 defineEmits(['close', 'refresh'])
 
 const modalRef = ref(null)
+
+const nokTurbines = computed(() => props.turbines.filter(t => t.status === 'NOK'))
+const riskTurbines = computed(() => props.turbines.filter(t => t.status === 'RISK'))
+const okTurbines = computed(() => props.turbines.filter(t => t.status === 'OK'))
 
 watch(() => props.open, async (val) => {
   if (val) {

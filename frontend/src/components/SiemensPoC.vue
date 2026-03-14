@@ -29,24 +29,6 @@
           </div>
         </div>
         <div class="ml-auto flex items-center gap-2">
-          <button @click="openArchModal()"
-            class="px-3 py-1.5 text-xs font-semibold bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5"
-            title="Explore the system architecture">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-            </svg>
-            See Project Architecture
-          </button>
-          <button @click="openHowToUse()"
-            class="px-2.5 py-1 text-xs bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5"
-            title="How to use this tool">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            How to Use
-          </button>
           <button @click="openFleetOverviewModal()"
             class="px-3 py-1.5 text-xs font-semibold bg-teal-900/60 border border-teal-700 rounded-lg text-teal-300 hover:bg-teal-800/80 hover:border-teal-500 hover:text-teal-200 transition-colors cursor-pointer flex items-center gap-1.5"
             title="Open fleet general overview">
@@ -56,6 +38,24 @@
             </svg>
             Fleet Overview
             <span v-if="stateChangesSinceLastOverview > 0" class="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-[10px] font-bold text-gray-900">{{ stateChangesSinceLastOverview }}</span>
+          </button>
+          <button @click="openArchModal()"
+            class="px-3 py-1.5 text-xs font-semibold bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5"
+            title="Explore the system architecture">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            </svg>
+            Project Architecture
+          </button>
+          <button @click="openHowToUse()"
+            class="px-2.5 py-1 text-xs bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5"
+            title="How to use this tool">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            How to Use
           </button>
         </div>
       </div>
@@ -85,6 +85,15 @@
             <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse"></span>
             OK
           </span>
+          <button @click="openFleetOverviewModal()"
+            class="p-1.5 rounded-lg bg-teal-900/60 border border-teal-700 text-teal-300 hover:bg-teal-800/80 hover:text-teal-200 transition-colors cursor-pointer relative"
+            title="Fleet Overview">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span v-if="stateChangesSinceLastOverview > 0" class="absolute -top-1 -right-1 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-amber-500 text-[8px] font-bold text-gray-900">{{ stateChangesSinceLastOverview }}</span>
+          </button>
           <button @click="openArchModal()"
             class="p-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer"
             title="View Architecture">
@@ -100,15 +109,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-          </button>
-          <button @click="openFleetOverviewModal()"
-            class="p-1.5 rounded-lg bg-teal-900/60 border border-teal-700 text-teal-300 hover:bg-teal-800/80 hover:text-teal-200 transition-colors cursor-pointer relative"
-            title="Fleet Overview">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <span v-if="stateChangesSinceLastOverview > 0" class="absolute -top-1 -right-1 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-amber-500 text-[8px] font-bold text-gray-900">{{ stateChangesSinceLastOverview }}</span>
           </button>
         </div>
       </div>
@@ -1291,9 +1291,9 @@
                   <text x="506" y="469" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
 
                   <!-- ═══ ARROWS ═══ -->
-                  <!-- Browser → Vercel CDN: route left to left edge of CDN box then down -->
-                  <path d="M390,65 L22,65 L22,150" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
-                  <text x="236" y="60" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
+                  <!-- Browser → Vercel CDN: route left to centre of CDN box then down -->
+                  <path d="M390,65 L132,65 L132,150" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
+                  <text x="260" y="58" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
                   <!-- Browser → API Gateway: route to left part of API GW -->
                   <path d="M390,90 L310,90 L310,150" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
                   <text x="347" y="86" fill="#64748b" font-size="9">REST API</text>
@@ -1378,6 +1378,7 @@
       :total-count="turbines.length"
       :state-changes="stateChangesSinceLastOverview"
       :rendered-summary="fleetOverview.aiSummary ? renderMarkdown(fleetOverview.aiSummary) : ''"
+      :turbines="turbines"
       @close="closeFleetOverviewModal"
       @refresh="loadFleetOverview"
     />
@@ -1753,10 +1754,10 @@ function updateTelemetry() {
     }
 
     // Trigger alert balloon on status escalation
-    if (t.status !== prevStatus && (t.status === 'NOK' || (t.status === 'RISK' && prevStatus === 'OK'))) {
+    if (t.status !== prevStatus && (t.status === 'NOK' || t.status === 'RISK')) {
       const cooldownKey = t.id + t.status
       const now = Date.now()
-      if (!alertCooldown[cooldownKey] || now - alertCooldown[cooldownKey] > 30000) {
+      if (!alertCooldown[cooldownKey] || now - alertCooldown[cooldownKey] > 12000) {
         alertCooldown[cooldownKey] = now
         showAlertBalloon(t)
       }
@@ -1840,18 +1841,41 @@ function enforceStatusDistribution() {
 function triggerRandomAnomaly() {
   const total = turbines.length
   const maxNOK = Math.max(1, Math.floor(total * 0.15))
+  const maxRISK = Math.max(1, Math.floor(total * 0.25))
   const currentNOK = turbines.filter(t => t.status === 'NOK').length
-  if (currentNOK >= maxNOK) return
+  const currentRISK = turbines.filter(t => t.status === 'RISK').length
 
-  const healthyAssets = turbines.filter(t => t.status === 'OK')
-  if (healthyAssets.length === 0) return
-  const target = healthyAssets[Math.floor(Math.random() * healthyAssets.length)]
+  // Decide whether to create a NOK or RISK anomaly
+  const canNOK = currentNOK < maxNOK
+  const canRISK = currentRISK < maxRISK
 
-  // Randomly choose which parameter becomes the anomaly (50/50 split)
-  if (Math.random() < 0.5) {
-    target.vibration = thresholds.vibration.critical + 0.5 + Math.random() * 1.5
+  if (!canNOK && !canRISK) return
+
+  // Prefer creating NOK anomalies 40% of the time, RISK 60%
+  const goNOK = canNOK && (!canRISK || Math.random() < 0.4)
+
+  if (goNOK) {
+    // Create NOK anomaly from OK or RISK assets
+    const candidates = turbines.filter(t => t.status === 'OK' || t.status === 'RISK')
+    if (candidates.length === 0) return
+    const target = candidates[Math.floor(Math.random() * candidates.length)]
+
+    if (Math.random() < 0.5) {
+      target.vibration = thresholds.vibration.critical + 0.5 + Math.random() * 1.5
+    } else {
+      target.exhaustTemp = thresholds.exhaustTemp.critical + 5 + Math.random() * 20
+    }
   } else {
-    target.exhaustTemp = thresholds.exhaustTemp.critical + 5 + Math.random() * 20
+    // Create RISK anomaly from OK assets
+    const healthyAssets = turbines.filter(t => t.status === 'OK')
+    if (healthyAssets.length === 0) return
+    const target = healthyAssets[Math.floor(Math.random() * healthyAssets.length)]
+
+    if (Math.random() < 0.5) {
+      target.vibration = thresholds.vibration.warning + 0.2 + Math.random() * (thresholds.vibration.critical - thresholds.vibration.warning - 0.3)
+    } else {
+      target.exhaustTemp = thresholds.exhaustTemp.warning + 2 + Math.random() * (thresholds.exhaustTemp.critical - thresholds.exhaustTemp.warning - 3)
+    }
   }
 }
 
@@ -2375,8 +2399,34 @@ async function scrollToBottom() {
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
+  // Seed initial RISK/NOK states for a lively dashboard from the start
+  // Target: ~15% NOK, ~25% RISK immediately
+  const total = turbines.length
+  const initialNOK = Math.max(1, Math.floor(total * 0.10))
+  const initialRISK = Math.max(2, Math.floor(total * 0.20))
+  const shuffled = [...turbines].sort(() => Math.random() - 0.5)
+  let idx = 0
+  for (let i = 0; i < initialNOK && idx < shuffled.length; i++, idx++) {
+    const t = shuffled[idx]
+    if (Math.random() < 0.5) {
+      t.vibration = thresholds.vibration.critical + 0.3 + Math.random() * 1.0
+    } else {
+      t.exhaustTemp = thresholds.exhaustTemp.critical + 3 + Math.random() * 15
+    }
+  }
+  for (let i = 0; i < initialRISK && idx < shuffled.length; i++, idx++) {
+    const t = shuffled[idx]
+    if (Math.random() < 0.5) {
+      t.vibration = thresholds.vibration.warning + 0.2 + Math.random() * (thresholds.vibration.critical - thresholds.vibration.warning - 0.3)
+    } else {
+      t.exhaustTemp = thresholds.exhaustTemp.warning + 2 + Math.random() * (thresholds.exhaustTemp.critical - thresholds.exhaustTemp.warning - 3)
+    }
+  }
+  // Run one telemetry tick to set statuses based on seeded values
+  updateTelemetry()
+
   updateInterval = setInterval(updateTelemetry, 2000)
-  anomalyInterval = setInterval(triggerRandomAnomaly, 8000)
+  anomalyInterval = setInterval(triggerRandomAnomaly, 5000)
 
   // Load fleet overview once on mount
   loadFleetOverview()
