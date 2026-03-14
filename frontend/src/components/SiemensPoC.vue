@@ -87,7 +87,7 @@
           </span>
           <button @click="openFleetOverviewModal()"
             class="p-1.5 rounded-lg bg-teal-900/60 border border-teal-700 text-teal-300 hover:bg-teal-800/80 hover:text-teal-200 transition-colors cursor-pointer relative"
-            title="Fleet Overview">
+            title="Fleet Assessment">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -168,7 +168,7 @@
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Fleet Overview
+            Back to Fleet Assessment
           </button>
 
           <div class="bg-gray-900 border rounded-xl p-4 md:p-6 shadow-md" :class="statusBorderClass(selectedTurbine)">
@@ -1287,8 +1287,8 @@
                   <text x="790" y="290" fill="#64748b" font-size="8">GEMINI_API_KEY (env var)</text>
 
                   <!-- ═══ AWS SAM / CloudFormation (centered below AWS boundary) ═══ -->
-                  <rect x="416" y="450" width="180" height="30" rx="6" fill="#1a2332" stroke="#f59e0b" stroke-width="1"/>
-                  <text x="506" y="469" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
+                  <rect x="416" y="470" width="180" height="30" rx="6" fill="#1a2332" stroke="#f59e0b" stroke-width="1"/>
+                  <text x="506" y="489" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
 
                   <!-- ═══ ARROWS ═══ -->
                   <!-- Browser → Vercel CDN: route left to centre of CDN box then down -->
@@ -1552,6 +1552,14 @@ function openFleetOverviewModal() {
   stateChangesSinceLastOverview.value = 0
 }
 
+
+
+
+const onOpenTurbineFromOverview = (id) => {
+  fleetOverviewOpen.value = false;
+  selectedTurbine.value = turbines.find(t => t.id === id);
+}
+
 function closeFleetOverviewModal() {
   fleetOverviewOpen.value = false
 }
@@ -1570,11 +1578,11 @@ async function loadFleetOverview() {
     `${t.name} (${t.id}): ${t.alert || 'elevated readings'}`).join('; ')
 
   const query =
-    `You are a fleet operations AI. Provide a concise 3-4 sentence executive summary of the current turbine fleet health. ` +
+    `You are a fleet operations AI. Provide an executive summary of the current turbine fleet health. ` +
     `Fleet: ${turbines.length} units — ${okCount} OK, ${riskCount} RISK, ${nokCount} NOK. ` +
     (nokCount > 0 ? `Critical units: ${nokSummary}. ` : '') +
     (riskCount > 0 ? `Risk units: ${riskSummary}. ` : '') +
-    `Summarize the overall operational status, highlight priority concerns, and note general fleet health. Be succinct and professional.`
+    `Format your response in Markdown with a short introduction paragraph, then use bullet points grouping each category (e.g. Critical Concerns, Elevated Risks, General Health) and use sub-bullet points if needed. Be professional and well-organized.`
 
   try {
     const res = await fetch(`${API_URL}/ask-assistant`, {
