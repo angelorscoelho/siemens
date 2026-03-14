@@ -342,7 +342,6 @@ export function makeFallbackSvg(name, type, color) {
 export function getOkCardInsight(turbine) {
   const hours = Math.floor(turbine.hoursSinceOverhaul)
   const days = Math.floor(hours / 24)
-  const weeks = Math.floor(days / 7)
 
   // Cap durations at realistic ranges (max ~30 days) and prefer day-based labels
   const cappedDays = Math.min(days, 30)

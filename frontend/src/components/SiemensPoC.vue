@@ -101,6 +101,15 @@
                 d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </button>
+          <button @click="openFleetOverviewModal()"
+            class="p-1.5 rounded-lg bg-teal-900/60 border border-teal-700 text-teal-300 hover:bg-teal-800/80 hover:text-teal-200 transition-colors cursor-pointer relative"
+            title="Fleet Overview">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span v-if="stateChangesSinceLastOverview > 0" class="absolute -top-1 -right-1 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-amber-500 text-[8px] font-bold text-gray-900">{{ stateChangesSinceLastOverview }}</span>
+          </button>
         </div>
       </div>
     </header>
@@ -2400,15 +2409,6 @@ onUnmounted(() => {
 .slide-leave-to {
   transform: translateX(100%);
   opacity: 0;
-}
-
-.animate-pulse-once {
-  animation: pulse-once 2s ease-in-out;
-}
-
-@keyframes pulse-once {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
 }
 
 .animate-pulse-slow {
