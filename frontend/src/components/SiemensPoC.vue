@@ -368,7 +368,7 @@
                   : 'bg-gray-800 text-gray-500 border-gray-700 hover:border-teal-700 hover:text-teal-400'"
               >
                 <span class="w-1.5 h-1.5 rounded-full" :class="statusFilters.OK ? 'bg-teal-400' : 'bg-gray-600'"></span>
-                OK
+                OK <span class="bg-gray-900/50 px-1.5 py-0.5 rounded text-[10px] ml-0.5 font-mono">{{ okCount }}</span>
               </button>
               <button
                 @click="toggleFilter('RISK')"
@@ -378,7 +378,7 @@
                   : 'bg-gray-800 text-gray-500 border-gray-700 hover:border-yellow-700 hover:text-yellow-400'"
               >
                 <span class="w-1.5 h-1.5 rounded-full" :class="statusFilters.RISK ? 'bg-yellow-400 animate-pulse' : 'bg-gray-600'"></span>
-                RISK
+                RISK <span class="bg-gray-900/50 px-1.5 py-0.5 rounded text-[10px] ml-0.5 font-mono">{{ warningCount }}</span>
               </button>
               <button
                 @click="toggleFilter('NOK')"
@@ -388,7 +388,7 @@
                   : 'bg-gray-800 text-gray-500 border-gray-700 hover:border-red-700 hover:text-red-400'"
               >
                 <span class="w-1.5 h-1.5 rounded-full" :class="statusFilters.NOK ? 'bg-red-400 animate-pulse' : 'bg-gray-600'"></span>
-                NOK
+                NOK <span class="bg-gray-900/50 px-1.5 py-0.5 rounded text-[10px] ml-0.5 font-mono">{{ criticalCount }}</span>
               </button>
             </div>
           </div>
@@ -1644,6 +1644,7 @@ function onDetailImageError() {
 }
 
 // ── Fleet Status Computed ─────────────────────────────────────────────────────
+const okCount = computed(() => turbines.filter(t => t.status === 'OK').length)
 const criticalCount = computed(() => turbines.filter(t => t.status === 'NOK').length)
 const warningCount = computed(() => turbines.filter(t => t.status === 'RISK').length)
 
