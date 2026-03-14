@@ -31,12 +31,12 @@
         <div class="ml-auto flex items-center gap-2">
           <button @click="openFleetOverviewModal()"
             class="px-3 py-1.5 text-xs font-semibold bg-teal-900/60 border border-teal-700 rounded-lg text-teal-300 hover:bg-teal-800/80 hover:border-teal-500 hover:text-teal-200 transition-colors cursor-pointer flex items-center gap-1.5"
-            title="Open fleet general overview">
+            title="Open fleet general assessment">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-            Fleet Overview
+            Fleet Assessment
             <span v-if="stateChangesSinceLastOverview > 0" class="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-[10px] font-bold text-gray-900">{{ stateChangesSinceLastOverview }}</span>
           </button>
           <button @click="openHowToUse()"
@@ -1557,7 +1557,10 @@ function openFleetOverviewModal() {
 
 const onOpenTurbineFromOverview = (id) => {
   fleetOverviewOpen.value = false;
-  selectedTurbine.value = turbines.find(t => t.id === id);
+  const turbine = turbines.find(t => t.id === id);
+  if (turbine) {
+    openTurbineSession(turbine);
+  }
 }
 
 function closeFleetOverviewModal() {
@@ -1702,6 +1705,7 @@ const historyModalStyle = computed(() => ({
 
 // ── Telemetry Simulation ──────────────────────────────────────────────────────
 function updateTelemetry() {
+  const escalated = []
   turbines.forEach((t) => {
     if (t.status === 'Offline') return
 
@@ -1763,19 +1767,25 @@ function updateTelemetry() {
       t.aiSuggestion = ''
     }
 
-    // Trigger alert balloon on status escalation
+    // Collect status escalations (balloon triggered AFTER distribution enforcement)
     if (t.status !== prevStatus && (t.status === 'NOK' || t.status === 'RISK')) {
-      const cooldownKey = t.id + t.status
-      const now = Date.now()
-      if (!alertCooldown[cooldownKey] || now - alertCooldown[cooldownKey] > 12000) {
-        alertCooldown[cooldownKey] = now
-        showAlertBalloon(t)
-      }
+      escalated.push(t)
     }
   })
 
   // Enforce max 10% NOK and 20% RISK to keep dashboard realistic
   enforceStatusDistribution()
+
+  // Now trigger alert balloon only for turbines whose escalation survived enforcement
+  const now = Date.now()
+  for (const t of escalated) {
+    if (t.status !== 'NOK' && t.status !== 'RISK') continue // downgraded by enforcement
+    const cooldownKey = t.id + t.status
+    if (!alertCooldown[cooldownKey] || now - alertCooldown[cooldownKey] > 12000) {
+      alertCooldown[cooldownKey] = now
+      showAlertBalloon(t)
+    }
+  }
 }
 
 // ── Status Distribution Cap (max 10% NOK, max 20% RISK) ──────────────────────
