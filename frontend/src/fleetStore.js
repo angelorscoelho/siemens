@@ -356,7 +356,7 @@ export function getOkCardInsight(turbine) {
       ? `Stable operation for ${cappedHours} hrs — all readings nominal`
       : `Trending healthy for ${cappedDays} days — no anomalies detected`,
     `Last inspection passed — operating within design parameters`,
-    `Efficiency tracking at ${(96 + (seed % 4)).toFixed(1)}% — above fleet average`,
+    `Efficiency tracking at ${(96 + (seed % 40) / 10).toFixed(1)}% — above fleet average`,
     `Vibration baseline holding steady since last overhaul`,
     cappedDays > 7
       ? `${cappedDays}-day trend: all KPIs within tolerance bands`
