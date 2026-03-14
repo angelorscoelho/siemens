@@ -47,6 +47,16 @@
             </svg>
             How to Use
           </button>
+          <button @click="openFleetOverviewModal()"
+            class="px-3 py-1.5 text-xs font-semibold bg-teal-900/60 border border-teal-700 rounded-lg text-teal-300 hover:bg-teal-800/80 hover:border-teal-500 hover:text-teal-200 transition-colors cursor-pointer flex items-center gap-1.5"
+            title="Open fleet general overview">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Fleet Overview
+            <span v-if="stateChangesSinceLastOverview > 0" class="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-[10px] font-bold text-gray-900">{{ stateChangesSinceLastOverview }}</span>
+          </button>
         </div>
       </div>
 
@@ -121,41 +131,12 @@
     <!-- ═══════════════════════════════════════════════════════════════
          ALERT BALLOON — clickable, focuses the card
     ═══════════════════════════════════════════════════════════════ -->
-    <transition name="balloon">
-      <div v-if="alertBalloon"
-        class="fixed top-[3.5rem] z-50 max-w-[calc(100vw-1.5rem)] md:max-w-[280px]"
-        :style="{ right: assistantOpen ? 'calc(clamp(300px, 25%, 400px) + 1.5rem)' : '1.5rem' }">
-        <div
-          class="rounded-xl px-4 py-3 shadow-2xl flex items-start gap-3 cursor-pointer transition-colors animate-pulse-once"
-          :class="alertBalloon.status === 'NOK'
-            ? 'bg-red-900 border border-red-500 hover:bg-red-800'
-            : 'bg-yellow-900 border border-yellow-500 hover:bg-yellow-800'"
-          @click="focusAlertCard"
-          :title="'Click to focus ' + (alertBalloon.turbineName || 'unit')"
-        >
-          <svg class="w-5 h-5 flex-shrink-0 mt-0.5"
-            :class="alertBalloon.status === 'NOK' ? 'text-red-400' : 'text-yellow-400'"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-semibold truncate"
-              :class="alertBalloon.status === 'NOK' ? 'text-red-300' : 'text-yellow-300'">{{ alertBalloon.title }}</p>
-            <p class="text-xs mt-0.5 leading-relaxed"
-              :class="alertBalloon.status === 'NOK' ? 'text-red-400' : 'text-yellow-400'">{{ alertBalloon.message }}</p>
-            <p class="text-[10px] mt-1 italic"
-              :class="alertBalloon.status === 'NOK' ? 'text-red-500' : 'text-yellow-500'">Click to focus card</p>
-          </div>
-          <button @click.stop="alertBalloon = null" class="cursor-pointer shrink-0"
-            :class="alertBalloon.status === 'NOK' ? 'text-red-500 hover:text-red-300' : 'text-yellow-500 hover:text-yellow-300'">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </transition>
+    <NotificationIndicator
+      :balloon="alertBalloon"
+      :assistant-open="assistantOpen"
+      @focus="focusAlertCard"
+      @dismiss="alertBalloon = null"
+    />
 
     <!-- ═══════════════════════════════════════════════════════════════
          MAIN CONTENT AREA
@@ -426,73 +407,6 @@
             <button @click="clearFilters" class="mt-2 text-xs text-teal-400 hover:underline cursor-pointer">Clear filters</button>
           </div>
 
-          <!-- ═══════════════════════════════════════════════════════════════
-               ACTIVE DIAGNOSTICS PANEL
-          ═══════════════════════════════════════════════════════════════ -->
-          <!-- ── Fleet General Overview ── -->
-          <div class="mt-6 bg-gray-900 border border-teal-800/50 rounded-xl overflow-hidden shadow-lg">
-            <div class="px-5 py-3 border-b border-teal-800/40 flex items-center justify-between">
-              <h3 class="text-sm font-semibold text-teal-300 uppercase tracking-wider flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Fleet General Overview
-              </h3>
-              <div class="flex items-center gap-2">
-                <span v-if="fleetOverview.timestamp" class="text-[10px] text-gray-500">{{ fleetOverview.timestamp }}</span>
-                <button
-                  @click="loadFleetOverview"
-                  :disabled="fleetOverview.loading"
-                  class="p-1 rounded-md text-gray-400 hover:text-teal-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                  title="Refresh overview"
-                >
-                  <svg class="w-3.5 h-3.5" :class="fleetOverview.loading ? 'animate-spin' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="p-5">
-              <!-- Status summary chips -->
-              <div class="flex flex-wrap gap-2 mb-4">
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-900/30 border border-teal-800/60">
-                  <span class="w-2 h-2 bg-teal-400 rounded-full shrink-0"></span>
-                  <span class="text-xs font-bold text-teal-300">{{ turbines.filter(t => t.status === 'OK').length }}</span>
-                  <span class="text-xs text-gray-400">OK</span>
-                </div>
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yellow-900/30 border border-yellow-800/60">
-                  <span class="w-2 h-2 bg-yellow-400 rounded-full shrink-0 animate-pulse"></span>
-                  <span class="text-xs font-bold text-yellow-300">{{ warningCount }}</span>
-                  <span class="text-xs text-gray-400">RISK</span>
-                </div>
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-900/30 border border-red-800/60">
-                  <span class="w-2 h-2 bg-red-400 rounded-full shrink-0 animate-pulse"></span>
-                  <span class="text-xs font-bold text-red-300">{{ criticalCount }}</span>
-                  <span class="text-xs text-gray-400">NOK</span>
-                </div>
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-800 border border-gray-700">
-                  <span class="text-xs text-gray-400">{{ turbines.length }} total</span>
-                </div>
-              </div>
-
-              <!-- AI summary -->
-              <div v-if="fleetOverview.loading" class="flex items-center gap-2 text-gray-500 text-xs py-1">
-                <span class="flex gap-1">
-                  <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay:0ms"></span>
-                  <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay:150ms"></span>
-                  <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay:300ms"></span>
-                </span>
-                Generating fleet overview…
-              </div>
-              <div v-else-if="fleetOverview.error" class="text-xs text-red-400">{{ fleetOverview.error }}</div>
-              <div v-else-if="fleetOverview.aiSummary"
-                class="text-xs text-gray-300 leading-relaxed ai-message"
-                v-html="renderMarkdown(fleetOverview.aiSummary)">
-              </div>
-              <div v-else class="text-xs text-gray-500">Overview will appear here after loading.</div>
-            </div>
-          </div>
         </section>
       </div>
 
@@ -1443,6 +1357,22 @@
       </transition>
     </Teleport>
 
+    <!-- ═══════════════════════════════════════════════════════════════
+         FLEET OVERVIEW MODAL (top-level access)
+    ═══════════════════════════════════════════════════════════════ -->
+    <OverviewDialog
+      :open="fleetOverviewOpen"
+      :overview="fleetOverview"
+      :nok-count="criticalCount"
+      :risk-count="warningCount"
+      :ok-count="turbines.filter(t => t.status === 'OK').length"
+      :total-count="turbines.length"
+      :state-changes="stateChangesSinceLastOverview"
+      :rendered-summary="fleetOverview.aiSummary ? renderMarkdown(fleetOverview.aiSummary) : ''"
+      @close="closeFleetOverviewModal"
+      @refresh="loadFleetOverview"
+    />
+
   </div>
 </template>
 
@@ -1459,6 +1389,8 @@ import {
   makeFallbackSvg,
 } from '../fleetStore.js'
 import EquipmentCard from './EquipmentCard.vue'
+import OverviewDialog from './OverviewDialog.vue'
+import NotificationIndicator from './NotificationIndicator.vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 
@@ -1597,6 +1529,21 @@ const fleetOverview = reactive({
   aiSummary: null,
   error: null,
 })
+const fleetOverviewOpen = ref(false)
+const stateChangesSinceLastOverview = ref(0)
+
+function openFleetOverviewModal() {
+  fleetOverviewOpen.value = true
+  // Auto-refresh if state changes occurred since last view
+  if (stateChangesSinceLastOverview.value > 0 || !fleetOverview.loaded) {
+    loadFleetOverview()
+  }
+  stateChangesSinceLastOverview.value = 0
+}
+
+function closeFleetOverviewModal() {
+  fleetOverviewOpen.value = false
+}
 
 async function loadFleetOverview() {
   if (fleetOverview.loading) return
@@ -1764,6 +1711,11 @@ function updateTelemetry() {
       t.status = 'RISK'
     } else {
       t.status = 'OK'
+    }
+
+    // Track state changes for overview refresh
+    if (t.status !== prevStatus) {
+      stateChangesSinceLastOverview.value++
     }
 
     // Generate dynamic alerts
@@ -2437,19 +2389,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.balloon-enter-active,
-.balloon-leave-active {
-  transition: all 0.3s ease;
-}
-.balloon-enter-from {
-  opacity: 0;
-  transform: translateX(20px);
-}
-.balloon-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
 .slide-enter-active,
 .slide-leave-active {
   transition: all 0.3s ease;

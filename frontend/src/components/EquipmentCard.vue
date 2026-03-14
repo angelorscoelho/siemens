@@ -120,73 +120,42 @@
       </div>
 
       <!-- ── Alert Banner (RISK/NOK) ── -->
-      <div
+      <CardFooterBanner
         v-if="turbine.alert"
-        class="mt-2 p-2 rounded text-xs leading-snug relative flex items-start gap-1 cursor-pointer group/alert"
-        :class="turbine.status === 'NOK'
-          ? 'bg-red-900/40 border border-red-700 text-red-300 hover:bg-red-900/60'
-          : 'bg-yellow-900/40 border border-yellow-700 text-yellow-300 hover:bg-yellow-900/60'"
-        @click.stop="$emit('select', turbine, activeMetricKey)"
-        :title="'Click to open full detail view'"
+        variant="alert"
+        :status="turbine.status"
+        :title="turbine.alert"
+        click-title="Click to open full detail view"
+        @click="$emit('select', turbine, activeMetricKey)"
       >
-        <span class="flex-1 flex items-start gap-1">
-          <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          {{ turbine.alert }}
-        </span>
-        <!-- Bot / AI assistant button (problem-solving mode) -->
-        <button
-          @click.stop="$emit('ask-assistant', turbine)"
-          class="bot-icon-btn shrink-0 ml-1 p-1 rounded-md transition-all duration-200 cursor-pointer"
-          :class="turbine.status === 'NOK'
-            ? 'bg-red-900/60 text-red-300 hover:bg-red-700/80 hover:text-red-100 nok-glow'
-            : 'bg-yellow-900/60 text-yellow-300 hover:bg-yellow-700/80 hover:text-yellow-100 risk-glow'"
-          title="Ask Assistant for Detailed Analysis"
-          aria-label="Ask Assistant for Detailed Analysis"
-        >
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="8" width="18" height="12" rx="2"/>
-            <path d="M12 2v4"/>
-            <circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/>
-            <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/>
-            <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
-            <path d="M9 17h6"/>
-            <path d="M3 12H1m22 0h-2"/>
-          </svg>
-        </button>
-      </div>
+        <template #action>
+          <AIActionButton
+            :status="turbine.status"
+            title="Ask Assistant for Detailed Analysis"
+            @click="$emit('ask-assistant', turbine)"
+          />
+        </template>
+      </CardFooterBanner>
 
       <!-- ── OK card insight (status = OK) ── -->
-      <div v-if="turbine.status === 'OK'" class="mt-2 space-y-1">
-        <div class="flex items-start gap-1.5 px-2 py-1.5 rounded-lg bg-teal-900/20 border border-teal-800/40">
-          <svg class="w-3 h-3 text-teal-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <div class="flex-1 min-w-0">
-            <p class="text-[10px] text-teal-400 font-medium leading-snug">{{ okInsight.stableStr }}</p>
-            <p class="text-[10px] text-gray-400 leading-snug mt-0.5">{{ okInsight.positive }}</p>
-            <p class="text-[10px] text-gray-500 leading-snug mt-0.5 italic">Watch: {{ okInsight.commonIssue }}</p>
-          </div>
-          <!-- Bot icon: overview mode -->
-          <button
-            @click.stop="$emit('ask-overview', turbine)"
-            class="bot-icon-btn shrink-0 p-1 rounded-md bg-teal-900/40 text-teal-400 hover:bg-teal-800/60 hover:text-teal-200 ok-glow transition-all duration-200 cursor-pointer"
+      <CardFooterBanner
+        v-if="turbine.status === 'OK'"
+        variant="ok"
+        status="OK"
+        :title="okInsight.stableStr"
+        :subtitle="okInsight.positive"
+        :hint="'Watch: ' + okInsight.commonIssue"
+        click-title="Click for equipment overview"
+        @click="$emit('select', turbine, activeMetricKey)"
+      >
+        <template #action>
+          <AIActionButton
+            status="OK"
             title="Ask Assistant for Equipment Overview"
-            aria-label="Ask Assistant for Equipment Overview"
-          >
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="8" width="18" height="12" rx="2"/>
-              <path d="M12 2v4"/>
-              <circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/>
-              <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/>
-              <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
-              <path d="M9 17h6"/>
-              <path d="M3 12H1m22 0h-2"/>
-            </svg>
-          </button>
-        </div>
-      </div>
+            @click="$emit('ask-overview', turbine)"
+          />
+        </template>
+      </CardFooterBanner>
 
       <!-- Mobile tap hint -->
       <div class="md:hidden mt-1 text-xs text-gray-600 text-right">Tap name for details →</div>
@@ -202,6 +171,8 @@ import {
   LinearScale, CategoryScale, Filler, Tooltip,
 } from 'chart.js'
 import { metricParams, getMostCriticalMetricKey, historyMetricKeys, makeFallbackSvg, getOkCardInsight } from '../fleetStore.js'
+import CardFooterBanner from './CardFooterBanner.vue'
+import AIActionButton from './AIActionButton.vue'
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip)
 
@@ -526,19 +497,5 @@ function onImageError() {
 }
 .card-focus-ok {
   animation: card-vibrate 1s ease-in-out, card-glow-ok 2.5s ease-in-out 5;
-}
-
-/* ── Bot icon button hover glow ── */
-.bot-icon-btn {
-  box-shadow: 0 0 0 0 transparent;
-}
-.bot-icon-btn.nok-glow:hover {
-  box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.55), 0 0 16px 2px rgba(239, 68, 68, 0.25);
-}
-.bot-icon-btn.risk-glow:hover {
-  box-shadow: 0 0 8px 2px rgba(234, 179, 8, 0.55), 0 0 16px 2px rgba(234, 179, 8, 0.25);
-}
-.bot-icon-btn.ok-glow:hover {
-  box-shadow: 0 0 8px 2px rgba(45, 212, 191, 0.55), 0 0 16px 2px rgba(45, 212, 191, 0.25);
 }
 </style>
