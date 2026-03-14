@@ -1287,8 +1287,8 @@
                   <text x="790" y="290" fill="#64748b" font-size="8">GEMINI_API_KEY (env var)</text>
 
                   <!-- ═══ AWS SAM / CloudFormation (centered below AWS boundary) ═══ -->
-                  <rect x="416" y="470" width="180" height="30" rx="6" fill="#1a2332" stroke="#f59e0b" stroke-width="1"/>
-                  <text x="506" y="489" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
+                  <rect x="416" y="442" width="180" height="30" rx="6" fill="#1a2332" stroke="#f59e0b" stroke-width="1"/>
+                  <text x="506" y="461" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">AWS SAM / CloudFormation</text>
 
                   <!-- ═══ ARROWS ═══ -->
                   <!-- Browser → Vercel CDN: route left to centre of CDN box then down -->
@@ -1310,10 +1310,10 @@
                   <path d="M726,271 L774,271" fill="none" stroke="#818cf8" stroke-width="1.8" marker-end="url(#arr-indigo)"/>
                   <text x="750" y="266" text-anchor="middle" fill="#64748b" font-size="9">HTTPS</text>
                   <!-- GitHub Actions → SAM (down then right to centered SAM) -->
-                  <path d="M132,278 L132,460 L416,460" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arr-gray)"/>
+                  <path d="M132,278 L132,457 L416,457" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arr-gray)"/>
                   <text x="140" y="370" fill="#64748b" font-size="9">deploys</text>
                   <!-- AWS SAM → AWS CLOUD boundary (IaC setup, upward) -->
-                  <line x1="506" y1="450" x2="506" y2="415" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+                  <line x1="506" y1="442" x2="506" y2="415" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-amber)"/>
                   <text x="514" y="435" fill="#64748b" font-size="8">IaC setup</text>
 
                   <!-- ═══ LEGEND (horizontally centred) ═══ -->
