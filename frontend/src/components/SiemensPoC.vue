@@ -297,7 +297,18 @@
 
             <!-- AI Maintenance Suggestion -->
             <div v-if="selectedTurbine.status !== 'OK'" class="mt-4 bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-xl p-4">
-              <p class="text-xs text-yellow-400 font-semibold mb-2">🤖 AI Maintenance Suggestion</p>
+              <p class="text-xs text-yellow-400 font-semibold mb-2 flex items-center gap-1.5">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="8" width="18" height="12" rx="2"/>
+                  <path d="M12 2v4"/>
+                  <circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/>
+                  <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+                  <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+                  <path d="M9 17h6"/>
+                  <path d="M3 12H1m22 0h-2"/>
+                </svg>
+                AI Maintenance Suggestion
+              </p>
               <p class="text-xs md:text-sm text-yellow-200">{{ selectedTurbine.aiSuggestion }}</p>
               <button @click="askAboutTurbineMobile(selectedTurbine)"
                 class="mt-3 px-4 py-2 text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer">
@@ -999,9 +1010,6 @@
                 <p class="mb-3">
                   The <span class="text-teal-400 font-semibold">Siemens Energy AI Maintenance Dashboard</span> is a proof-of-concept tool designed to help maintenance engineers and plant operators monitor industrial gas turbine fleets in real time. The dashboard presents live telemetry data—such as vibration levels, exhaust temperatures, power output, and efficiency—across all fleet assets, highlights anomalies instantly, and provides AI-driven root-cause analysis and actionable maintenance plans.
                 </p>
-                <p class="mb-3">
-                  Under the hood, the AI assistant uses <span class="text-teal-400 font-semibold">Retrieval-Augmented Generation (RAG)</span> to ground its answers in real documentation. When you ask a question, the system embeds your query using <span class="text-teal-400 font-semibold">Google text-embedding-004</span>, retrieves the most relevant excerpts from the equipment manuals and maintenance history stored in Amazon S3, and then passes that context to <span class="text-teal-400 font-semibold">Gemini 2.0 Flash</span> for a structured, evidence-based response. This means the AI doesn't hallucinate generic advice—it references the actual Siemens SGT-series maintenance documentation and your fleet's historical records.
-                </p>
               </section>
 
               <!-- Reading the Dashboard -->
@@ -1083,8 +1091,22 @@
                       </svg>
                     </span>
                     <div>
-                      <p class="text-white font-semibold text-xs">Ask AI Assistant (Alert Robot Icon)</p>
-                      <p class="text-gray-400 text-xs">Appears on cards with <span class="text-yellow-300 font-bold">RISK</span> or <span class="text-red-300 font-bold">NOK</span> status. Clicking the robot icon instantly sends the anomaly context to the AI assistant for analysis—no typing needed. Also available in the detail view as a dedicated button.</p>
+                      <p class="text-white font-semibold text-xs">Ask AI Assistant (Robot Icon)</p>
+                      <p class="text-gray-400 text-xs">Available on every equipment card. The AI assistant responds based on the current card status:</p>
+                      <div class="mt-1.5 space-y-1 pl-2">
+                        <div class="flex items-center gap-1.5">
+                          <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-red-900 text-red-300 border border-red-700">NOK</span>
+                          <span class="text-gray-400 text-[11px]">→ Root-cause analysis + recommended actions</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-yellow-900 text-yellow-300 border border-yellow-700">RISK</span>
+                          <span class="text-gray-400 text-[11px]">→ Preventive diagnostic analysis</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-teal-900 text-teal-300 border border-teal-700">OK</span>
+                          <span class="text-gray-400 text-[11px]">→ Operational performance overview</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1122,26 +1144,6 @@
                 </div>
               </section>
 
-              <!-- RAG Explanation -->
-              <section>
-                <h3 class="text-base font-bold text-teal-300 mb-3 flex items-center gap-2">
-                  <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                  </svg>
-                  How the AI Works (RAG Pipeline)
-                </h3>
-                <p class="mb-3">
-                  The AI assistant follows a <span class="text-teal-400 font-semibold">Retrieval-Augmented Generation (RAG)</span> pipeline to ensure every answer is grounded in real Siemens documentation:
-                </p>
-                <ol class="space-y-2 list-decimal list-inside">
-                  <li class="text-gray-400"><span class="text-gray-300">Your question is embedded</span> into a 768-dimensional vector using Google text-embedding-004.</li>
-                  <li class="text-gray-400"><span class="text-gray-300">Cosine similarity search</span> compares that vector against pre-computed chunks from the Siemens SGT-series manuals and maintenance records stored in Amazon S3.</li>
-                  <li class="text-gray-400"><span class="text-gray-300">Top-3 most relevant excerpts</span> are selected and injected into a structured prompt.</li>
-                  <li class="text-gray-400"><span class="text-gray-300">Gemini 2.0 Flash</span> generates the final answer, citing the source documents. This ensures accurate, traceable recommendations instead of generic advice.</li>
-                </ol>
-              </section>
-
               <!-- Example Workflow -->
               <section>
                 <h3 class="text-base font-bold text-teal-300 mb-3 flex items-center gap-2">
@@ -1153,14 +1155,14 @@
                 </h3>
                 <div class="space-y-3">
                   <div class="flex items-start gap-3">
-                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-red-900 text-red-300 text-xs font-bold border border-red-700">1</span>
+                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-teal-900 text-teal-300 text-xs font-bold border border-teal-700">1</span>
                     <div>
                       <p class="text-white font-semibold text-xs">Spot the anomaly</p>
                       <p class="text-gray-400 text-xs">You notice <span class="text-red-300 font-bold">GT-03</span> shows a <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-red-900 text-red-300 border border-red-700">NOK</span> badge — vibration has spiked to 12.1 mm/s (limit: 11.0).</p>
                     </div>
                   </div>
                   <div class="flex items-start gap-3">
-                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-yellow-900 text-yellow-300 text-xs font-bold border border-yellow-700">2</span>
+                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-teal-900 text-teal-300 text-xs font-bold border border-teal-700">2</span>
                     <div>
                       <p class="text-white font-semibold text-xs">Consult the manual</p>
                       <p class="text-gray-400 text-xs">Click the
@@ -1178,7 +1180,7 @@
                     </div>
                   </div>
                   <div class="flex items-start gap-3">
-                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-900 text-indigo-300 text-xs font-bold border border-indigo-700">4</span>
+                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-teal-900 text-teal-300 text-xs font-bold border border-teal-700">4</span>
                     <div>
                       <p class="text-white font-semibold text-xs">Review and act</p>
                       <p class="text-gray-400 text-xs">The AI response includes a structured action plan (e.g., "inspect coupling alignment, check bearing lubrication, schedule balancing") with references to the specific manual sections. Follow the plan or ask follow-up questions in the chat.</p>
@@ -1368,7 +1370,7 @@
                   <!-- ═══ ARROWS ═══ -->
                   <!-- Browser → Vercel CDN: route left to left edge of CDN box then down -->
                   <path d="M390,65 L22,65 L22,150" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
-                  <text x="206" y="60" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
+                  <text x="236" y="60" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
                   <!-- Browser → API Gateway: route to left part of API GW -->
                   <path d="M390,90 L310,90 L310,150" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
                   <text x="347" y="86" fill="#64748b" font-size="9">REST API</text>
@@ -1807,8 +1809,8 @@ function updateTelemetry() {
 // ── Status Distribution Cap (max 10% NOK, max 20% RISK) ──────────────────────
 function enforceStatusDistribution() {
   const total = turbines.length
-  const maxNOK = Math.max(1, Math.floor(total * 0.1))
-  const maxRISK = Math.max(1, Math.floor(total * 0.2))
+  const maxNOK = Math.max(1, Math.floor(total * 0.15))
+  const maxRISK = Math.max(1, Math.floor(total * 0.25))
 
   // Get NOK turbines sorted by how far above critical threshold they are (least critical first)
   const nokTurbines = turbines
@@ -1876,7 +1878,7 @@ function enforceStatusDistribution() {
 // ── Anomaly Trigger ────────────────────────────────────────────────────────────
 function triggerRandomAnomaly() {
   const total = turbines.length
-  const maxNOK = Math.max(1, Math.floor(total * 0.1))
+  const maxNOK = Math.max(1, Math.floor(total * 0.15))
   const currentNOK = turbines.filter(t => t.status === 'NOK').length
   if (currentNOK >= maxNOK) return
 
@@ -2413,7 +2415,7 @@ async function scrollToBottom() {
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
   updateInterval = setInterval(updateTelemetry, 2000)
-  anomalyInterval = setInterval(triggerRandomAnomaly, 15000)
+  anomalyInterval = setInterval(triggerRandomAnomaly, 8000)
 
   // Load fleet overview once on mount
   loadFleetOverview()

@@ -344,10 +344,13 @@ export function getOkCardInsight(turbine) {
   const days = Math.floor(hours / 24)
   const weeks = Math.floor(days / 7)
 
+  // Cap durations at realistic ranges (max ~30 days) and prefer day-based labels
+  const cappedDays = Math.min(days, 30)
+  const cappedHours = Math.min(hours, 720)
+
   let stableStr
-  if (hours < 72) stableStr = `No deviations in the last ${hours} hrs`
-  else if (days < 30) stableStr = `No deviations in the last ${days} days`
-  else stableStr = `No deviations in the last ${weeks} weeks`
+  if (cappedHours < 72) stableStr = `No critical deviations in the last ${cappedHours} hrs`
+  else stableStr = `No critical deviations in the last ${cappedDays} days`
 
   const tp = (turbine.type || '').toLowerCase()
   let positive, commonIssue
