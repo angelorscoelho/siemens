@@ -47,6 +47,16 @@
             </svg>
             How to Use
           </button>
+          <button @click="openFleetOverviewModal()"
+            class="px-3 py-1.5 text-xs font-semibold bg-teal-900/60 border border-teal-700 rounded-lg text-teal-300 hover:bg-teal-800/80 hover:border-teal-500 hover:text-teal-200 transition-colors cursor-pointer flex items-center gap-1.5"
+            title="Open fleet general overview">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Fleet Overview
+            <span v-if="stateChangesSinceLastOverview > 0" class="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-[10px] font-bold text-gray-900">{{ stateChangesSinceLastOverview }}</span>
+          </button>
         </div>
       </div>
 
@@ -91,6 +101,15 @@
                 d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </button>
+          <button @click="openFleetOverviewModal()"
+            class="p-1.5 rounded-lg bg-teal-900/60 border border-teal-700 text-teal-300 hover:bg-teal-800/80 hover:text-teal-200 transition-colors cursor-pointer relative"
+            title="Fleet Overview">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span v-if="stateChangesSinceLastOverview > 0" class="absolute -top-1 -right-1 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-amber-500 text-[8px] font-bold text-gray-900">{{ stateChangesSinceLastOverview }}</span>
+          </button>
         </div>
       </div>
     </header>
@@ -121,41 +140,12 @@
     <!-- ═══════════════════════════════════════════════════════════════
          ALERT BALLOON — clickable, focuses the card
     ═══════════════════════════════════════════════════════════════ -->
-    <transition name="balloon">
-      <div v-if="alertBalloon"
-        class="fixed top-[3.5rem] z-50 max-w-[calc(100vw-1.5rem)] md:max-w-[280px]"
-        :style="{ right: assistantOpen ? 'calc(clamp(300px, 25%, 400px) + 1.5rem)' : '1.5rem' }">
-        <div
-          class="rounded-xl px-4 py-3 shadow-2xl flex items-start gap-3 cursor-pointer transition-colors animate-pulse-once"
-          :class="alertBalloon.status === 'NOK'
-            ? 'bg-red-900 border border-red-500 hover:bg-red-800'
-            : 'bg-yellow-900 border border-yellow-500 hover:bg-yellow-800'"
-          @click="focusAlertCard"
-          :title="'Click to focus ' + (alertBalloon.turbineName || 'unit')"
-        >
-          <svg class="w-5 h-5 flex-shrink-0 mt-0.5"
-            :class="alertBalloon.status === 'NOK' ? 'text-red-400' : 'text-yellow-400'"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-semibold truncate"
-              :class="alertBalloon.status === 'NOK' ? 'text-red-300' : 'text-yellow-300'">{{ alertBalloon.title }}</p>
-            <p class="text-xs mt-0.5 leading-relaxed"
-              :class="alertBalloon.status === 'NOK' ? 'text-red-400' : 'text-yellow-400'">{{ alertBalloon.message }}</p>
-            <p class="text-[10px] mt-1 italic"
-              :class="alertBalloon.status === 'NOK' ? 'text-red-500' : 'text-yellow-500'">Click to focus card</p>
-          </div>
-          <button @click.stop="alertBalloon = null" class="cursor-pointer shrink-0"
-            :class="alertBalloon.status === 'NOK' ? 'text-red-500 hover:text-red-300' : 'text-yellow-500 hover:text-yellow-300'">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </transition>
+    <NotificationIndicator
+      :balloon="alertBalloon"
+      :assistant-open="assistantOpen"
+      @focus="focusAlertCard"
+      @dismiss="alertBalloon = null"
+    />
 
     <!-- ═══════════════════════════════════════════════════════════════
          MAIN CONTENT AREA
@@ -297,7 +287,18 @@
 
             <!-- AI Maintenance Suggestion -->
             <div v-if="selectedTurbine.status !== 'OK'" class="mt-4 bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-xl p-4">
-              <p class="text-xs text-yellow-400 font-semibold mb-2">🤖 AI Maintenance Suggestion</p>
+              <p class="text-xs text-yellow-400 font-semibold mb-2 flex items-center gap-1.5">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="8" width="18" height="12" rx="2"/>
+                  <path d="M12 2v4"/>
+                  <circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/>
+                  <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+                  <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+                  <path d="M9 17h6"/>
+                  <path d="M3 12H1m22 0h-2"/>
+                </svg>
+                AI Maintenance Suggestion
+              </p>
               <p class="text-xs md:text-sm text-yellow-200">{{ selectedTurbine.aiSuggestion }}</p>
               <button @click="askAboutTurbineMobile(selectedTurbine)"
                 class="mt-3 px-4 py-2 text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer">
@@ -415,73 +416,6 @@
             <button @click="clearFilters" class="mt-2 text-xs text-teal-400 hover:underline cursor-pointer">Clear filters</button>
           </div>
 
-          <!-- ═══════════════════════════════════════════════════════════════
-               ACTIVE DIAGNOSTICS PANEL
-          ═══════════════════════════════════════════════════════════════ -->
-          <!-- ── Fleet General Overview ── -->
-          <div class="mt-6 bg-gray-900 border border-teal-800/50 rounded-xl overflow-hidden shadow-lg">
-            <div class="px-5 py-3 border-b border-teal-800/40 flex items-center justify-between">
-              <h3 class="text-sm font-semibold text-teal-300 uppercase tracking-wider flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Fleet General Overview
-              </h3>
-              <div class="flex items-center gap-2">
-                <span v-if="fleetOverview.timestamp" class="text-[10px] text-gray-500">{{ fleetOverview.timestamp }}</span>
-                <button
-                  @click="loadFleetOverview"
-                  :disabled="fleetOverview.loading"
-                  class="p-1 rounded-md text-gray-400 hover:text-teal-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                  title="Refresh overview"
-                >
-                  <svg class="w-3.5 h-3.5" :class="fleetOverview.loading ? 'animate-spin' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="p-5">
-              <!-- Status summary chips -->
-              <div class="flex flex-wrap gap-2 mb-4">
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-900/30 border border-teal-800/60">
-                  <span class="w-2 h-2 bg-teal-400 rounded-full shrink-0"></span>
-                  <span class="text-xs font-bold text-teal-300">{{ turbines.filter(t => t.status === 'OK').length }}</span>
-                  <span class="text-xs text-gray-400">OK</span>
-                </div>
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yellow-900/30 border border-yellow-800/60">
-                  <span class="w-2 h-2 bg-yellow-400 rounded-full shrink-0 animate-pulse"></span>
-                  <span class="text-xs font-bold text-yellow-300">{{ warningCount }}</span>
-                  <span class="text-xs text-gray-400">RISK</span>
-                </div>
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-900/30 border border-red-800/60">
-                  <span class="w-2 h-2 bg-red-400 rounded-full shrink-0 animate-pulse"></span>
-                  <span class="text-xs font-bold text-red-300">{{ criticalCount }}</span>
-                  <span class="text-xs text-gray-400">NOK</span>
-                </div>
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-800 border border-gray-700">
-                  <span class="text-xs text-gray-400">{{ turbines.length }} total</span>
-                </div>
-              </div>
-
-              <!-- AI summary -->
-              <div v-if="fleetOverview.loading" class="flex items-center gap-2 text-gray-500 text-xs py-1">
-                <span class="flex gap-1">
-                  <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay:0ms"></span>
-                  <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay:150ms"></span>
-                  <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay:300ms"></span>
-                </span>
-                Generating fleet overview…
-              </div>
-              <div v-else-if="fleetOverview.error" class="text-xs text-red-400">{{ fleetOverview.error }}</div>
-              <div v-else-if="fleetOverview.aiSummary"
-                class="text-xs text-gray-300 leading-relaxed ai-message"
-                v-html="renderMarkdown(fleetOverview.aiSummary)">
-              </div>
-              <div v-else class="text-xs text-gray-500">Overview will appear here after loading.</div>
-            </div>
-          </div>
         </section>
       </div>
 
@@ -999,9 +933,6 @@
                 <p class="mb-3">
                   The <span class="text-teal-400 font-semibold">Siemens Energy AI Maintenance Dashboard</span> is a proof-of-concept tool designed to help maintenance engineers and plant operators monitor industrial gas turbine fleets in real time. The dashboard presents live telemetry data—such as vibration levels, exhaust temperatures, power output, and efficiency—across all fleet assets, highlights anomalies instantly, and provides AI-driven root-cause analysis and actionable maintenance plans.
                 </p>
-                <p class="mb-3">
-                  Under the hood, the AI assistant uses <span class="text-teal-400 font-semibold">Retrieval-Augmented Generation (RAG)</span> to ground its answers in real documentation. When you ask a question, the system embeds your query using <span class="text-teal-400 font-semibold">Google text-embedding-004</span>, retrieves the most relevant excerpts from the equipment manuals and maintenance history stored in Amazon S3, and then passes that context to <span class="text-teal-400 font-semibold">Gemini 2.0 Flash</span> for a structured, evidence-based response. This means the AI doesn't hallucinate generic advice—it references the actual Siemens SGT-series maintenance documentation and your fleet's historical records.
-                </p>
               </section>
 
               <!-- Reading the Dashboard -->
@@ -1083,8 +1014,22 @@
                       </svg>
                     </span>
                     <div>
-                      <p class="text-white font-semibold text-xs">Ask AI Assistant (Alert Robot Icon)</p>
-                      <p class="text-gray-400 text-xs">Appears on cards with <span class="text-yellow-300 font-bold">RISK</span> or <span class="text-red-300 font-bold">NOK</span> status. Clicking the robot icon instantly sends the anomaly context to the AI assistant for analysis—no typing needed. Also available in the detail view as a dedicated button.</p>
+                      <p class="text-white font-semibold text-xs">Ask AI Assistant (Robot Icon)</p>
+                      <p class="text-gray-400 text-xs">Available on every equipment card. The AI assistant responds based on the current card status:</p>
+                      <div class="mt-1.5 space-y-1 pl-2">
+                        <div class="flex items-center gap-1.5">
+                          <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-red-900 text-red-300 border border-red-700">NOK</span>
+                          <span class="text-gray-400 text-[11px]">→ Root-cause analysis + recommended actions</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-yellow-900 text-yellow-300 border border-yellow-700">RISK</span>
+                          <span class="text-gray-400 text-[11px]">→ Preventive diagnostic analysis</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-teal-900 text-teal-300 border border-teal-700">OK</span>
+                          <span class="text-gray-400 text-[11px]">→ Operational performance overview</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1122,26 +1067,6 @@
                 </div>
               </section>
 
-              <!-- RAG Explanation -->
-              <section>
-                <h3 class="text-base font-bold text-teal-300 mb-3 flex items-center gap-2">
-                  <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                  </svg>
-                  How the AI Works (RAG Pipeline)
-                </h3>
-                <p class="mb-3">
-                  The AI assistant follows a <span class="text-teal-400 font-semibold">Retrieval-Augmented Generation (RAG)</span> pipeline to ensure every answer is grounded in real Siemens documentation:
-                </p>
-                <ol class="space-y-2 list-decimal list-inside">
-                  <li class="text-gray-400"><span class="text-gray-300">Your question is embedded</span> into a 768-dimensional vector using Google text-embedding-004.</li>
-                  <li class="text-gray-400"><span class="text-gray-300">Cosine similarity search</span> compares that vector against pre-computed chunks from the Siemens SGT-series manuals and maintenance records stored in Amazon S3.</li>
-                  <li class="text-gray-400"><span class="text-gray-300">Top-3 most relevant excerpts</span> are selected and injected into a structured prompt.</li>
-                  <li class="text-gray-400"><span class="text-gray-300">Gemini 2.0 Flash</span> generates the final answer, citing the source documents. This ensures accurate, traceable recommendations instead of generic advice.</li>
-                </ol>
-              </section>
-
               <!-- Example Workflow -->
               <section>
                 <h3 class="text-base font-bold text-teal-300 mb-3 flex items-center gap-2">
@@ -1153,14 +1078,14 @@
                 </h3>
                 <div class="space-y-3">
                   <div class="flex items-start gap-3">
-                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-red-900 text-red-300 text-xs font-bold border border-red-700">1</span>
+                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-teal-900 text-teal-300 text-xs font-bold border border-teal-700">1</span>
                     <div>
                       <p class="text-white font-semibold text-xs">Spot the anomaly</p>
                       <p class="text-gray-400 text-xs">You notice <span class="text-red-300 font-bold">GT-03</span> shows a <span class="inline-block px-1 py-0 text-[10px] font-bold rounded bg-red-900 text-red-300 border border-red-700">NOK</span> badge — vibration has spiked to 12.1 mm/s (limit: 11.0).</p>
                     </div>
                   </div>
                   <div class="flex items-start gap-3">
-                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-yellow-900 text-yellow-300 text-xs font-bold border border-yellow-700">2</span>
+                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-teal-900 text-teal-300 text-xs font-bold border border-teal-700">2</span>
                     <div>
                       <p class="text-white font-semibold text-xs">Consult the manual</p>
                       <p class="text-gray-400 text-xs">Click the
@@ -1178,7 +1103,7 @@
                     </div>
                   </div>
                   <div class="flex items-start gap-3">
-                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-900 text-indigo-300 text-xs font-bold border border-indigo-700">4</span>
+                    <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-teal-900 text-teal-300 text-xs font-bold border border-teal-700">4</span>
                     <div>
                       <p class="text-white font-semibold text-xs">Review and act</p>
                       <p class="text-gray-400 text-xs">The AI response includes a structured action plan (e.g., "inspect coupling alignment, check bearing lubrication, schedule balancing") with references to the specific manual sections. Follow the plan or ask follow-up questions in the chat.</p>
@@ -1368,7 +1293,7 @@
                   <!-- ═══ ARROWS ═══ -->
                   <!-- Browser → Vercel CDN: route left to left edge of CDN box then down -->
                   <path d="M390,65 L22,65 L22,150" fill="none" stroke="#0d9488" stroke-width="1.8" marker-end="url(#arr-teal)"/>
-                  <text x="206" y="60" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
+                  <text x="236" y="60" text-anchor="middle" fill="#64748b" font-size="9">HTTPS (serve SPA)</text>
                   <!-- Browser → API Gateway: route to left part of API GW -->
                   <path d="M390,90 L310,90 L310,150" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
                   <text x="347" y="86" fill="#64748b" font-size="9">REST API</text>
@@ -1441,6 +1366,22 @@
       </transition>
     </Teleport>
 
+    <!-- ═══════════════════════════════════════════════════════════════
+         FLEET OVERVIEW MODAL (top-level access)
+    ═══════════════════════════════════════════════════════════════ -->
+    <OverviewDialog
+      :open="fleetOverviewOpen"
+      :overview="fleetOverview"
+      :nok-count="criticalCount"
+      :risk-count="warningCount"
+      :ok-count="turbines.filter(t => t.status === 'OK').length"
+      :total-count="turbines.length"
+      :state-changes="stateChangesSinceLastOverview"
+      :rendered-summary="fleetOverview.aiSummary ? renderMarkdown(fleetOverview.aiSummary) : ''"
+      @close="closeFleetOverviewModal"
+      @refresh="loadFleetOverview"
+    />
+
   </div>
 </template>
 
@@ -1457,6 +1398,8 @@ import {
   makeFallbackSvg,
 } from '../fleetStore.js'
 import EquipmentCard from './EquipmentCard.vue'
+import OverviewDialog from './OverviewDialog.vue'
+import NotificationIndicator from './NotificationIndicator.vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 
@@ -1595,6 +1538,21 @@ const fleetOverview = reactive({
   aiSummary: null,
   error: null,
 })
+const fleetOverviewOpen = ref(false)
+const stateChangesSinceLastOverview = ref(0)
+
+function openFleetOverviewModal() {
+  fleetOverviewOpen.value = true
+  // Auto-refresh if state changes occurred since last view
+  if (stateChangesSinceLastOverview.value > 0 || !fleetOverview.loaded) {
+    loadFleetOverview()
+  }
+  stateChangesSinceLastOverview.value = 0
+}
+
+function closeFleetOverviewModal() {
+  fleetOverviewOpen.value = false
+}
 
 async function loadFleetOverview() {
   if (fleetOverview.loading) return
@@ -1764,6 +1722,11 @@ function updateTelemetry() {
       t.status = 'OK'
     }
 
+    // Track state changes for overview refresh
+    if (t.status !== prevStatus) {
+      stateChangesSinceLastOverview.value++
+    }
+
     // Generate dynamic alerts
     if (t.status === 'NOK') {
       const isVibrationCritical = t.vibration > thresholds.vibration.critical
@@ -1807,8 +1770,8 @@ function updateTelemetry() {
 // ── Status Distribution Cap (max 10% NOK, max 20% RISK) ──────────────────────
 function enforceStatusDistribution() {
   const total = turbines.length
-  const maxNOK = Math.max(1, Math.floor(total * 0.1))
-  const maxRISK = Math.max(1, Math.floor(total * 0.2))
+  const maxNOK = Math.max(1, Math.floor(total * 0.15))
+  const maxRISK = Math.max(1, Math.floor(total * 0.25))
 
   // Get NOK turbines sorted by how far above critical threshold they are (least critical first)
   const nokTurbines = turbines
@@ -1876,7 +1839,7 @@ function enforceStatusDistribution() {
 // ── Anomaly Trigger ────────────────────────────────────────────────────────────
 function triggerRandomAnomaly() {
   const total = turbines.length
-  const maxNOK = Math.max(1, Math.floor(total * 0.1))
+  const maxNOK = Math.max(1, Math.floor(total * 0.15))
   const currentNOK = turbines.filter(t => t.status === 'NOK').length
   if (currentNOK >= maxNOK) return
 
@@ -2413,7 +2376,7 @@ async function scrollToBottom() {
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
   updateInterval = setInterval(updateTelemetry, 2000)
-  anomalyInterval = setInterval(triggerRandomAnomaly, 15000)
+  anomalyInterval = setInterval(triggerRandomAnomaly, 8000)
 
   // Load fleet overview once on mount
   loadFleetOverview()
@@ -2435,19 +2398,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.balloon-enter-active,
-.balloon-leave-active {
-  transition: all 0.3s ease;
-}
-.balloon-enter-from {
-  opacity: 0;
-  transform: translateX(20px);
-}
-.balloon-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
 .slide-enter-active,
 .slide-leave-active {
   transition: all 0.3s ease;
@@ -2459,15 +2409,6 @@ onUnmounted(() => {
 .slide-leave-to {
   transform: translateX(100%);
   opacity: 0;
-}
-
-.animate-pulse-once {
-  animation: pulse-once 2s ease-in-out;
-}
-
-@keyframes pulse-once {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
 }
 
 .animate-pulse-slow {
