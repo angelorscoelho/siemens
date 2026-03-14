@@ -17,7 +17,7 @@
                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <div class="flex-1 min-w-0">
-              <h2 class="text-sm font-bold text-white">Fleet General Overview</h2>
+              <h2 class="text-sm font-bold text-white">Fleet General Assessment</h2>
               <p class="text-xs text-gray-400">Siemens Energy · AI Maintenance Dashboard</p>
             </div>
             <div class="flex items-center gap-2">
@@ -95,7 +95,7 @@
                     </svg>
                   </button>
                   <div v-show="!nokCollapsed" class="divide-y divide-red-900/30">
-                    <div v-for="t in nokTurbines" :key="t.id" class="px-4 py-3 bg-gray-950/80">
+                    <div v-for="t in nokTurbines" :key="t.id" class="px-4 py-3 bg-gray-950/80 cursor-pointer hover:bg-gray-900 transition-colors" title="Open equipment overview" @click="$emit('open-turbine', t.id, 'NOK')">
                       <div class="flex items-center gap-2 mb-1.5">
                         <span class="text-sm font-bold text-red-300">{{ t.name }}</span>
                         <span class="text-xs text-gray-500 font-mono">{{ t.id }}</span>
@@ -126,7 +126,7 @@
                     </svg>
                   </button>
                   <div v-show="!riskCollapsed" class="divide-y divide-yellow-900/20">
-                    <div v-for="t in riskTurbines" :key="t.id" class="px-4 py-3 bg-gray-950/80">
+                    <div v-for="t in riskTurbines" :key="t.id" class="px-4 py-3 bg-gray-950/80 cursor-pointer hover:bg-gray-900 transition-colors" title="Open equipment overview" @click="$emit('open-turbine', t.id, 'RISK')">
                       <div class="flex items-center gap-2 mb-1.5">
                         <span class="text-sm font-bold text-yellow-300">{{ t.name }}</span>
                         <span class="text-xs text-gray-500 font-mono">{{ t.id }}</span>
@@ -157,7 +157,7 @@
                     </svg>
                   </button>
                   <div v-show="!okCollapsed" class="divide-y divide-teal-900/20">
-                    <div v-for="t in okTurbines" :key="t.id" class="px-4 py-2.5 bg-gray-950/80 flex items-center gap-3">
+                    <div v-for="t in okTurbines" :key="t.id" class="px-4 py-2.5 bg-gray-950/80 flex items-center gap-3 cursor-pointer hover:bg-gray-900 transition-colors" title="Open equipment overview" @click="$emit('open-turbine', t.id, 'OK')">
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
                           <span class="text-sm font-semibold text-teal-300">{{ t.name }}</span>
@@ -237,7 +237,7 @@ const props = defineProps({
   turbines: { type: Array, default: () => [] },
 })
 
-defineEmits(['close', 'refresh'])
+defineEmits(['close', 'refresh', 'open-turbine'])
 
 const modalRef = ref(null)
 
