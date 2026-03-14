@@ -39,15 +39,6 @@
             Fleet Overview
             <span v-if="stateChangesSinceLastOverview > 0" class="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-[10px] font-bold text-gray-900">{{ stateChangesSinceLastOverview }}</span>
           </button>
-          <button @click="openArchModal()"
-            class="px-3 py-1.5 text-xs font-semibold bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5"
-            title="Explore the system architecture">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-            </svg>
-            Project Architecture
-          </button>
           <button @click="openHowToUse()"
             class="px-2.5 py-1 text-xs bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5"
             title="How to use this tool">
@@ -56,6 +47,15 @@
                 d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             How to Use
+          </button>
+          <button @click="openArchModal()"
+            class="px-3 py-1.5 text-xs font-semibold bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5"
+            title="Explore the system architecture">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            </svg>
+            Project Architecture
           </button>
         </div>
       </div>
@@ -94,20 +94,20 @@
             </svg>
             <span v-if="stateChangesSinceLastOverview > 0" class="absolute -top-1 -right-1 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-amber-500 text-[8px] font-bold text-gray-900">{{ stateChangesSinceLastOverview }}</span>
           </button>
-          <button @click="openArchModal()"
-            class="p-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer"
-            title="View Architecture">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-            </svg>
-          </button>
           <button @click="openHowToUse()"
             class="p-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer"
             title="How to use this tool">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+          <button @click="openArchModal()"
+            class="p-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-300 transition-colors cursor-pointer"
+            title="View Architecture">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
             </svg>
           </button>
         </div>
@@ -1599,9 +1599,10 @@ async function loadFleetOverview() {
 // ── Status Filters ────────────────────────────────────────────────────────────
 const statusFilters = reactive({ OK: false, RISK: false, NOK: false })
 const anyFilterActive = computed(() => statusFilters.OK || statusFilters.RISK || statusFilters.NOK)
+const STATUS_ORDER = { NOK: 0, RISK: 1, OK: 2 }
 const filteredTurbines = computed(() => {
-  if (!anyFilterActive.value) return turbines
-  return turbines.filter(t => statusFilters[t.status])
+  const list = anyFilterActive.value ? turbines.filter(t => statusFilters[t.status]) : [...turbines]
+  return list.sort((a, b) => (STATUS_ORDER[a.status] ?? 3) - (STATUS_ORDER[b.status] ?? 3))
 })
 
 function toggleFilter(status) {

@@ -339,69 +339,68 @@ export function makeFallbackSvg(name, type, color) {
 }
 
 // ── OK card insight data ───────────────────────────────────────────────────────
+// Keeps the green banner text short — these cards need minimal attention.
+// The seed ensures each turbine gets a stable, deterministic message.
 export function getOkCardInsight(turbine) {
   const hours = Math.floor(turbine.hoursSinceOverhaul)
   const days = Math.floor(hours / 24)
-
-  // Cap durations at realistic ranges (max ~30 days) and prefer day-based labels
   const cappedDays = Math.min(days, 30)
-  const cappedHours = Math.min(hours, 720)
-
-  // Use turbine id as a seed for deterministic but varied messages
   const seed = turbine.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
 
-  // Pool of varied OK status headlines — pick one deterministically per turbine
+  // Short, varied banners — no deviation history available, so keep it factual
   const okHeadlines = [
-    cappedHours < 72
-      ? `Stable operation for ${cappedHours} hrs — all readings nominal`
-      : `Trending healthy for ${cappedDays} days — no anomalies detected`,
-    `Last inspection passed — operating within design parameters`,
-    `Efficiency tracking at ${(96 + (seed % 40) / 10).toFixed(1)}% — above fleet average`,
-    `Vibration baseline holding steady since last overhaul`,
-    cappedDays > 7
-      ? `${cappedDays}-day trend: all KPIs within tolerance bands`
-      : `Recent start-up nominal — all thermal gradients within limits`,
-    `Bearing temperatures stable — lubrication system performing well`,
-    `Emissions within permit — combustion tuning optimal`,
-    `Output matching dispatch schedule — no derate events`,
-    `Compressor wash ${3 + (seed % 5)} days ago — restored efficiency`,
-    `Heat recovery steady — steam production meeting demand targets`,
+    `All nominal · No deviations in ${cappedDays}d`,
+    `Healthy · Last anomaly >${cappedDays}d ago`,
+    `All KPIs in tolerance · ${cappedDays}d clean`,
+    `Nominal readings · No action needed`,
+    `Within limits · ${cappedDays}d anomaly-free`,
+    `Stable · No alerts in ${cappedDays} days`,
+    `All parameters nominal · No action`,
+    `Clean run · ${cappedDays}d since last flag`,
   ]
 
   const stableStr = okHeadlines[seed % okHeadlines.length]
-
-  const tp = (turbine.type || '').toLowerCase()
-  let positive, commonIssue
-
-  if (tp.includes('steam turbine')) {
-    positive = 'Steam path efficiency and blade condition tracking within design limits.'
-    commonIssue = 'Monitor steam chemistry and gland seal leakage over time.'
-  } else if (tp.includes('aeroderivative')) {
-    positive = 'Fast-start capability maintained — hot section health within limits.'
-    commonIssue = 'Frequent start/stop cycles accelerate combustion liner wear.'
-  } else if (turbine.name.includes('8000H') || tp.includes('h-class')) {
-    positive = 'H-class performance tracking at rated output with high efficiency.'
-    commonIssue = 'Compressor fouling can reduce efficiency — maintain wash intervals.'
-  } else if (tp.includes('f-class') || tp.includes('heavy-duty')) {
-    positive = 'DLE combustion stable — NOx emissions within permit limits.'
-    commonIssue = 'Combustion liner wear is the most common F-class maintenance item.'
-  } else if (tp.includes('generator')) {
-    positive = 'Winding insulation resistance and hydrogen purity both nominal.'
-    commonIssue = 'Hydrogen seal oil system requires routine monitoring.'
-  } else {
-    positive = 'All monitored parameters within normal operating envelope.'
-    commonIssue = 'Compressor fouling and fuel nozzle carbon build-up are periodic concerns.'
-  }
-
-  return { stableStr, positive, commonIssue }
+  return { stableStr }
 }
 
-// ── Determine most critical metric key for a turbine ──────────────────────────
+// ── Operating ranges for normalized variation (based on randomWalk min/max) ────
+const METRIC_OPERATING_RANGES = {
+  exhaustTemp: { min: 420, max: 670 },    // °C
+  shaftSpeed:  { min: 2800, max: 20000 }, // RPM
+  vibration:   { min: 0.3, max: 9.0 },   // mm/s
+  powerOutput: { min: 1, max: 1500 },     // MW
+  fuelFlow:    { min: 0.05, max: 16.0 },  // kg/s
+}
+
+// ── Determine most critical / most variant metric key for a turbine ────────────
 export function getMostCriticalMetricKey(turbine) {
+  // Always surface an actively alarming metric first
   if (turbine.vibration > thresholds.vibration.critical) return 'vibration'
   if (turbine.exhaustTemp > thresholds.exhaustTemp.critical) return 'exhaustTemp'
   if (turbine.vibration > thresholds.vibration.warning) return 'vibration'
   if (turbine.exhaustTemp > thresholds.exhaustTemp.warning) return 'exhaustTemp'
+
+  // For OK turbines: pick the metric with the greatest *normalized* variation
+  // (max − min in history / operating range) so large-scale metrics like RPM
+  // don't automatically dominate over fast-changing ones like vibration.
+  if (turbine.metricHistory) {
+    let bestKey = 'exhaustTemp'
+    let bestVariation = -Infinity
+    for (const key of historyMetricKeys) {
+      const hist = turbine.metricHistory[key]
+      if (!hist || hist.length < 2) continue
+      const bounds = METRIC_OPERATING_RANGES[key]
+      if (!bounds) continue
+      const range = bounds.max - bounds.min
+      const variation = (Math.max(...hist) - Math.min(...hist)) / range
+      if (variation > bestVariation) {
+        bestVariation = variation
+        bestKey = key
+      }
+    }
+    return bestKey
+  }
+
   return 'exhaustTemp'
 }
 

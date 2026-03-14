@@ -143,8 +143,6 @@
         variant="ok"
         status="OK"
         :title="okInsight.stableStr"
-        :subtitle="okInsight.positive"
-        :hint="'Watch: ' + okInsight.commonIssue"
         click-title="Click for equipment overview"
         @click="$emit('select', turbine, activeMetricKey)"
       >
