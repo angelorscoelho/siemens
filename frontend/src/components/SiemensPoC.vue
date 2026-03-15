@@ -196,7 +196,7 @@
             </div>
 
             <!-- Detailed Metrics (clickable to change trend chart) -->
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
               <div v-for="param in detailVisibleMetricParams" :key="param.key"
                 @click="selectDetailMetric(param.key)"
                 @keydown.enter.prevent="selectDetailMetric(param.key)"
@@ -205,7 +205,7 @@
                 role="button"
                 :aria-pressed="detailActiveMetricKey === param.key"
                 :aria-label="`Show ${param.label} trend`"
-                class="rounded-lg p-3 cursor-pointer transition-all"
+                class="rounded-lg px-2.5 py-1.5 cursor-pointer transition-all"
                 :class="[
                   detailActiveMetricKey === param.key
                     ? 'bg-gray-700 ring-2 ' + (selectedTurbine.status === 'NOK' ? 'ring-red-600' : selectedTurbine.status === 'RISK' ? 'ring-yellow-600' : 'ring-teal-600')
@@ -213,16 +213,16 @@
                 ]"
                 :title="`Show ${param.label} trend`"
               >
-                <p class="text-xs text-gray-400 mb-1 leading-tight flex items-center gap-1">
+                <p class="text-[11px] text-gray-400 leading-tight flex items-center gap-1">
                   {{ param.label }}
                   <span v-if="detailActiveMetricKey === param.key" class="text-teal-400 text-[9px] font-bold uppercase tracking-wide">● shown</span>
                 </p>
-                <p class="text-base md:text-lg font-mono font-bold leading-tight"
+                <p class="text-sm font-mono font-bold leading-tight"
                   :class="getMetricColorClass(selectedTurbine, param.key)">
                   {{ formatValue(selectedTurbine[param.key], param.decimals) }}
-                  <span class="text-xs font-normal text-gray-400">{{ param.unit }}</span>
+                  <span class="text-[10px] font-normal text-gray-400">{{ param.unit }}</span>
                 </p>
-                <div class="flex items-center justify-between mt-1.5 text-[10px] text-gray-500">
+                <div class="flex items-center justify-between text-[10px] text-gray-500">
                   <span title="Minimum over last 60 readings">↓ {{ getParamMin(param) }}</span>
                   <span title="Maximum over last 60 readings">↑ {{ getParamMax(param) }}</span>
                 </div>
@@ -230,7 +230,7 @@
             </div>
 
             <!-- Dynamic Metric Sparkline (drill-in) -->
-            <div class="bg-gray-800 rounded-lg p-3 mb-5">
+            <div class="bg-gray-800 rounded-lg p-3 mb-3">
               <div class="flex items-center justify-between mb-2">
                 <p class="text-xs font-semibold uppercase tracking-wider" :style="{ color: detailSparklineColor }">
                   {{ detailActiveParam.label }} Trend
@@ -260,7 +260,7 @@
             </div>
 
             <!-- AI Maintenance Suggestion -->
-            <div v-if="selectedTurbine.status !== 'OK'" class="mt-4 bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-xl p-4">
+            <div v-if="selectedTurbine.status !== 'OK'" class="mt-3 bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-xl p-4">
               <p class="text-xs text-yellow-400 font-semibold mb-2 flex items-center gap-1.5">
                 <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="8" width="18" height="12" rx="2"/>
@@ -273,11 +273,13 @@
                 </svg>
                 AI Maintenance Suggestion
               </p>
-              <p class="text-xs md:text-sm text-yellow-200">{{ selectedTurbine.aiSuggestion }}</p>
-              <button @click="askAboutTurbineMobile(selectedTurbine)"
-                class="mt-3 px-4 py-2 text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer">
-                Ask Assistant for Detailed Analysis
-              </button>
+              <div class="flex items-start gap-3">
+                <p class="flex-1 text-xs md:text-sm text-yellow-200">{{ selectedTurbine.aiSuggestion }}</p>
+                <button @click="askAboutTurbineMobile(selectedTurbine)"
+                  class="shrink-0 px-4 py-2 text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer whitespace-nowrap">
+                  Ask Assistant for Detailed Analysis
+                </button>
+              </div>
             </div>
 
             <!-- Maintenance Documentation -->
@@ -307,53 +309,58 @@
               <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
               <span class="text-gray-400 font-medium">{{ turbines.length }} Units</span>
             </div>
-            <button @click="toggleFilter('OK')" class="flex-none flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer transition-all border"
-              :class="statusFilters.OK ? 'bg-teal-800 border-teal-500 text-teal-200 ring-1 ring-teal-400' : 'bg-teal-900/40 border-teal-800 text-teal-300'">
-              <span class="w-2 h-2 bg-teal-400 rounded-full"></span>
-              OK {{ okCount }}
+            <button @click="toggleFilter('NOK')" class="flex-none flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer transition-all border"
+              :class="statusFilters.NOK ? 'bg-red-800 border-red-500 text-red-200 ring-1 ring-red-400' : 'bg-red-900/60 border-red-700 text-red-300'">
+              <span class="w-2 h-2 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
+              NOK {{ criticalCount }}
             </button>
             <button @click="toggleFilter('RISK')" class="flex-none flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer transition-all border"
               :class="statusFilters.RISK ? 'bg-yellow-800 border-yellow-500 text-yellow-200 ring-1 ring-yellow-400' : 'bg-yellow-900/60 border-yellow-700 text-yellow-300'">
               <span class="w-2 h-2 bg-yellow-400 rounded-full" :class="{ 'animate-pulse': warningCount > 0 }"></span>
               RISK {{ warningCount }}
             </button>
-            <button @click="toggleFilter('NOK')" class="flex-none flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer transition-all border"
-              :class="statusFilters.NOK ? 'bg-red-800 border-red-500 text-red-200 ring-1 ring-red-400' : 'bg-red-900/60 border-red-700 text-red-300'">
-              <span class="w-2 h-2 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
-              NOK {{ criticalCount }}
+            <button @click="toggleFilter('OK')" class="flex-none flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer transition-all border"
+              :class="statusFilters.OK ? 'bg-teal-800 border-teal-500 text-teal-200 ring-1 ring-teal-400' : 'bg-teal-900/40 border-teal-800 text-teal-300'">
+              <span class="w-2 h-2 bg-teal-400 rounded-full"></span>
+              OK {{ okCount }}
             </button>
           </div>
 
           <!-- Desktop fleet header with filter chips -->
-          <div class="hidden md:flex text-lg font-semibold text-teal-300 mb-4 items-center justify-center gap-3">
-            <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Fleet Overview
-            <!-- Status filter chips -->
-            <button @click="toggleFilter('OK')"
-              class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
-              :class="statusFilters.OK ? 'bg-teal-800 border-teal-500 text-teal-200 ring-1 ring-teal-400' : 'bg-teal-900/30 border-teal-800/60 text-teal-300 hover:border-teal-600'">
-              <span class="w-2 h-2 bg-teal-400 rounded-full"></span>
-              OK {{ okCount }}
-            </button>
-            <button @click="toggleFilter('RISK')"
-              class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
-              :class="statusFilters.RISK ? 'bg-yellow-800 border-yellow-500 text-yellow-200 ring-1 ring-yellow-400' : 'bg-yellow-900/30 border-yellow-800/60 text-yellow-300 hover:border-yellow-600'">
-              <span class="w-2 h-2 bg-yellow-400 rounded-full" :class="{ 'animate-pulse': warningCount > 0 }"></span>
-              RISK {{ warningCount }}
-            </button>
-            <button @click="toggleFilter('NOK')"
-              class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
-              :class="statusFilters.NOK ? 'bg-red-800 border-red-500 text-red-200 ring-1 ring-red-400' : 'bg-red-900/30 border-red-800/60 text-red-300 hover:border-red-600'">
-              <span class="w-2 h-2 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
-              NOK {{ criticalCount }}
-            </button>
-            <button v-if="anyFilterActive" @click="clearFilters"
-              class="text-[10px] text-gray-500 hover:text-gray-300 cursor-pointer underline">
-              Clear
-            </button>
+          <div class="hidden md:flex mb-4 items-center">
+            <!-- Fleet Overview label on the left -->
+            <div class="flex items-center gap-2 text-lg font-semibold text-teal-300 shrink-0">
+              <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Fleet Overview
+            </div>
+            <!-- Status filter chips centered -->
+            <div class="flex-1 flex items-center justify-center gap-3">
+              <button @click="toggleFilter('NOK')"
+                class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
+                :class="statusFilters.NOK ? 'bg-red-800 border-red-500 text-red-200 ring-1 ring-red-400' : 'bg-red-900/30 border-red-800/60 text-red-300 hover:border-red-600'">
+                <span class="w-2 h-2 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
+                NOK {{ criticalCount }}
+              </button>
+              <button @click="toggleFilter('RISK')"
+                class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
+                :class="statusFilters.RISK ? 'bg-yellow-800 border-yellow-500 text-yellow-200 ring-1 ring-yellow-400' : 'bg-yellow-900/30 border-yellow-800/60 text-yellow-300 hover:border-yellow-600'">
+                <span class="w-2 h-2 bg-yellow-400 rounded-full" :class="{ 'animate-pulse': warningCount > 0 }"></span>
+                RISK {{ warningCount }}
+              </button>
+              <button @click="toggleFilter('OK')"
+                class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
+                :class="statusFilters.OK ? 'bg-teal-800 border-teal-500 text-teal-200 ring-1 ring-teal-400' : 'bg-teal-900/30 border-teal-800/60 text-teal-300 hover:border-teal-600'">
+                <span class="w-2 h-2 bg-teal-400 rounded-full"></span>
+                OK {{ okCount }}
+              </button>
+              <button v-if="anyFilterActive" @click="clearFilters"
+                class="text-[10px] text-gray-500 hover:text-gray-300 cursor-pointer underline">
+                Clear
+              </button>
+            </div>
           </div>
 
           <!-- Equipment Card Grid -->
