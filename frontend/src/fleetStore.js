@@ -1058,33 +1058,45 @@ export function createFleetData() {
 // ── Generate Mock Diagnostic Action Plan (Simulated RAG) ──────────────────────
 export function generateActionPlan(turbine) {
   const isVibrationCritical = turbine.vibrationVelocity > thresholds.vibrationVelocity.critical
-  const isExhaustCritical = turbine.tet > thresholds.tet.critical
+  const isTetCritical = turbine.tet > thresholds.tet.critical
+  const isTetSpreadCritical = turbine.tetSpread > thresholds.tetSpread.critical
 
   if (isVibrationCritical) {
     return [
       `1. Initiate controlled load reduction on ${turbine.name} ${turbine.type} #${turbine.id}`,
-      `2. Verify bearing temperatures and oil pressure on all journal bearings`,
-      `3. Cross-reference vibration spectrum data with baseline from last overhaul at ${Math.floor(turbine.eoh).toLocaleString()}h`,
-      `4. If vibration exceeds 8.0 mm/s, execute emergency shutdown per SOP-${turbine.id}-001`,
+      `2. Vibration velocity at ${turbine.vibrationVelocity.toFixed(1)} mm/s RMS — ISO 10816-4 Zone D (>11.2 mm/s). Verify bearing temps and lube oil pressure`,
+      `3. Cross-reference vibration spectrum with baseline from last overhaul at ${Math.floor(turbine.eoh).toLocaleString()} EOH`,
+      `4. If vibration exceeds 11.2 mm/s, execute emergency shutdown per SOP-${turbine.id}-001`,
       `5. Schedule emergency bearing inspection and rotor balance check within 24 hours`,
       `6. Notify plant operations manager and prepare maintenance crew for potential outage`,
     ]
   }
 
-  if (isExhaustCritical) {
+  if (isTetSpreadCritical) {
+    return [
+      `1. TET Spread at ${turbine.tetSpread.toFixed(0)}°C exceeds 50°C critical threshold on ${turbine.name} #${turbine.id}`,
+      `2. Inspect individual burner cans for combustion asymmetry — check fuel nozzle spray patterns`,
+      `3. Verify PCD (currently ${(turbine.pcd ?? 0).toFixed(1)} bar) for compressor degradation indication`,
+      `4. Cross-reference with TET trending — current TET: ${turbine.tet.toFixed(0)}°C`,
+      `5. Schedule combustion inspection within 48 hours per maintenance manual`,
+      `6. Review fuel gas quality and Wobbe index for recent changes`,
+    ]
+  }
+
+  if (isTetCritical) {
     return [
       `1. Reduce load on ${turbine.name} ${turbine.type} #${turbine.id} to 75% rated capacity immediately`,
-      `2. Verify combustion liner temperatures across all cans`,
-      `3. Check fuel nozzle spray patterns and fuel gas quality parameters`,
-      `4. If temperature continues rising above ${thresholds.tet.critical}°C, initiate controlled shutdown`,
+      `2. TET at ${turbine.tet.toFixed(0)}°C — verify combustion liner temperatures across all cans`,
+      `3. Check PCD (${(turbine.pcd ?? 0).toFixed(1)} bar) and TCD for compressor health indicators`,
+      `4. If TET continues rising above ${thresholds.tet.critical}°C, initiate controlled shutdown`,
       `5. Schedule combustion inspection within 48 hours per maintenance manual Section 9`,
-      `6. Review compressor wash schedule — last performed may indicate fouling trend`,
+      `6. Review compressor wash schedule — PCD drop may indicate fouling trend`,
     ]
   }
 
   return [
     `1. Continue monitoring ${turbine.name} ${turbine.type} #${turbine.id} telemetry at elevated frequency`,
-    `2. Review trending data for the last 72 hours to identify degradation patterns`,
-    `3. Schedule preventive maintenance review within 7 days`,
+    `2. All parameters within ISO 10816-4 Zone A/B. Review trending data for the last 72 hours`,
+    `3. Next maintenance milestone: EOH ${Math.floor(turbine.eoh).toLocaleString()} h. Schedule preventive review within 7 days`,
   ]
 }

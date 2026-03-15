@@ -931,7 +931,7 @@
                   Overview
                 </h3>
                 <p class="mb-3">
-                  The <span class="text-teal-400 font-semibold">Siemens Energy AI Maintenance Dashboard</span> is a proof-of-concept tool designed to help maintenance engineers and plant operators monitor industrial gas turbine fleets in real time. The dashboard presents live telemetry data—such as vibration levels, exhaust temperatures, power output, and efficiency—across all fleet assets, highlights anomalies instantly, and provides AI-driven root-cause analysis and actionable maintenance plans.
+                  The <span class="text-teal-400 font-semibold">Siemens Energy AI Maintenance Dashboard</span> is a proof-of-concept tool designed to help maintenance engineers and plant operators monitor industrial gas turbine fleets in real time. The dashboard presents live telemetry data—such as vibration velocity (ISO 10816-4), TET, PCD, TCD, TET Spread, power output, and EOH—across all fleet assets, highlights anomalies instantly, and provides AI-driven root-cause analysis and actionable maintenance plans.
                 </p>
               </section>
 
@@ -1653,7 +1653,7 @@ const detailMetricKey = ref(null)
 
 const detailActiveMetricKey = computed(() => {
   if (detailMetricKey.value) return detailMetricKey.value
-  return selectedTurbine.value ? getMostCriticalMetricKey(selectedTurbine.value) : 'exhaustTemp'
+  return selectedTurbine.value ? getMostCriticalMetricKey(selectedTurbine.value) : 'tet'
 })
 
 const detailActiveParam = computed(() => {
@@ -1664,8 +1664,8 @@ const detailSparklineColor = computed(() => {
   if (!selectedTurbine.value) return '#2dd4bf'
   if (selectedTurbine.value.status === 'NOK') return '#f87171'
   const key = detailActiveMetricKey.value
-  if (key === 'vibration' && selectedTurbine.value.vibrationAlert) return '#fbbf24'
-  if (key === 'exhaustTemp' && selectedTurbine.value.tempAlert) return '#fbbf24'
+  if (key === 'vibrationVelocity' && selectedTurbine.value.vibrationAlert) return '#fbbf24'
+  if (key === 'tet' && selectedTurbine.value.tetAlert) return '#fbbf24'
   return '#2dd4bf'
 })
 
@@ -1710,13 +1710,17 @@ function updateTelemetry() {
   turbines.forEach((t) => {
     if (t.status === 'Offline') return
 
-    t.exhaustTemp = randomWalk(t.exhaustTemp, 1.2, 420, 670)
+    t.tet = randomWalk(t.tet, 1.2, 420, 670)
     // Each turbine has different shaft speed range; use a wide but realistic bound
-    t.shaftSpeed = randomWalk(t.shaftSpeed, 5.0, 2800, 20000)
-    t.vibration = randomWalk(t.vibration, 0.08, 0.3, 9.0)
-    t.fuelFlow = randomWalk(t.fuelFlow, 0.02, 0.05, 16.0)
+    t.rotationalSpeed = randomWalk(t.rotationalSpeed, 5.0, 2800, 20000)
+    t.vibrationVelocity = randomWalk(t.vibrationVelocity, 0.08, 0.3, 12.0)
+    t.fuelMassFlow = randomWalk(t.fuelMassFlow, 0.02, 0.05, 16.0)
     t.powerOutput = randomWalk(t.powerOutput, 0.5, 1.0, 1500.0)
-    t.hoursSinceOverhaul += 0.000556
+    t.pcd = randomWalk(t.pcd ?? 18, 0.15, 5, 45)
+    t.tcd = randomWalk(t.tcd ?? 420, 1.5, 300, 500)
+    t.pressureRatio = randomWalk(t.pressureRatio ?? 20, 0.1, 10, 35)
+    t.tetSpread = randomWalk(t.tetSpread ?? 15, 0.8, 2, 80)
+    t.eoh += 0.000556
 
     // Update all metric histories
     historyMetricKeys.forEach(key => {
@@ -1726,13 +1730,16 @@ function updateTelemetry() {
       if (t.metricHistory[key].length > 60) t.metricHistory[key].shift()
     })
 
-    t.tempAlert = t.exhaustTemp > thresholds.exhaustTemp.warning
-    t.vibrationAlert = t.vibration > thresholds.vibration.warning
+    t.tetAlert = t.tet > thresholds.tet.warning
+    t.vibrationAlert = t.vibrationVelocity > thresholds.vibrationVelocity.warning
+    const tetSpreadAlert = t.tetSpread > thresholds.tetSpread.warning
 
     const prevStatus = t.status
-    if (t.vibration > thresholds.vibration.critical || t.exhaustTemp > thresholds.exhaustTemp.critical) {
+    // ISO 10816-4: Zone D (>11.2 mm/s) = NOK, Zone C (7.1–11.2) = RISK
+    // TET Spread >50°C = critical warning indicator
+    if (t.vibrationVelocity > thresholds.vibrationVelocity.critical || t.tet > thresholds.tet.critical || t.tetSpread > thresholds.tetSpread.critical) {
       t.status = 'NOK'
-    } else if (t.vibrationAlert || t.tempAlert) {
+    } else if (t.vibrationAlert || t.tetAlert || tetSpreadAlert) {
       t.status = 'RISK'
     } else {
       t.status = 'OK'
@@ -1743,26 +1750,33 @@ function updateTelemetry() {
       stateChangesSinceLastOverview.value++
     }
 
-    // Generate dynamic alerts
+    // Generate dynamic alerts using OEM terminology
     if (t.status === 'NOK') {
-      const isVibrationCritical = t.vibration > thresholds.vibration.critical
-      t.alert = isVibrationCritical
-        ? `CRITICAL: Vibration at ${t.vibration.toFixed(1)} mm/s exceeds critical threshold. Immediate action required.`
-        : `CRITICAL: Exhaust temp at ${t.exhaustTemp.toFixed(0)}°C exceeds critical threshold. Immediate action required.`
-      t.aiSuggestion = isVibrationCritical
-        ? `URGENT: Vibration at ${t.vibration.toFixed(1)} mm/s approaching trip threshold. Initiate controlled shutdown and perform emergency bearing inspection.`
-        : `URGENT: Exhaust temperature at ${t.exhaustTemp.toFixed(0)}°C exceeds limits. Reduce load immediately and inspect combustion system.`
+      const isVibrationCritical = t.vibrationVelocity > thresholds.vibrationVelocity.critical
+      const isTetSpreadCritical = t.tetSpread > thresholds.tetSpread.critical
+      if (isVibrationCritical) {
+        t.alert = `CRITICAL: Vibration velocity ${t.vibrationVelocity.toFixed(1)} mm/s RMS — ISO 10816-4 Zone D. Immediate shutdown required.`
+        t.aiSuggestion = `URGENT: Vibration velocity ${t.vibrationVelocity.toFixed(1)} mm/s in Zone D (>11.2 mm/s). Execute controlled shutdown per SOP. Emergency bearing inspection required.`
+      } else if (isTetSpreadCritical) {
+        t.alert = `CRITICAL: TET Spread ${t.tetSpread.toFixed(0)}°C exceeds 50°C threshold. Combustion anomaly suspected.`
+        t.aiSuggestion = `URGENT: TET Spread at ${t.tetSpread.toFixed(0)}°C indicates combustion asymmetry. Inspect individual burner cans and fuel nozzle spray patterns.`
+      } else {
+        t.alert = `CRITICAL: TET ${t.tet.toFixed(0)}°C exceeds critical threshold. Immediate load reduction required.`
+        t.aiSuggestion = `URGENT: TET at ${t.tet.toFixed(0)}°C exceeds limits. Reduce load and inspect combustion system per maintenance manual.`
+      }
     } else if (t.status === 'RISK') {
-      if (t.vibrationAlert && t.tempAlert) {
-        t.alert = `High vibration (${t.vibration.toFixed(1)} mm/s) and elevated exhaust temp (${t.exhaustTemp.toFixed(0)}°C). Maintenance review recommended.`
+      if (t.vibrationAlert && t.tetAlert) {
+        t.alert = `Vibration ${t.vibrationVelocity.toFixed(1)} mm/s (ISO Zone C) and TET ${t.tet.toFixed(0)}°C elevated. Inspection within 72 h advised.`
       } else if (t.vibrationAlert) {
-        t.alert = `Vibration at ${t.vibration.toFixed(1)} mm/s exceeds warning threshold. Monitor closely.`
-      } else if (t.tempAlert) {
-        t.alert = `Exhaust temp at ${t.exhaustTemp.toFixed(0)}°C above normal range. Combustion check advised.`
+        t.alert = `Vibration velocity ${t.vibrationVelocity.toFixed(1)} mm/s — ISO 10816-4 Zone C. Schedule bearing inspection.`
+      } else if (tetSpreadAlert) {
+        t.alert = `TET Spread ${t.tetSpread.toFixed(0)}°C approaching critical 50°C threshold. Monitor combustion dynamics.`
+      } else if (t.tetAlert) {
+        t.alert = `TET ${t.tet.toFixed(0)}°C above warning threshold. Combustion inspection advised.`
       }
       t.aiSuggestion = t.vibrationAlert
-        ? `Vibration trending at ${t.vibration.toFixed(1)} mm/s. Schedule vibration analysis and bearing inspection within 48 hours.`
-        : `Exhaust temperature elevated at ${t.exhaustTemp.toFixed(0)}°C. Inspect combustion liners and fuel nozzles.`
+        ? `Vibration velocity trending at ${t.vibrationVelocity.toFixed(1)} mm/s (Zone C). Schedule vibration analysis and bearing inspection within 48 hours.`
+        : `TET elevated at ${t.tet.toFixed(0)}°C. Inspect combustion liners, fuel nozzles, and check PCD for compressor degradation.`
     } else {
       t.alert = null
       t.aiSuggestion = ''
@@ -1800,12 +1814,12 @@ function enforceStatusDistribution() {
     .filter(t => t.status === 'NOK')
     .sort((a, b) => {
       const critA = Math.max(
-        (a.vibration - thresholds.vibration.critical) / thresholds.vibration.critical,
-        (a.exhaustTemp - thresholds.exhaustTemp.critical) / thresholds.exhaustTemp.critical,
+        (a.vibrationVelocity - thresholds.vibrationVelocity.critical) / thresholds.vibrationVelocity.critical,
+        (a.tet - thresholds.tet.critical) / thresholds.tet.critical,
       )
       const critB = Math.max(
-        (b.vibration - thresholds.vibration.critical) / thresholds.vibration.critical,
-        (b.exhaustTemp - thresholds.exhaustTemp.critical) / thresholds.exhaustTemp.critical,
+        (b.vibrationVelocity - thresholds.vibrationVelocity.critical) / thresholds.vibrationVelocity.critical,
+        (b.tet - thresholds.tet.critical) / thresholds.tet.critical,
       )
       return critA - critB
     })
@@ -1815,11 +1829,11 @@ function enforceStatusDistribution() {
     nokTurbines.slice(0, nokTurbines.length - maxNOK).forEach(t => {
       t.status = 'RISK'
       // Clamp values just below the critical threshold so they stay RISK
-      if (t.vibration > thresholds.vibration.critical) {
-        t.vibration = thresholds.vibration.critical - 0.1 - Math.random() * 0.2
+      if (t.vibrationVelocity > thresholds.vibrationVelocity.critical) {
+        t.vibrationVelocity = thresholds.vibrationVelocity.critical - 0.1 - Math.random() * 0.2
       }
-      if (t.exhaustTemp > thresholds.exhaustTemp.critical) {
-        t.exhaustTemp = thresholds.exhaustTemp.critical - 1 - Math.random() * 2
+      if (t.tet > thresholds.tet.critical) {
+        t.tet = thresholds.tet.critical - 1 - Math.random() * 2
       }
     })
   }
@@ -1829,12 +1843,12 @@ function enforceStatusDistribution() {
     .filter(t => t.status === 'RISK')
     .sort((a, b) => {
       const critA = Math.max(
-        (a.vibration - thresholds.vibration.warning) / thresholds.vibration.warning,
-        (a.exhaustTemp - thresholds.exhaustTemp.warning) / thresholds.exhaustTemp.warning,
+        (a.vibrationVelocity - thresholds.vibrationVelocity.warning) / thresholds.vibrationVelocity.warning,
+        (a.tet - thresholds.tet.warning) / thresholds.tet.warning,
       )
       const critB = Math.max(
-        (b.vibration - thresholds.vibration.warning) / thresholds.vibration.warning,
-        (b.exhaustTemp - thresholds.exhaustTemp.warning) / thresholds.exhaustTemp.warning,
+        (b.vibrationVelocity - thresholds.vibrationVelocity.warning) / thresholds.vibrationVelocity.warning,
+        (b.tet - thresholds.tet.warning) / thresholds.tet.warning,
       )
       return critA - critB
     })
@@ -1843,16 +1857,16 @@ function enforceStatusDistribution() {
   if (riskTurbines.length > maxRISK) {
     riskTurbines.slice(0, riskTurbines.length - maxRISK).forEach(t => {
       t.status = 'OK'
-      t.tempAlert = false
+      t.tetAlert = false
       t.vibrationAlert = false
       t.alert = null
       t.aiSuggestion = ''
       // Clamp values below warning thresholds
-      if (t.vibration > thresholds.vibration.warning) {
-        t.vibration = thresholds.vibration.warning - 0.1 - Math.random() * 0.3
+      if (t.vibrationVelocity > thresholds.vibrationVelocity.warning) {
+        t.vibrationVelocity = thresholds.vibrationVelocity.warning - 0.1 - Math.random() * 0.3
       }
-      if (t.exhaustTemp > thresholds.exhaustTemp.warning) {
-        t.exhaustTemp = thresholds.exhaustTemp.warning - 1 - Math.random() * 5
+      if (t.tet > thresholds.tet.warning) {
+        t.tet = thresholds.tet.warning - 1 - Math.random() * 5
       }
     })
   }
@@ -1882,9 +1896,9 @@ function triggerRandomAnomaly() {
     const target = candidates[Math.floor(Math.random() * candidates.length)]
 
     if (Math.random() < 0.5) {
-      target.vibration = thresholds.vibration.critical + 0.5 + Math.random() * 1.5
+      target.vibrationVelocity = thresholds.vibrationVelocity.critical + 0.5 + Math.random() * 1.5
     } else {
-      target.exhaustTemp = thresholds.exhaustTemp.critical + 5 + Math.random() * 20
+      target.tet = thresholds.tet.critical + 5 + Math.random() * 20
     }
   } else {
     // Create RISK anomaly from OK assets
@@ -1893,9 +1907,9 @@ function triggerRandomAnomaly() {
     const target = healthyAssets[Math.floor(Math.random() * healthyAssets.length)]
 
     if (Math.random() < 0.5) {
-      target.vibration = thresholds.vibration.warning + 0.2 + Math.random() * (thresholds.vibration.critical - thresholds.vibration.warning - 0.3)
+      target.vibrationVelocity = thresholds.vibrationVelocity.warning + 0.2 + Math.random() * (thresholds.vibrationVelocity.critical - thresholds.vibrationVelocity.warning - 0.3)
     } else {
-      target.exhaustTemp = thresholds.exhaustTemp.warning + 2 + Math.random() * (thresholds.exhaustTemp.critical - thresholds.exhaustTemp.warning - 3)
+      target.tet = thresholds.tet.warning + 2 + Math.random() * (thresholds.tet.critical - thresholds.tet.warning - 3)
     }
   }
 }
@@ -1904,14 +1918,16 @@ function triggerRandomAnomaly() {
 function buildBalloonMessage(turbine) {
   const isCritical = turbine.status === 'NOK'
   if (isCritical) {
-    const detail = turbine.vibration > thresholds.vibration.critical
-      ? `vibration at ${turbine.vibration.toFixed(1)} mm/s`
-      : `exhaust temp at ${turbine.exhaustTemp.toFixed(0)}°C`
+    const detail = turbine.vibrationVelocity > thresholds.vibrationVelocity.critical
+      ? `vibration velocity ${turbine.vibrationVelocity.toFixed(1)} mm/s RMS (Zone D)`
+      : turbine.tetSpread > thresholds.tetSpread.critical
+        ? `TET Spread ${turbine.tetSpread.toFixed(0)}°C (>50°C critical)`
+        : `TET ${turbine.tet.toFixed(0)}°C exceeds critical threshold`
     return `Immediate attention required: ${detail}. Click card for details.`
   }
   const detail = turbine.vibrationAlert
-    ? `Vibration trending high at ${turbine.vibration.toFixed(1)} mm/s.`
-    : `Exhaust temp elevated at ${turbine.exhaustTemp.toFixed(0)}°C.`
+    ? `Vibration velocity ${turbine.vibrationVelocity.toFixed(1)} mm/s — ISO Zone C.`
+    : `TET elevated at ${turbine.tet.toFixed(0)}°C.`
   return `${detail} Review recommended.`
 }
 
@@ -1988,8 +2004,8 @@ function statusBadgeClass(turbine) {
 }
 
 function getMetricColorClass(turbine, key) {
-  if (key === 'exhaustTemp' && turbine.tempAlert) return 'text-yellow-400'
-  if (key === 'vibration' && turbine.vibrationAlert) return 'text-red-400'
+  if (key === 'tet' && turbine.tetAlert) return 'text-yellow-400'
+  if (key === 'vibrationVelocity' && turbine.vibrationAlert) return 'text-red-400'
   return 'text-gray-100'
 }
 
@@ -2015,7 +2031,7 @@ function askAboutTurbine(turbine) {
     role: 'system',
     content: `Analyzing specific fault in Asset #${turbine.id} (${turbine.name} ${turbine.type})...`,
   })
-  const query = `Analyze the current status of ${turbine.name} ${turbine.type} (Unit ${turbine.id}): vibration is ${turbine.vibration.toFixed(3)} mm/s, exhaust temperature is ${turbine.exhaustTemp.toFixed(1)}°C, and it has ${Math.floor(turbine.hoursSinceOverhaul).toLocaleString()} hours since last overhaul. What maintenance actions should be taken?`
+  const query = `Analyze the current status of ${turbine.name} ${turbine.type} (Unit ${turbine.id}): vibration velocity is ${turbine.vibrationVelocity.toFixed(3)} mm/s RMS, TET is ${turbine.tet.toFixed(1)}°C, PCD is ${(turbine.pcd ?? 0).toFixed(1)} bar, TET Spread is ${(turbine.tetSpread ?? 0).toFixed(1)}°C, and EOH is ${Math.floor(turbine.eoh).toLocaleString()} h. What maintenance actions should be taken per ISO 10816-4 and OEM guidelines?`
   inputText.value = query
   nextTick(() => sendMessage())
 }
@@ -2029,7 +2045,7 @@ function askAboutTurbineMobile(turbine) {
     role: 'system',
     content: `Analyzing specific fault in Asset #${turbine.id} (${turbine.name} ${turbine.type})...`,
   })
-  const query = `Analyze the current status of ${turbine.name} ${turbine.type} (Unit ${turbine.id}): vibration is ${turbine.vibration.toFixed(3)} mm/s, exhaust temperature is ${turbine.exhaustTemp.toFixed(1)}°C, and it has ${Math.floor(turbine.hoursSinceOverhaul).toLocaleString()} hours since last overhaul. What maintenance actions should be taken?`
+  const query = `Analyze the current status of ${turbine.name} ${turbine.type} (Unit ${turbine.id}): vibration velocity is ${turbine.vibrationVelocity.toFixed(3)} mm/s RMS, TET is ${turbine.tet.toFixed(1)}°C, PCD is ${(turbine.pcd ?? 0).toFixed(1)} bar, TET Spread is ${(turbine.tetSpread ?? 0).toFixed(1)}°C, and EOH is ${Math.floor(turbine.eoh).toLocaleString()} h. What maintenance actions should be taken per ISO 10816-4 and OEM guidelines?`
   inputText.value = query
   nextTick(() => sendMessage())
 }
@@ -2048,10 +2064,11 @@ function askAboutTurbineOverview(turbine) {
   })
   const query =
     `Give a brief operational health overview for ${turbine.name} ${turbine.type} (Unit ${turbine.id}, ${turbine.location}). ` +
-    `Current readings: vibration ${turbine.vibration.toFixed(2)} mm/s, exhaust temp ${turbine.exhaustTemp.toFixed(0)}°C, ` +
-    `power output ${turbine.powerOutput.toFixed(0)} MW, ` +
-    `hours since overhaul: ${Math.floor(turbine.hoursSinceOverhaul).toLocaleString()} hrs. ` +
-    `Status: OK (all parameters within normal range). Summarize the current health, any upcoming maintenance milestones, ` +
+    `Current telemetry: vibration velocity ${turbine.vibrationVelocity.toFixed(2)} mm/s RMS, TET ${turbine.tet.toFixed(0)}°C, ` +
+    `PCD ${(turbine.pcd ?? 0).toFixed(1)} bar, TET Spread ${(turbine.tetSpread ?? 0).toFixed(1)}°C, ` +
+    `power output ${turbine.powerOutput.toFixed(0)} MW-e, ` +
+    `EOH: ${Math.floor(turbine.eoh).toLocaleString()} h. ` +
+    `Status: OK (all parameters within ISO 10816-4 Zone A/B). Summarize the current health, any upcoming maintenance milestones, ` +
     `efficiency notes, and general recommendations for this unit type. Keep it concise.`
   inputText.value = query
   nextTick(() => sendMessage())
@@ -2319,10 +2336,10 @@ function renderMarkdown(text) {
 }
 
 const sampleQuestions = [
-  'What are the vibration thresholds for bearing fault detection?',
-  'How often should combustion liners be inspected?',
-  'What causes high exhaust temperature readings?',
-  'Describe the hot gas path inspection procedure.',
+  'What are the ISO 10816-4 vibration zones for gas turbine bearing monitoring?',
+  'How is EOH calculated and what are the fuel and start factors?',
+  'What does a TET Spread >50°C indicate for combustion health?',
+  'Describe the hot gas path inspection procedure for H-class turbines.',
 ]
 
 const API_URL = '/api'
@@ -2430,17 +2447,17 @@ onMounted(() => {
   for (let i = 0; i < initialNOK && idx < shuffled.length; i++, idx++) {
     const t = shuffled[idx]
     if (Math.random() < 0.5) {
-      t.vibration = thresholds.vibration.critical + 0.3 + Math.random() * 1.0
+      t.vibrationVelocity = thresholds.vibrationVelocity.critical + 0.3 + Math.random() * 1.0
     } else {
-      t.exhaustTemp = thresholds.exhaustTemp.critical + 3 + Math.random() * 15
+      t.tet = thresholds.tet.critical + 3 + Math.random() * 15
     }
   }
   for (let i = 0; i < initialRISK && idx < shuffled.length; i++, idx++) {
     const t = shuffled[idx]
     if (Math.random() < 0.5) {
-      t.vibration = thresholds.vibration.warning + 0.2 + Math.random() * (thresholds.vibration.critical - thresholds.vibration.warning - 0.3)
+      t.vibrationVelocity = thresholds.vibrationVelocity.warning + 0.2 + Math.random() * (thresholds.vibrationVelocity.critical - thresholds.vibrationVelocity.warning - 0.3)
     } else {
-      t.exhaustTemp = thresholds.exhaustTemp.warning + 2 + Math.random() * (thresholds.exhaustTemp.critical - thresholds.exhaustTemp.warning - 3)
+      t.tet = thresholds.tet.warning + 2 + Math.random() * (thresholds.tet.critical - thresholds.tet.warning - 3)
     }
   }
   // Run one telemetry tick to set statuses based on seeded values
