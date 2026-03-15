@@ -368,24 +368,16 @@ export function makeFallbackSvg(name, type, color) {
 // Keeps the green banner text short — these cards need minimal attention.
 // The seed ensures each turbine gets a stable, deterministic message.
 export function getOkCardInsight(turbine) {
-  const hours = Math.floor(turbine.eoh)
-  const days = Math.floor(hours / 24)
-  const cappedDays = Math.min(days, 30)
   const seed = turbine.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
 
-  // Short, varied banners — no deviation history available, so keep it factual
-  const okHeadlines = [
-    `All nominal · No deviations in ${cappedDays}d`,
-    `Healthy · Last anomaly >${cappedDays}d ago`,
-    `All KPIs in tolerance · ${cappedDays}d clean`,
-    `Nominal readings · No action needed`,
-    `Within limits · ${cappedDays}d anomaly-free`,
-    `Stable · No alerts in ${cappedDays} days`,
-    `All parameters nominal · No action`,
-    `Clean run · ${cappedDays}d since last flag`,
-  ]
+  // Seeded pseudo-random: primes 7/13 spread values, mod 45 gives 1–45 day range
+  const rawDays = ((seed * 7 + 13) % 45) + 1
+  const daysStr = rawDays > 30 ? '>30 days' : `${rawDays} days`
 
-  const stableStr = okHeadlines[seed % okHeadlines.length]
+  // Alternate between RISK and NOK absence messages based on seed parity
+  const stableStr = seed % 2 === 0
+    ? `No RISK parameter read for ${daysStr}`
+    : `No NOK parameter read for ${daysStr}`
   return { stableStr }
 }
 
