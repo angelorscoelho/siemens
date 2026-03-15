@@ -371,22 +371,14 @@ export function getOkCardInsight(turbine) {
   const hours = Math.floor(turbine.eoh)
   const seed = turbine.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
 
-  // Randomize days per card using a seeded pseudo-random number
+  // Seeded pseudo-random: primes 7/13 spread values, mod 45 gives 1–45 day range
   const rawDays = ((seed * 7 + 13) % 45) + 1
   const daysStr = rawDays > 30 ? '>30 days' : `${rawDays} days`
 
-  const okHeadlines = [
-    `No RISK parameter read for ${daysStr}`,
-    `No NOK parameter read for ${daysStr}`,
-    `No RISK parameter read for ${daysStr}`,
-    `No NOK parameter read for ${daysStr}`,
-    `No RISK parameter read for ${daysStr}`,
-    `No NOK parameter read for ${daysStr}`,
-    `No RISK parameter read for ${daysStr}`,
-    `No NOK parameter read for ${daysStr}`,
-  ]
-
-  const stableStr = okHeadlines[seed % okHeadlines.length]
+  // Alternate between RISK and NOK absence messages based on seed parity
+  const stableStr = seed % 2 === 0
+    ? `No RISK parameter read for ${daysStr}`
+    : `No NOK parameter read for ${daysStr}`
   return { stableStr }
 }
 
