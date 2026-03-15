@@ -327,37 +327,37 @@
           </div>
 
           <!-- Desktop fleet header with filter chips -->
-          <div class="hidden md:flex mb-4 items-center">
+          <div class="hidden md:flex mb-4 items-center relative">
             <!-- Fleet Overview label on the left -->
-            <div class="flex items-center gap-2 text-lg font-semibold text-teal-300 shrink-0">
+            <div class="flex items-center gap-2 text-lg font-semibold text-teal-300 shrink-0 relative z-10">
               <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
               Fleet Overview
             </div>
-            <!-- Status filter chips centered -->
-            <div class="flex-1 flex items-center justify-center gap-3">
+            <!-- Status filter chips centered (absolute so they ignore the label width) -->
+            <div class="absolute inset-0 flex items-center justify-center gap-3 pointer-events-none">
               <button @click="toggleFilter('NOK')"
-                class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
+                class="pointer-events-auto flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
                 :class="statusFilters.NOK ? 'bg-red-800 border-red-500 text-red-200 ring-1 ring-red-400' : 'bg-red-900/30 border-red-800/60 text-red-300 hover:border-red-600'">
                 <span class="w-2 h-2 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
                 NOK {{ criticalCount }}
               </button>
               <button @click="toggleFilter('RISK')"
-                class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
+                class="pointer-events-auto flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
                 :class="statusFilters.RISK ? 'bg-yellow-800 border-yellow-500 text-yellow-200 ring-1 ring-yellow-400' : 'bg-yellow-900/30 border-yellow-800/60 text-yellow-300 hover:border-yellow-600'">
                 <span class="w-2 h-2 bg-yellow-400 rounded-full" :class="{ 'animate-pulse': warningCount > 0 }"></span>
                 RISK {{ warningCount }}
               </button>
               <button @click="toggleFilter('OK')"
-                class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
+                class="pointer-events-auto flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
                 :class="statusFilters.OK ? 'bg-teal-800 border-teal-500 text-teal-200 ring-1 ring-teal-400' : 'bg-teal-900/30 border-teal-800/60 text-teal-300 hover:border-teal-600'">
                 <span class="w-2 h-2 bg-teal-400 rounded-full"></span>
                 OK {{ okCount }}
               </button>
               <button v-if="anyFilterActive" @click="clearFilters"
-                class="text-[10px] text-gray-500 hover:text-gray-300 cursor-pointer underline">
+                class="pointer-events-auto text-[10px] text-gray-500 hover:text-gray-300 cursor-pointer underline">
                 Clear
               </button>
             </div>
