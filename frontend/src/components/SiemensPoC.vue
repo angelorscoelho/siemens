@@ -165,16 +165,6 @@
     </Teleport>
 
     <!-- ═══════════════════════════════════════════════════════════════
-         ALERT BALLOON — clickable, focuses the card
-    ═══════════════════════════════════════════════════════════════ -->
-    <NotificationIndicator
-      :balloon="alertBalloon"
-      :assistant-open="assistantOpen"
-      @focus="focusAlertCard"
-      @dismiss="alertBalloon = null"
-    />
-
-    <!-- ═══════════════════════════════════════════════════════════════
          MAIN CONTENT AREA
     ═══════════════════════════════════════════════════════════════ -->
     <div class="flex-1 flex overflow-hidden">
@@ -372,49 +362,13 @@
             </div>
           </div>
 
-          <!-- Desktop fleet header with status filter chips -->
-          <div class="hidden md:flex text-lg font-semibold text-teal-300 mb-4 items-center gap-2 flex-wrap">
+          <!-- Desktop fleet header -->
+          <div class="hidden md:flex text-lg font-semibold text-teal-300 mb-4 items-center gap-2">
             <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             Fleet Overview
-            <span class="ml-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-            <span class="text-xs text-gray-500 font-normal">{{ filteredTurbines.length }}/{{ turbines.length }} units · live 2s</span>
-
-            <!-- Status Filter Chips -->
-            <div class="ml-auto flex items-center gap-2">
-              <button
-                @click="toggleFilter('OK')"
-                class="flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full border transition-all cursor-pointer"
-                :class="statusFilters.OK
-                  ? 'bg-teal-900 text-teal-300 border-teal-600'
-                  : 'bg-gray-800 text-gray-500 border-gray-700 hover:border-teal-700 hover:text-teal-400'"
-              >
-                <span class="w-1.5 h-1.5 rounded-full" :class="statusFilters.OK ? 'bg-teal-400' : 'bg-gray-600'"></span>
-                OK <span class="bg-gray-900/50 px-1.5 py-0.5 rounded text-[10px] ml-0.5 font-mono">{{ okCount }}</span>
-              </button>
-              <button
-                @click="toggleFilter('RISK')"
-                class="flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full border transition-all cursor-pointer"
-                :class="statusFilters.RISK
-                  ? 'bg-yellow-900 text-yellow-300 border-yellow-600'
-                  : 'bg-gray-800 text-gray-500 border-gray-700 hover:border-yellow-700 hover:text-yellow-400'"
-              >
-                <span class="w-1.5 h-1.5 rounded-full" :class="statusFilters.RISK ? 'bg-yellow-400 animate-pulse' : 'bg-gray-600'"></span>
-                RISK <span class="bg-gray-900/50 px-1.5 py-0.5 rounded text-[10px] ml-0.5 font-mono">{{ warningCount }}</span>
-              </button>
-              <button
-                @click="toggleFilter('NOK')"
-                class="flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full border transition-all cursor-pointer"
-                :class="statusFilters.NOK
-                  ? 'bg-red-900 text-red-300 border-red-600'
-                  : 'bg-gray-800 text-gray-500 border-gray-700 hover:border-red-700 hover:text-red-400'"
-              >
-                <span class="w-1.5 h-1.5 rounded-full" :class="statusFilters.NOK ? 'bg-red-400 animate-pulse' : 'bg-gray-600'"></span>
-                NOK <span class="bg-gray-900/50 px-1.5 py-0.5 rounded text-[10px] ml-0.5 font-mono">{{ criticalCount }}</span>
-              </button>
-            </div>
           </div>
 
           <!-- Equipment Card Grid -->
