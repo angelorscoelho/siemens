@@ -51,26 +51,30 @@
               <!-- ── LEFT: Equipment Status Summaries ── -->
               <div class="flex-1 min-w-0 px-6 py-5 space-y-4 lg:overflow-y-auto lg:max-h-[calc(90vh-8rem)]">
 
-                <!-- Status summary chips -->
+                <!-- Status summary chips — clickable to filter categories -->
                 <div class="flex flex-wrap gap-2">
-                  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-900/30 border border-red-800/60">
+                  <button @click="toggleCategoryFilter('NOK')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all"
+                    :class="activeFilter === 'NOK' ? 'bg-red-800 border-red-500 ring-1 ring-red-400' : 'bg-red-900/30 border-red-800/60 hover:border-red-600'">
                     <span class="w-2.5 h-2.5 bg-red-400 rounded-full shrink-0 animate-pulse"></span>
                     <span class="text-sm font-bold text-red-300">{{ nokCount }}</span>
                     <span class="text-xs text-gray-400">NOK</span>
-                  </div>
-                  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-yellow-900/30 border border-yellow-800/60">
+                  </button>
+                  <button @click="toggleCategoryFilter('RISK')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all"
+                    :class="activeFilter === 'RISK' ? 'bg-yellow-800 border-yellow-500 ring-1 ring-yellow-400' : 'bg-yellow-900/30 border-yellow-800/60 hover:border-yellow-600'">
                     <span class="w-2.5 h-2.5 bg-yellow-400 rounded-full shrink-0 animate-pulse"></span>
                     <span class="text-sm font-bold text-yellow-300">{{ riskCount }}</span>
                     <span class="text-xs text-gray-400">RISK</span>
-                  </div>
-                  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-teal-900/30 border border-teal-800/60">
+                  </button>
+                  <button @click="toggleCategoryFilter('OK')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all"
+                    :class="activeFilter === 'OK' ? 'bg-teal-800 border-teal-500 ring-1 ring-teal-400' : 'bg-teal-900/30 border-teal-800/60 hover:border-teal-600'">
                     <span class="w-2.5 h-2.5 bg-teal-400 rounded-full shrink-0"></span>
                     <span class="text-sm font-bold text-teal-300">{{ okCount }}</span>
                     <span class="text-xs text-gray-400">OK</span>
-                  </div>
+                  </button>
                   <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700">
                     <span class="text-xs text-gray-400">{{ totalCount }} total</span>
                   </div>
+                  <button v-if="activeFilter" @click="activeFilter = null" class="text-[10px] text-gray-500 hover:text-gray-300 cursor-pointer underline self-center ml-1">Clear</button>
                 </div>
 
                 <!-- State changes indicator -->
@@ -82,7 +86,7 @@
                 </div>
 
                 <!-- ── NOK Section (always expanded) ── -->
-                <div v-if="nokTurbines.length > 0" class="rounded-xl border border-red-800/60 overflow-hidden">
+                <div v-if="nokTurbines.length > 0 && (!activeFilter || activeFilter === 'NOK')" class="rounded-xl border border-red-800/60 overflow-hidden">
                   <button
                     class="w-full px-4 py-2.5 bg-red-900/30 border-b border-red-800/40 flex items-center gap-2 cursor-pointer hover:bg-red-900/40 transition-colors"
                     @click="nokCollapsed = !nokCollapsed"
@@ -113,7 +117,7 @@
                 </div>
 
                 <!-- ── RISK Section (expanded by default) ── -->
-                <div v-if="riskTurbines.length > 0" class="rounded-xl border border-yellow-800/60 overflow-hidden">
+                <div v-if="riskTurbines.length > 0 && (!activeFilter || activeFilter === 'RISK')" class="rounded-xl border border-yellow-800/60 overflow-hidden">
                   <button
                     class="w-full px-4 py-2.5 bg-yellow-900/20 border-b border-yellow-800/40 flex items-center gap-2 cursor-pointer hover:bg-yellow-900/30 transition-colors"
                     @click="riskCollapsed = !riskCollapsed"
@@ -144,7 +148,7 @@
                 </div>
 
                 <!-- ── OK Section (collapsed by default) ── -->
-                <div v-if="okTurbines.length > 0" class="rounded-xl border border-teal-800/40 overflow-hidden">
+                <div v-if="okTurbines.length > 0 && (!activeFilter || activeFilter === 'OK')" class="rounded-xl border border-teal-800/40 overflow-hidden">
                   <button
                     class="w-full px-4 py-2.5 bg-teal-900/20 border-b border-teal-800/30 flex items-center gap-2 cursor-pointer hover:bg-teal-900/30 transition-colors"
                     @click="okCollapsed = !okCollapsed"
@@ -235,6 +239,7 @@ const props = defineProps({
   stateChanges: { type: Number, default: 0 },
   renderedSummary: { type: String, default: '' },
   turbines: { type: Array, default: () => [] },
+  isMobile: { type: Boolean, default: false },
 })
 
 defineEmits(['close', 'refresh', 'open-turbine'])
@@ -246,12 +251,30 @@ const nokCollapsed = ref(false)
 const riskCollapsed = ref(false)
 const okCollapsed = ref(true)
 
+// Category filter — when a top chip is clicked, only that status section is shown
+const activeFilter = ref(null) // null = show all, 'NOK' | 'RISK' | 'OK'
+
+function toggleCategoryFilter(status) {
+  activeFilter.value = activeFilter.value === status ? null : status
+}
+
 const nokTurbines = computed(() => props.turbines.filter(t => t.status === 'NOK'))
 const riskTurbines = computed(() => props.turbines.filter(t => t.status === 'RISK'))
 const okTurbines = computed(() => props.turbines.filter(t => t.status === 'OK'))
 
 watch(() => props.open, async (val) => {
   if (val) {
+    // On mobile, start with all sections collapsed so user can see AI Fleet Assessment
+    if (props.isMobile) {
+      nokCollapsed.value = true
+      riskCollapsed.value = true
+      okCollapsed.value = true
+    } else {
+      nokCollapsed.value = false
+      riskCollapsed.value = false
+      okCollapsed.value = true
+    }
+    activeFilter.value = null
     await nextTick()
     modalRef.value?.focus()
   }

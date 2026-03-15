@@ -16,18 +16,17 @@
           </svg>
           angelorscoelho.dev
         </a>
-        <div class="flex items-center gap-2">
+        <a href="/siemens/" class="flex items-center gap-2 hover:opacity-80 transition-opacity" @click.prevent="goHome">
           <svg class="w-6 h-6 text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
           <div>
-            <a href="https://www.angelorscoelho.dev/siemens"
-               class="text-base font-bold tracking-tight text-white leading-tight hover:text-teal-400 transition-colors">
+            <span class="text-base font-bold tracking-tight text-white leading-tight hover:text-teal-400 transition-colors block">
               Siemens Energy — AI Maintenance Dashboard
-            </a>
+            </span>
             <p class="text-xs text-teal-400 leading-tight">PoC · Distributed AI Factory · Industrial RAG</p>
           </div>
-        </div>
+        </a>
 
         <div class="ml-auto flex items-center gap-2">
           <button @click="openFleetOverviewModal()"
@@ -63,13 +62,15 @@
 
       <!-- Mobile header -->
       <div class="md:hidden px-4 py-2.5 flex items-center gap-3">
-        <svg class="w-6 h-6 text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-        <div class="flex-1 min-w-0">
-          <h1 class="text-sm font-bold text-white leading-tight truncate">GT AI Maintenance</h1>
-          <p class="text-xs text-teal-400 leading-tight">Siemens Energy · PoC</p>
-        </div>
+        <a href="/siemens/" class="flex items-center gap-3 flex-1 min-w-0" @click.prevent="goHome">
+          <svg class="w-6 h-6 text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <div class="flex-1 min-w-0">
+            <h1 class="text-sm font-bold text-white leading-tight truncate">GT AI Maintenance</h1>
+            <p class="text-xs text-teal-400 leading-tight">Siemens Energy · PoC</p>
+          </div>
+        </a>
         <div class="flex items-center gap-1.5 shrink-0">
           <button @click="openFleetOverviewModal()"
             class="p-1.5 rounded-lg bg-teal-900/60 border border-teal-700 text-teal-300 hover:bg-teal-800/80 hover:text-teal-200 transition-colors cursor-pointer relative"
@@ -259,6 +260,24 @@
               <p class="text-[10px] text-gray-600 text-center mt-1">Click any metric above to change chart ↑</p>
             </div>
 
+            <!-- OK card insight banner (matches mini-card banner) -->
+            <CardFooterBanner
+              v-if="selectedTurbine.status === 'OK'"
+              variant="ok"
+              status="OK"
+              :title="detailOkInsight.stableStr"
+              click-title="Click for equipment overview"
+              @click="askAboutTurbineOverview(selectedTurbine)"
+            >
+              <template #action>
+                <AIActionButton
+                  status="OK"
+                  title="Ask Assistant for Equipment Overview"
+                  @click="askAboutTurbineOverview(selectedTurbine)"
+                />
+              </template>
+            </CardFooterBanner>
+
             <!-- AI Maintenance Suggestion -->
             <div v-if="selectedTurbine.status !== 'OK'" class="mt-3 bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-xl p-4">
               <p class="text-xs text-yellow-400 font-semibold mb-2 flex items-center gap-1.5">
@@ -283,13 +302,19 @@
             </div>
 
             <!-- Maintenance Documentation -->
-            <div class="bg-gray-800 border border-gray-600 rounded-xl p-4">
+            <div class="bg-gray-800 border border-gray-600 rounded-xl p-4 md:cursor-default cursor-pointer"
+              :role="isMobileScreen ? 'button' : undefined"
+              :tabindex="isMobileScreen ? 0 : undefined"
+              @click="isMobileScreen && openHistoryModal(selectedTurbine)"
+              @keydown.enter="isMobileScreen && openHistoryModal(selectedTurbine)"
+              @keydown.space.prevent="isMobileScreen && openHistoryModal(selectedTurbine)">
               <h4 class="text-xs font-semibold text-teal-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Maintenance Documentation &amp; History
+                <span class="md:hidden text-[10px] text-gray-500 font-normal normal-case tracking-normal ml-auto">Tap to open ↗</span>
               </h4>
               <div class="space-y-3 text-sm text-gray-300">
                 <div v-for="doc in selectedTurbine.documentation" :key="doc.title" class="border-l-2 border-teal-700 pl-3">
@@ -1349,6 +1374,7 @@
       :state-changes="stateChangesSinceLastOverview"
       :rendered-summary="fleetOverview.aiSummary ? renderMarkdown(fleetOverview.aiSummary) : ''"
       :turbines="turbines"
+      :is-mobile="isMobileScreen"
       @close="closeFleetOverviewModal"
       @open-turbine="onOpenTurbineFromOverview"
       @refresh="loadFleetOverview"
@@ -1360,6 +1386,7 @@
     <NotificationIndicator
       :balloon="alertBalloon"
       :assistant-open="assistantOpen"
+      :is-mobile="isMobileScreen"
       @focus="focusAlertCard"
       @dismiss="alertBalloon = null"
     />
@@ -1377,11 +1404,13 @@ import {
 import {
   metricParams, thresholds, createFleetData, randomWalk,
   historyMetricKeys, getMostCriticalMetricKey, getMaintenanceHistory,
-  makeFallbackSvg, openManual, isGasTurbine,
+  makeFallbackSvg, openManual, isGasTurbine, getOkCardInsight,
 } from '../fleetStore.js'
 import EquipmentCard from './EquipmentCard.vue'
 import OverviewDialog from './OverviewDialog.vue'
 import NotificationIndicator from './NotificationIndicator.vue'
+import CardFooterBanner from './CardFooterBanner.vue'
+import AIActionButton from './AIActionButton.vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 
@@ -1640,10 +1669,19 @@ function onDetailImageError() {
   detailImageHasError.value = true
 }
 
+// ── Detail View OK Card Insight ───────────────────────────────────────────────
+const detailOkInsight = computed(() => {
+  return selectedTurbine.value ? getOkCardInsight(selectedTurbine.value) : { stableStr: '' }
+})
+
 // ── Fleet Status Computed ─────────────────────────────────────────────────────
 const okCount = computed(() => turbines.filter(t => t.status === 'OK').length)
 const criticalCount = computed(() => turbines.filter(t => t.status === 'NOK').length)
 const warningCount = computed(() => turbines.filter(t => t.status === 'RISK').length)
+
+// ── Mobile Detection ──────────────────────────────────────────────────────────
+const isMobileScreen = ref(false)
+function onResizeCheck() { isMobileScreen.value = window.innerWidth < 768 }
 
 // ── Detail View Metric Drill-In ───────────────────────────────────────────────
 const detailMetricKey = ref(null)
@@ -1800,15 +1838,9 @@ function updateTelemetry() {
   // Enforce max 10% NOK and 20% RISK to keep dashboard realistic
   enforceStatusDistribution()
 
-  // Track state transitions AFTER enforcement so reverted changes are not counted
-  turbines.forEach((t) => {
-    if (t.status !== prevStatuses[t.id]) {
-      stateChangesSinceLastOverview.value++
-    }
-  })
-
   // Now trigger alert balloon only for turbines whose escalation survived enforcement
   // Skip lastNotifiedId to prevent consecutive notification spam for the same card
+  // Track state changes ONLY when a balloon is actually shown (matches visible notifications)
   const now = Date.now()
   for (const t of escalated) {
     if (t.status !== 'NOK' && t.status !== 'RISK') continue // downgraded by enforcement
@@ -1817,6 +1849,7 @@ function updateTelemetry() {
     if (!alertCooldown[cooldownKey] || now - alertCooldown[cooldownKey] > 12000) {
       alertCooldown[cooldownKey] = now
       lastNotifiedId = t.id
+      stateChangesSinceLastOverview.value++
       showAlertBalloon(t)
     }
   }
@@ -2046,6 +2079,16 @@ function getMetricColorClass(turbine, key) {
 }
 
 // ── Turbine Session ───────────────────────────────────────────────────────────
+function goHome() {
+  clearTurbineSelection()
+  fleetOverviewOpen.value = false
+  archOpen.value = false
+  howToUseOpen.value = false
+  historyModalTurbine.value = null
+  historyModalData.value = []
+  pushHash('')
+}
+
 function openTurbineSession(turbine, metricKey = null) {
   pendingMetricKey = metricKey
   selectedTurbine.value = turbine
@@ -2398,6 +2441,11 @@ async function sendMessage() {
   const query = inputText.value.trim()
   if (!query || loading.value) return
 
+  // Auto-open assistant panel so the user immediately sees the new message
+  if (!assistantOpen.value) {
+    assistantOpen.value = true
+  }
+
   error.value = ''
   messages.value.push({ role: 'user', content: query })
   inputText.value = ''
@@ -2588,8 +2636,12 @@ onMounted(() => {
   // Restore view from URL hash (sharable links)
   if (location.hash) applyHash()
 
+  // Initialize mobile detection
+  onResizeCheck()
+
   // Sync view when the user navigates with browser back/forward
   window.addEventListener('popstate', applyHash)
+  window.addEventListener('resize', onResizeCheck)
 })
 
 onUnmounted(() => {
@@ -2599,6 +2651,7 @@ onUnmounted(() => {
   if (loadingMsgInterval) clearInterval(loadingMsgInterval)
   destroyDetailChart()
   window.removeEventListener('popstate', applyHash)
+  window.removeEventListener('resize', onResizeCheck)
 })
 </script>
 

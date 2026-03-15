@@ -1,9 +1,9 @@
 <template>
   <transition name="balloon">
     <div v-if="balloon"
-      class="fixed top-[60px] z-50 max-w-[calc(100vw-1.5rem)] md:max-w-[280px] rounded-xl border shadow-2xl backdrop-blur-sm overflow-hidden cursor-pointer"
+      class="fixed top-[60px] right-3 md:right-auto z-50 max-w-[calc(100vw-1.5rem)] md:max-w-[280px] rounded-xl border shadow-2xl backdrop-blur-sm overflow-hidden cursor-pointer"
       :class="balloonClass"
-      :style="{ right: assistantOpen ? 'calc(clamp(300px, 25%, 400px) + 1.5rem)' : '1.5rem' }"
+      :style="mdStyle"
       @click="$emit('focus')"
     >
       <div class="flex items-start gap-3 px-4 py-3">
@@ -37,6 +37,7 @@ import { computed } from 'vue'
 const props = defineProps({
   balloon: { type: Object, default: null },
   assistantOpen: { type: Boolean, default: false },
+  isMobile: { type: Boolean, default: false },
 })
 
 defineEmits(['focus', 'dismiss'])
@@ -45,6 +46,13 @@ const balloonClass = computed(() => {
   if (!props.balloon) return ''
   if (props.balloon.status === 'NOK') return 'bg-red-900 border-red-500 hover:bg-red-800 text-red-300 balloon-pulse-nok'
   return 'bg-yellow-900 border-yellow-500 hover:bg-yellow-800 text-yellow-300 balloon-pulse-risk'
+})
+
+// On desktop (md+), position shifts left when assistant sidebar is open
+// On mobile, the right-3 class handles it (always top-right)
+const mdStyle = computed(() => {
+  if (props.isMobile) return {}
+  return { right: props.assistantOpen ? 'calc(clamp(300px, 25%, 400px) + 1.5rem)' : '1.5rem' }
 })
 </script>
 
