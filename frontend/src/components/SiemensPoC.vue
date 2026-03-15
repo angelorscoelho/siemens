@@ -1450,6 +1450,10 @@ const alertCooldown = {}
 // Exponential flip schedule: cumulative seconds from page load at which
 // one OK card flips to RISK or NOK, progressing towards target 12/4/2.
 const DEMO_FLIP_TIMES = [10, 50, 90, 160, 250, 370, 520, 710, 950]
+const DEMO_TARGET_NOK = 2
+const DEMO_TARGET_RISK = 4
+const DEMO_INITIAL_NOK = 1
+const DEMO_INITIAL_RISK = 1
 const demoMode = ref(true)
 const demoPaused = ref(false)
 let demoStartTime = 0
@@ -1861,11 +1865,9 @@ function enforceStatusDistribution() {
   let maxNOK, maxRISK
   if (demoMode.value && demoNextFlipIdx < DEMO_FLIP_TIMES.length) {
     // Demo target: start 1 NOK / 1 RISK, ramp to 2 NOK / 4 RISK
-    // Allow the current scheduled maximum based on how many flips have occurred
     const flipsCompleted = demoNextFlipIdx
-    // First NOK flip happens at flip index ~0-1, target is 2 NOK total
-    maxNOK = Math.min(2, 1 + Math.floor(flipsCompleted / 3))
-    maxRISK = Math.min(4, 1 + flipsCompleted)
+    maxNOK = Math.min(DEMO_TARGET_NOK, DEMO_INITIAL_NOK + Math.floor(flipsCompleted / 3))
+    maxRISK = Math.min(DEMO_TARGET_RISK, DEMO_INITIAL_RISK + flipsCompleted)
   } else {
     const total = turbines.length
     maxNOK = Math.max(1, Math.floor(total * 0.15))
@@ -2513,10 +2515,8 @@ function demoFlipTick() {
   // That means 1 more NOK flip + 3 RISK flips = 4 total flips from the 9 scheduled
   const currentNOK = turbines.filter(t => t.status === 'NOK').length
   const currentRISK = turbines.filter(t => t.status === 'RISK').length
-  const targetNOK = 2
-  const targetRISK = 4
-  const needNOK = currentNOK < targetNOK
-  const needRISK = currentRISK < targetRISK
+  const needNOK = currentNOK < DEMO_TARGET_NOK
+  const needRISK = currentRISK < DEMO_TARGET_RISK
 
   if (!needNOK && !needRISK) {
     demoNextFlipIdx = DEMO_FLIP_TIMES.length // stop
@@ -2561,26 +2561,18 @@ onMounted(() => {
   // Demo Mode: Reset ALL units to OK baseline first, then seed exactly 1 RISK + 1 NOK
   // This ensures t=0 shows: "OK 16 RISK 1 NOK 1"
   turbines.forEach(t => {
-    // Reset telemetry to safe baseline values (well below warning thresholds)
-    t.tet = t.telemetryBaseline.tet
-    t.pcd = t.telemetryBaseline.pcd
-    t.tcd = t.telemetryBaseline.tcd
-    t.rotationalSpeed = t.telemetryBaseline.rotationalSpeed
-    t.vibrationVelocity = t.telemetryBaseline.vibrationVelocity
-    t.powerOutput = t.telemetryBaseline.powerOutput
-    t.fuelMassFlow = t.telemetryBaseline.fuelMassFlow
-    t.pressureRatio = t.telemetryBaseline.pressureRatio
-    t.tetSpread = t.telemetryBaseline.tetSpread
-    t.status = 'OK'
-    t.currentStatus = 'OK'
-    t.tetAlert = false
-    t.vibrationAlert = false
-    t.alert = null
-    t.aiSuggestion = ''
+    Object.assign(t, t.telemetryBaseline, {
+      status: 'OK',
+      currentStatus: 'OK',
+      tetAlert: false,
+      vibrationAlert: false,
+      alert: null,
+      aiSuggestion: '',
+    })
   })
 
   // Seed exactly 1 NOK and 1 RISK (pick random gas turbines for realism)
-  const gasTurbines = turbines.filter(t => t.name.startsWith('SGT'))
+  const gasTurbines = turbines.filter(t => isGasTurbine(t))
   const shuffled = [...gasTurbines].sort(() => Math.random() - 0.5)
   // First card → NOK
   if (shuffled.length > 0) {
