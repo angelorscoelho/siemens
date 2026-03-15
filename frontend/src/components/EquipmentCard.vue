@@ -39,9 +39,9 @@
           <p class="text-xs text-gray-400 mt-0.5 leading-snug truncate">{{ turbine.type }}</p>
         </div>
 
-        <!-- Manual Icon (opens equipment detail with documentation) -->
+        <!-- Manual Icon (opens Siemens Energy product page in new tab) -->
         <button
-          @click.stop="$emit('select', turbine, activeMetricKey)"
+          @click.stop.prevent="openManual(turbine)"
           class="shrink-0 mt-0.5 p-1 rounded-md bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
           :title="`Open the ${turbine.name} equipment manual`"
           :aria-label="`Open the ${turbine.name} equipment manual`"
@@ -78,7 +78,7 @@
       <!-- ── Metric Rows (individually clickable → changes graph) ── -->
       <div class="space-y-0.5">
         <div
-          v-for="param in metricParams"
+          v-for="param in visibleMetricParams"
           :key="param.key"
           @click.stop="selectMetric(param.key)"
           class="flex items-center justify-between px-2 py-1 rounded-lg cursor-pointer transition-all"
@@ -165,7 +165,7 @@ import {
   LineController, LineElement, PointElement,
   LinearScale, CategoryScale, Filler, Tooltip,
 } from 'chart.js'
-import { metricParams, getMostCriticalMetricKey, historyMetricKeys, makeFallbackSvg, getOkCardInsight } from '../fleetStore.js'
+import { metricParams, getMostCriticalMetricKey, historyMetricKeys, makeFallbackSvg, getOkCardInsight, openManual, isGasTurbine } from '../fleetStore.js'
 import CardFooterBanner from './CardFooterBanner.vue'
 import AIActionButton from './AIActionButton.vue'
 
@@ -192,6 +192,15 @@ const displayImageSrc = computed(() => {
 
 // ── OK card insight data ──────────────────────────────────────────────────────
 const okInsight = computed(() => getOkCardInsight(props.turbine))
+
+// ── Gas-only field filtering ─────────────────────────────────────────────────
+// Steam turbines (SST-*) and generators (SGen-*) don't have Brayton-cycle
+// parameters like TET, PCD, TCD, pressure ratio, TET Spread, or fuel mass flow.
+const GAS_ONLY_KEYS = new Set(['tet', 'pcd', 'tcd', 'pressureRatio', 'tetSpread', 'fuelMassFlow'])
+const visibleMetricParams = computed(() => {
+  if (isGasTurbine(props.turbine)) return metricParams
+  return metricParams.filter(p => !GAS_ONLY_KEYS.has(p.key))
+})
 
 // ── Focus / Glow / Vibrate animation ─────────────────────────────────────────
 const cardRef = ref(null)
