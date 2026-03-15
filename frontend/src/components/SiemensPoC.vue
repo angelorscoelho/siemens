@@ -1694,9 +1694,9 @@ watch(selectedTurbine, async (newVal) => {
 // Positions the modal within the left content panel so it never overlaps
 // the right-side AI assistant sidebar or the top header bar.
 const historyModalStyle = computed(() => {
-  const headerH = headerRef.value ? headerRef.value.offsetHeight : 52
+  const headerHeight = headerRef.value ? headerRef.value.offsetHeight : 52
   return {
-    top: `${headerH}px`,
+    top: `${headerHeight}px`,
     bottom: '0',
     left: '0',
     // When the AI assistant is open on desktop it takes clamp(300px, 25%, 400px)
@@ -1707,8 +1707,8 @@ const historyModalStyle = computed(() => {
 // ── Telemetry Simulation ──────────────────────────────────────────────────────
 function updateTelemetry() {
   const escalated = []
-  // Save previous statuses BEFORE any changes so we can count transitions
-  // after enforceStatusDistribution() to avoid counting reverted changes
+  // Capture previous statuses BEFORE any changes to accurately count
+  // transitions after enforceStatusDistribution() excludes reverted changes
   const prevStatuses = {}
   turbines.forEach((t) => {
     prevStatuses[t.id] = t.status
