@@ -542,6 +542,7 @@ export function createFleetData() {
       maintenanceHistory: getMaintenanceHistory('GT-02'),
     },
     // ── 4. SST-6000 ───────────────────────────────────────────────────────────
+    // 3000 RPM = synchronous speed for 50 Hz grid (2-pole generator)
     {
       id: 'ST-02',
       name: 'SST-6000',
