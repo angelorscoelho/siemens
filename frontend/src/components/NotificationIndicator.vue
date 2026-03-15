@@ -19,10 +19,10 @@
         </div>
         <button
           @click.stop="$emit('dismiss')"
-          class="shrink-0 cursor-pointer opacity-60 hover:opacity-100 transition-opacity"
+          class="shrink-0 cursor-pointer opacity-60 hover:opacity-100 transition-opacity p-1.5"
           aria-label="Dismiss notification"
         >
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
