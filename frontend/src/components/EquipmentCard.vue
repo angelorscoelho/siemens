@@ -39,12 +39,9 @@
           <p class="text-xs text-gray-400 mt-0.5 leading-snug truncate">{{ turbine.type }}</p>
         </div>
 
-        <!-- Manual Icon (links to manufacturer manual) -->
-        <a
-          :href="turbine.manualUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-          @click.stop
+        <!-- Manual Icon (opens equipment detail with documentation) -->
+        <button
+          @click.stop="$emit('select', turbine, activeMetricKey)"
           class="shrink-0 mt-0.5 p-1 rounded-md bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
           :title="`Open the ${turbine.name} equipment manual`"
           :aria-label="`Open the ${turbine.name} equipment manual`"
@@ -53,7 +50,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-        </a>
+        </button>
 
         <!-- Maintenance History Icon (opens history modal) -->
         <button
@@ -251,8 +248,8 @@ let chartInstance = null
 function getChartColors() {
   const key = activeMetricKey.value
   const isAlert =
-    (key === 'vibration' && props.turbine.vibrationAlert) ||
-    (key === 'exhaustTemp' && props.turbine.tempAlert)
+    (key === 'vibrationVelocity' && props.turbine.vibrationAlert) ||
+    (key === 'tet' && props.turbine.tetAlert)
   if (props.turbine.status === 'NOK') return { border: '#f87171', bg: 'rgba(248,113,113,0.10)' }
   if (isAlert) return { border: '#fbbf24', bg: 'rgba(251,191,36,0.10)' }
   return { border: '#2dd4bf', bg: 'rgba(45,212,191,0.08)' }
@@ -396,9 +393,11 @@ const chartMax = computed(() => {
 
 // Watch for telemetry changes
 watch(
-  [() => props.turbine.exhaustTemp, () => props.turbine.vibration,
-   () => props.turbine.shaftSpeed, () => props.turbine.powerOutput,
-   () => props.turbine.fuelFlow],
+  [() => props.turbine.tet, () => props.turbine.vibrationVelocity,
+   () => props.turbine.rotationalSpeed, () => props.turbine.powerOutput,
+   () => props.turbine.fuelMassFlow, () => props.turbine.pcd,
+   () => props.turbine.tcd, () => props.turbine.pressureRatio,
+   () => props.turbine.tetSpread],
   () => { updateChart() },
 )
 
@@ -438,15 +437,15 @@ const activeRingClass = computed(() => {
 
 const activeMetricColorClass = computed(() => {
   const key = activeMetricKey.value
-  if (key === 'vibration' && props.turbine.vibrationAlert) return 'text-red-400'
-  if (key === 'exhaustTemp' && props.turbine.tempAlert) return 'text-yellow-400'
+  if (key === 'vibrationVelocity' && props.turbine.vibrationAlert) return 'text-red-400'
+  if (key === 'tet' && props.turbine.tetAlert) return 'text-yellow-400'
   return 'text-gray-400'
 })
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 function getMetricColorClass(key) {
-  if (key === 'exhaustTemp' && props.turbine.tempAlert) return 'text-yellow-400'
-  if (key === 'vibration' && props.turbine.vibrationAlert) return 'text-red-400'
+  if (key === 'tet' && props.turbine.tetAlert) return 'text-yellow-400'
+  if (key === 'vibrationVelocity' && props.turbine.vibrationAlert) return 'text-red-400'
   return 'text-gray-200'
 }
 

@@ -149,23 +149,43 @@ export function getMaintenanceHistory(turbineId) {
   return MAINTENANCE_HISTORIES[turbineId] || []
 }
 
-// ── Metric Parameters Definition ──────────────────────────────────────────────
+// ── Metric Parameters Definition (OEM-aligned per Siemens Energy GS D) ────────
 export const metricParams = [
-  { key: 'exhaustTemp', label: 'Exhaust Temperature', unit: '°C', decimals: 1 },
-  { key: 'shaftSpeed', label: 'Shaft Speed', unit: 'RPM', decimals: 1 },
-  { key: 'vibration', label: 'Vibration', unit: 'mm/s', decimals: 3 },
-  { key: 'powerOutput', label: 'Power Output', unit: 'MW', decimals: 2 },
-  { key: 'fuelFlow', label: 'Fuel Flow', unit: 'kg/s', decimals: 3 },
-  { key: 'hoursSinceOverhaul', label: 'Hours Since Overhaul', unit: 'h', decimals: 0 },
+  { key: 'tet',               label: 'TET (Exhaust Temp)',       unit: '°C',   decimals: 1 },
+  { key: 'pcd',               label: 'PCD (Compr. Disch. Press)', unit: 'bar',  decimals: 1 },
+  { key: 'tcd',               label: 'TCD (Compr. Disch. Temp)', unit: '°C',   decimals: 1 },
+  { key: 'rotationalSpeed',   label: 'Rotational Speed',         unit: 'RPM',  decimals: 0 },
+  { key: 'vibrationVelocity', label: 'Vibration Velocity (RMS)', unit: 'mm/s', decimals: 3 },
+  { key: 'powerOutput',       label: 'Power Output',             unit: 'MW-e', decimals: 2 },
+  { key: 'fuelMassFlow',      label: 'Fuel Mass Flow',           unit: 'kg/s', decimals: 3 },
+  { key: 'pressureRatio',     label: 'Pressure Ratio',           unit: ':1',   decimals: 1 },
+  { key: 'tetSpread',         label: 'TET Spread',               unit: '°C',   decimals: 1 },
+  { key: 'eoh',               label: 'EOH (Equiv. Oper. Hours)', unit: 'h',    decimals: 0 },
 ]
 
-// Metrics to track in history (all except hoursSinceOverhaul which is cumulative)
-export const historyMetricKeys = ['exhaustTemp', 'shaftSpeed', 'vibration', 'powerOutput', 'fuelFlow']
+// Metrics to track in history (all except eoh which is cumulative)
+export const historyMetricKeys = ['tet', 'pcd', 'tcd', 'rotationalSpeed', 'vibrationVelocity', 'powerOutput', 'fuelMassFlow', 'pressureRatio', 'tetSpread']
 
 // ── Thresholds for alerts ─────────────────────────────────────────────────────
+// Vibration: ISO 10816-4 zones for gas/steam turbines:
+//   Zone A ≤ 3.5 mm/s RMS → newly commissioned
+//   Zone B 3.5–7.1 mm/s RMS → acceptable for long-term operation
+//   Zone C 7.1–11.2 mm/s RMS → short-term acceptable (RISK)
+//   Zone D > 11.2 mm/s RMS → damage likely (NOK)
+// TET Spread: >50°C is a critical warning indicator per research baseline
 export const thresholds = {
-  exhaustTemp: { warning: 590, critical: 630 },
-  vibration: { warning: 4.0, critical: 7.0 },
+  tet: { warning: 590, critical: 630 },
+  tetSpread: { warning: 40, critical: 50 },
+  vibrationVelocity: { warning: 7.1, critical: 11.2 },
+}
+
+// ── EOH Formula (per Siemens Energy maintenance philosophy) ───────────────────
+// EOH = H_base × F_fuel × F_peak + (N_starts × F_start)
+//   F_fuel:  1.0 for natural gas, 1.5 for liquid fuel
+//   F_peak:  1.0 at base load, increases for above-base-load operation
+//   F_start: 20–50 equivalent hours per start (depends on turbine class)
+export function calculateEOH({ baseHours, fuelFactor, peakFactor, startCount, startFactor }) {
+  return baseHours * fuelFactor * peakFactor + (startCount * startFactor)
 }
 
 // ── Helper: Generate metric history values ────────────────────────────────────
@@ -182,12 +202,18 @@ export function generateInitialHistory(baseValue, volatility, count) {
 
 // ── Generate metric history for all tracked params ─────────────────────────────
 function generateAllHistories(baseline, count = 60) {
+  // Fallbacks are safe defaults for mid-range gas turbines; all 18 records
+  // now provide explicit values so these only guard against future omissions.
   return {
-    exhaustTemp: generateInitialHistory(baseline.exhaustTemp, 8, count),
-    shaftSpeed: generateInitialHistory(baseline.shaftSpeed, 30, count),
-    vibration: generateInitialHistory(baseline.vibration, 0.15, count),
+    tet: generateInitialHistory(baseline.tet, 8, count),
+    pcd: generateInitialHistory(baseline.pcd ?? 18, 0.5, count),
+    tcd: generateInitialHistory(baseline.tcd ?? 420, 4, count),
+    rotationalSpeed: generateInitialHistory(baseline.rotationalSpeed, 30, count),
+    vibrationVelocity: generateInitialHistory(baseline.vibrationVelocity, 0.15, count),
     powerOutput: generateInitialHistory(baseline.powerOutput, 2, count),
-    fuelFlow: generateInitialHistory(baseline.fuelFlow, 0.1, count),
+    fuelMassFlow: generateInitialHistory(baseline.fuelMassFlow, 0.1, count),
+    pressureRatio: generateInitialHistory(baseline.pressureRatio ?? 20, 0.3, count),
+    tetSpread: generateInitialHistory(baseline.tetSpread ?? 15, 2, count),
   }
 }
 
@@ -342,7 +368,7 @@ export function makeFallbackSvg(name, type, color) {
 // Keeps the green banner text short — these cards need minimal attention.
 // The seed ensures each turbine gets a stable, deterministic message.
 export function getOkCardInsight(turbine) {
-  const hours = Math.floor(turbine.hoursSinceOverhaul)
+  const hours = Math.floor(turbine.eoh)
   const days = Math.floor(hours / 24)
   const cappedDays = Math.min(days, 30)
   const seed = turbine.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
@@ -365,26 +391,32 @@ export function getOkCardInsight(turbine) {
 
 // ── Operating ranges for normalized variation (based on randomWalk min/max) ────
 const METRIC_OPERATING_RANGES = {
-  exhaustTemp: { min: 420, max: 670 },    // °C
-  shaftSpeed:  { min: 2800, max: 20000 }, // RPM
-  vibration:   { min: 0.3, max: 9.0 },   // mm/s
-  powerOutput: { min: 1, max: 1500 },     // MW
-  fuelFlow:    { min: 0.05, max: 16.0 },  // kg/s
+  tet:               { min: 420, max: 670 },    // °C
+  pcd:               { min: 5, max: 45 },       // bar
+  tcd:               { min: 300, max: 500 },     // °C
+  rotationalSpeed:   { min: 2800, max: 20000 },  // RPM
+  vibrationVelocity: { min: 0.3, max: 12.0 },    // mm/s RMS (ISO 10816-4 range)
+  powerOutput:       { min: 1, max: 1500 },       // MW-e
+  fuelMassFlow:      { min: 0.05, max: 16.0 },    // kg/s
+  pressureRatio:     { min: 10, max: 25 },         // :1
+  tetSpread:         { min: 0, max: 80 },          // °C
 }
 
 // ── Determine most critical / most variant metric key for a turbine ────────────
 export function getMostCriticalMetricKey(turbine) {
   // Always surface an actively alarming metric first
-  if (turbine.vibration > thresholds.vibration.critical) return 'vibration'
-  if (turbine.exhaustTemp > thresholds.exhaustTemp.critical) return 'exhaustTemp'
-  if (turbine.vibration > thresholds.vibration.warning) return 'vibration'
-  if (turbine.exhaustTemp > thresholds.exhaustTemp.warning) return 'exhaustTemp'
+  if (turbine.vibrationVelocity > thresholds.vibrationVelocity.critical) return 'vibrationVelocity'
+  if (turbine.tet > thresholds.tet.critical) return 'tet'
+  if (turbine.tetSpread > thresholds.tetSpread.critical) return 'tetSpread'
+  if (turbine.vibrationVelocity > thresholds.vibrationVelocity.warning) return 'vibrationVelocity'
+  if (turbine.tet > thresholds.tet.warning) return 'tet'
+  if (turbine.tetSpread > thresholds.tetSpread.warning) return 'tetSpread'
 
   // For OK turbines: pick the metric with the greatest *normalized* variation
   // (max − min in history / operating range) so large-scale metrics like RPM
   // don't automatically dominate over fast-changing ones like vibration.
   if (turbine.metricHistory) {
-    let bestKey = 'exhaustTemp'
+    let bestKey = 'tet'
     let bestVariation = -Infinity
     for (const key of historyMetricKeys) {
       const hist = turbine.metricHistory[key]
@@ -401,7 +433,7 @@ export function getMostCriticalMetricKey(turbine) {
     return bestKey
   }
 
-  return 'exhaustTemp'
+  return 'tet'
 }
 
 // ── Fleet Data — 18 Distinct Real-World Assets ────────────────────────────────
@@ -412,23 +444,27 @@ export function createFleetData() {
       id: 'GT-01',
       name: 'SGT5-8000H',
       type: 'H-class Heavy-Duty Gas Turbine',
-      description: '375 MW combined cycle flagship',
-      location: 'Plant Alpha — Berlin, DE',
+      description: '450 MW combined cycle H-class',
+      location: 'Irsching 4 — Vohburg an der Donau, DE',
       imageUrl: makeEquipmentImage('SGT5-8000H', '#2dd4bf', 0),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt5-8000h.html',
+      manualUrl: '#manual/GT-01',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 560, vibration: 1.2, shaftSpeed: 3000, powerOutput: 340, fuelFlow: 14.8 },
-      exhaustTemp: 545.2,
-      shaftSpeed: 3000.0,
-      vibration: 1.245,
-      hoursSinceOverhaul: 8420,
-      fuelFlow: 14.832,
-      powerOutput: 340.25,
-      tempAlert: false,
+      telemetryBaseline: { tet: 560, vibrationVelocity: 1.2, rotationalSpeed: 3000, powerOutput: 450, fuelMassFlow: 14.8, pcd: 19.5, tcd: 430, pressureRatio: 21.0, tetSpread: 18 },
+      tet: 545.2,
+      pcd: 19.8,
+      tcd: 432.5,
+      rotationalSpeed: 3000.0,
+      vibrationVelocity: 1.245,
+      eoh: 8420,
+      fuelMassFlow: 14.832,
+      powerOutput: 448.7,
+      pressureRatio: 21.2,
+      tetSpread: 18.4,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 545, shaftSpeed: 3000, vibration: 1.2, powerOutput: 340, fuelFlow: 14.8 }),
+      metricHistory: generateAllHistories({ tet: 545, rotationalSpeed: 3000, vibrationVelocity: 1.2, powerOutput: 448, fuelMassFlow: 14.8, pcd: 19.5, tcd: 430, pressureRatio: 21.0, tetSpread: 18 }),
       documentation: [
         { title: 'Last Inspection — 2025-12-10', content: 'Hot gas path inspection completed. All combustion liners within tolerance. Next scheduled: 2026-06-10.' },
         { title: 'Bearing Service Log', content: 'Bearing #1-#5 lubrication system checked. Oil quality nominal. Vibration baseline: 1.2 mm/s.' },
@@ -445,20 +481,24 @@ export function createFleetData() {
       description: '65 MW mechanical drive & power generation steam turbine',
       location: 'Plant Beta — Houston, TX',
       imageUrl: makeEquipmentImage('SST-400', '#fbbf24', 1),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sst-400.html',
+      manualUrl: '#manual/ST-01',
       status: 'RISK',
       currentStatus: 'RISK',
-      telemetryBaseline: { exhaustTemp: 520, vibration: 2.0, shaftSpeed: 3600, powerOutput: 198, fuelFlow: 11.4 },
-      exhaustTemp: 608.7,
-      shaftSpeed: 3600.0,
-      vibration: 4.712,
-      hoursSinceOverhaul: 23810,
-      fuelFlow: 11.438,
+      telemetryBaseline: { tet: 520, vibrationVelocity: 2.0, rotationalSpeed: 3600, powerOutput: 198, fuelMassFlow: 11.4, pcd: 65, tcd: 480, pressureRatio: 0, tetSpread: 42 },
+      tet: 608.7,
+      pcd: 66.2,
+      tcd: 481.3,
+      rotationalSpeed: 3600.0,
+      vibrationVelocity: 4.712,
+      eoh: 23810,
+      fuelMassFlow: 11.438,
       powerOutput: 198.45,
-      tempAlert: true,
+      pressureRatio: 0,
+      tetSpread: 42.5,
+      tetAlert: true,
       vibrationAlert: true,
       alert: 'High vibration detected on bearing #3. Maintenance recommended within 48 h.',
-      metricHistory: generateAllHistories({ exhaustTemp: 608, shaftSpeed: 3600, vibration: 4.7, powerOutput: 198, fuelFlow: 11.4 }),
+      metricHistory: generateAllHistories({ tet: 608, rotationalSpeed: 3600, vibrationVelocity: 4.7, powerOutput: 198, fuelMassFlow: 11.4, pcd: 65, tcd: 480, pressureRatio: 0, tetSpread: 42 }),
       documentation: [
         { title: 'Alert — Vibration Exceedance', content: 'Bearing #3 vibration exceeded 4.5 mm/s threshold at 2026-03-10 14:32 UTC. Trending upward over 72 hrs.' },
         { title: 'Maintenance History', content: 'Last major overhaul: 2024-01-15 at 18,000 hrs. Blade row 1 replacement completed. Compressor wash performed monthly.' },
@@ -475,20 +515,24 @@ export function createFleetData() {
       description: '53 MW high-efficiency mid-range unit',
       location: 'Plant Gamma — Riyadh, SA',
       imageUrl: makeEquipmentImage('SGT-800', '#2dd4bf', 2),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-800.html',
+      manualUrl: '#manual/GT-02',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 540, vibration: 0.9, shaftSpeed: 6608, powerOutput: 48, fuelFlow: 3.6 },
-      exhaustTemp: 545.2,
-      shaftSpeed: 6608.0,
-      vibration: 0.892,
-      hoursSinceOverhaul: 5200,
-      fuelFlow: 3.654,
+      telemetryBaseline: { tet: 540, vibrationVelocity: 0.9, rotationalSpeed: 6608, powerOutput: 48, fuelMassFlow: 3.6, pcd: 19.2, tcd: 395, pressureRatio: 21.5, tetSpread: 15 },
+      tet: 545.2,
+      pcd: 19.4,
+      tcd: 396.2,
+      rotationalSpeed: 6608.0,
+      vibrationVelocity: 0.892,
+      eoh: 5200,
+      fuelMassFlow: 3.654,
       powerOutput: 48.92,
-      tempAlert: false,
+      pressureRatio: 21.7,
+      tetSpread: 15.3,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 545, shaftSpeed: 6608, vibration: 0.9, powerOutput: 48, fuelFlow: 3.6 }),
+      metricHistory: generateAllHistories({ tet: 545, rotationalSpeed: 6608, vibrationVelocity: 0.9, powerOutput: 48, fuelMassFlow: 3.6, pcd: 19.2, tcd: 395, pressureRatio: 21.5, tetSpread: 15 }),
       documentation: [
         { title: 'Commissioning Date', content: 'Unit commissioned 2025-06-20. Running on natural gas. Dual-fuel capability available.' },
         { title: 'Performance Log', content: 'Heat rate: 9,480 kJ/kWh. Efficiency: 38.0%. All parameters within design envelope.' },
@@ -497,32 +541,37 @@ export function createFleetData() {
       aiSuggestion: '',
       maintenanceHistory: getMaintenanceHistory('GT-02'),
     },
-    // ── 4. SST-600 ────────────────────────────────────────────────────────────
+    // ── 4. SST-6000 ───────────────────────────────────────────────────────────
+    // 3000 RPM = synchronous speed for 50 Hz grid (2-pole generator)
     {
       id: 'ST-02',
-      name: 'SST-600',
-      type: 'Industrial Steam Turbine',
-      description: '150 MW extraction/condensing steam turbine',
-      location: 'Plant Delta — Rotterdam, NL',
-      imageUrl: makeEquipmentImage('SST-600', '#2dd4bf', 3),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sst-600.html',
+      name: 'SST-6000',
+      type: 'Large Steam Turbine',
+      description: 'Up to 1,200 MW reheat steam turbine for large combined cycle',
+      location: 'Plant Delta — Boxberg, DE',
+      imageUrl: makeEquipmentImage('SST-6000', '#2dd4bf', 3),
+      manualUrl: '#manual/ST-02',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 460, vibration: 1.5, shaftSpeed: 6100, powerOutput: 35, fuelFlow: 2.9 },
-      exhaustTemp: 468.3,
-      shaftSpeed: 6100.0,
-      vibration: 1.534,
-      hoursSinceOverhaul: 15600,
-      fuelFlow: 2.987,
-      powerOutput: 35.18,
-      tempAlert: false,
+      telemetryBaseline: { tet: 460, vibrationVelocity: 1.5, rotationalSpeed: 3000, powerOutput: 900, fuelMassFlow: 2.9, pcd: 165, tcd: 565, pressureRatio: 0, tetSpread: 0 },
+      tet: 468.3,
+      pcd: 163.8,
+      tcd: 563.2,
+      rotationalSpeed: 3000.0,
+      vibrationVelocity: 1.534,
+      eoh: 15600,
+      fuelMassFlow: 2.987,
+      powerOutput: 895.4,
+      pressureRatio: 0,
+      tetSpread: 0,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 468, shaftSpeed: 6100, vibration: 1.5, powerOutput: 35, fuelFlow: 2.9 }),
+      metricHistory: generateAllHistories({ tet: 468, rotationalSpeed: 3000, vibrationVelocity: 1.5, powerOutput: 895, fuelMassFlow: 2.9, pcd: 165, tcd: 565, pressureRatio: 0, tetSpread: 0 }),
       documentation: [
-        { title: 'Operational Profile', content: 'Baseload continuous duty — high availability operation. Steam extraction for process heat and power co-generation. Annual planned outage for inspection.' },
+        { title: 'Operational Profile', content: 'Baseload continuous duty in large combined cycle plant. HP/IP/LP turbine sections. Main steam: 165 bar / 565°C. Reheat: 40 bar / 565°C.' },
         { title: 'Last Hot Section Inspection', content: '2025-09-01 at 12,000 hrs. Turbine blades within creep limits. Next HSI at 20,000 hrs.' },
-        { title: 'Steam System', content: 'Main steam pressure: 140 bar. Reheat steam: 40 bar. Extraction for process heat at 10 bar.' },
+        { title: 'Steam System', content: 'Main steam pressure: 165 bar. Reheat steam: 40 bar. Designed for large combined cycle and fossil power plant applications.' },
       ],
       aiSuggestion: '',
       maintenanceHistory: getMaintenanceHistory('ST-02'),
@@ -535,20 +584,24 @@ export function createFleetData() {
       description: '37 MW fast-start peaker unit',
       location: 'Plant Epsilon — Lagos, NG',
       imageUrl: makeEquipmentImage('SGT-750', '#fbbf24', 4),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-750.html',
+      manualUrl: '#manual/GT-03',
       status: 'RISK',
       currentStatus: 'RISK',
-      telemetryBaseline: { exhaustTemp: 530, vibration: 1.8, shaftSpeed: 9500, powerOutput: 12, fuelFlow: 1.6 },
-      exhaustTemp: 594.8,
-      shaftSpeed: 9500.0,
-      vibration: 3.876,
-      hoursSinceOverhaul: 28900,
-      fuelFlow: 1.623,
+      telemetryBaseline: { tet: 530, vibrationVelocity: 1.8, rotationalSpeed: 9500, powerOutput: 12, fuelMassFlow: 1.6, pcd: 18.5, tcd: 400, pressureRatio: 20.8, tetSpread: 38 },
+      tet: 594.8,
+      pcd: 18.8,
+      tcd: 402.1,
+      rotationalSpeed: 9500.0,
+      vibrationVelocity: 3.876,
+      eoh: 28900,
+      fuelMassFlow: 1.623,
       powerOutput: 12.14,
-      tempAlert: true,
+      pressureRatio: 21.0,
+      tetSpread: 38.6,
+      tetAlert: true,
       vibrationAlert: false,
       alert: 'Exhaust temperature trending high. Combustion inspection advised within 7 days.',
-      metricHistory: generateAllHistories({ exhaustTemp: 594, shaftSpeed: 9500, vibration: 3.8, powerOutput: 12, fuelFlow: 1.6 }),
+      metricHistory: generateAllHistories({ tet: 594, rotationalSpeed: 9500, vibrationVelocity: 3.8, powerOutput: 12, fuelMassFlow: 1.6, pcd: 18.5, tcd: 400, pressureRatio: 20.8, tetSpread: 38 }),
       documentation: [
         { title: 'Alert — Exhaust Temp Trend', content: 'Exhaust temperature has increased ~15°C over the last 30 days. Potential combustion liner degradation or fuel nozzle fouling.' },
         { title: 'Overhaul Status', content: 'Unit approaching 30,000 hr major overhaul interval. Last overhaul: 2023-05-20. Recommend scheduling during next planned outage.' },
@@ -565,20 +618,24 @@ export function createFleetData() {
       description: '67 MW fast-response grid stabilization',
       location: 'Plant Zeta — Yokohama, JP',
       imageUrl: makeEquipmentImage('SGT-A65', '#f87171', 5),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-a65.html',
+      manualUrl: '#manual/GT-04',
       status: 'NOK',
       currentStatus: 'NOK',
-      telemetryBaseline: { exhaustTemp: 550, vibration: 1.5, shaftSpeed: 3600, powerOutput: 58, fuelFlow: 5.4 },
-      exhaustTemp: 651.3,
-      shaftSpeed: 3600.0,
-      vibration: 7.234,
-      hoursSinceOverhaul: 31200,
-      fuelFlow: 5.412,
+      telemetryBaseline: { tet: 550, vibrationVelocity: 1.5, rotationalSpeed: 3600, powerOutput: 58, fuelMassFlow: 5.4, pcd: 30, tcd: 445, pressureRatio: 32, tetSpread: 55 },
+      tet: 651.3,
+      pcd: 29.4,
+      tcd: 443.8,
+      rotationalSpeed: 3600.0,
+      vibrationVelocity: 7.234,
+      eoh: 31200,
+      fuelMassFlow: 5.412,
       powerOutput: 58.67,
-      tempAlert: true,
+      pressureRatio: 31.5,
+      tetSpread: 56.3,
+      tetAlert: true,
       vibrationAlert: true,
       alert: 'CRITICAL: Vibration exceeds 7.0 mm/s on bearing #2. Immediate shutdown recommended.',
-      metricHistory: generateAllHistories({ exhaustTemp: 651, shaftSpeed: 3600, vibration: 7.2, powerOutput: 58, fuelFlow: 5.4 }),
+      metricHistory: generateAllHistories({ tet: 651, rotationalSpeed: 3600, vibrationVelocity: 7.2, powerOutput: 58, fuelMassFlow: 5.4, pcd: 30, tcd: 445, pressureRatio: 32, tetSpread: 55 }),
       documentation: [
         { title: 'CRITICAL ALERT — Vibration', content: 'Bearing #2 vibration spiked to 7.2 mm/s at 2026-03-11 08:15 UTC. Trip threshold: 8.0 mm/s. Immediate inspection required.' },
         { title: 'Overhaul Overdue', content: 'Unit at 31,200 hours — 1,200 hours past recommended major overhaul interval of 30,000 hours. Deferred due to grid demand constraints.' },
@@ -595,20 +652,24 @@ export function createFleetData() {
       description: '292 MW advanced F-class gas turbine',
       location: 'Plant Eta — Madrid, ES',
       imageUrl: makeEquipmentImage('SGT5-4000F', '#2dd4bf', 6),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt5-4000f.html',
+      manualUrl: '#manual/GT-05',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 545, vibration: 1.1, shaftSpeed: 3000, powerOutput: 288, fuelFlow: 12.1 },
-      exhaustTemp: 542.7,
-      shaftSpeed: 3000.0,
-      vibration: 1.124,
-      hoursSinceOverhaul: 6850,
-      fuelFlow: 12.087,
+      telemetryBaseline: { tet: 545, vibrationVelocity: 1.1, rotationalSpeed: 3000, powerOutput: 288, fuelMassFlow: 12.1, pcd: 16.5, tcd: 395, pressureRatio: 18.2, tetSpread: 14 },
+      tet: 542.7,
+      pcd: 16.7,
+      tcd: 396.1,
+      rotationalSpeed: 3000.0,
+      vibrationVelocity: 1.124,
+      eoh: 6850,
+      fuelMassFlow: 12.087,
       powerOutput: 287.6,
-      tempAlert: false,
+      pressureRatio: 18.4,
+      tetSpread: 14.2,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 542, shaftSpeed: 3000, vibration: 1.1, powerOutput: 288, fuelFlow: 12.1 }),
+      metricHistory: generateAllHistories({ tet: 542, rotationalSpeed: 3000, vibrationVelocity: 1.1, powerOutput: 288, fuelMassFlow: 12.1, pcd: 16.5, tcd: 395, pressureRatio: 18.2, tetSpread: 14 }),
       documentation: [
         { title: 'Performance Data', content: 'Electrical efficiency: 39.8%. Heat rate: 9,045 kJ/kWh. Operating at 98.6% rated load. All KPIs within design envelope.' },
         { title: 'Maintenance Schedule', content: 'Combustion inspection due at 8,000 hrs (1,150 hrs remaining). Hot gas path inspection at 16,000 hrs.' },
@@ -625,20 +686,24 @@ export function createFleetData() {
       description: '232 MW 60 Hz grid-connected gas turbine',
       location: 'Plant Theta — Chicago, IL',
       imageUrl: makeEquipmentImage('SGT6-5000F', '#fbbf24', 7),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt6-5000f.html',
+      manualUrl: '#manual/GT-06',
       status: 'RISK',
       currentStatus: 'RISK',
-      telemetryBaseline: { exhaustTemp: 538, vibration: 2.2, shaftSpeed: 3600, powerOutput: 228, fuelFlow: 9.8 },
-      exhaustTemp: 603.1,
-      shaftSpeed: 3600.0,
-      vibration: 4.018,
-      hoursSinceOverhaul: 19200,
-      fuelFlow: 9.734,
+      telemetryBaseline: { tet: 538, vibrationVelocity: 2.2, rotationalSpeed: 3600, powerOutput: 228, fuelMassFlow: 9.8, pcd: 17.2, tcd: 400, pressureRatio: 18.8, tetSpread: 36 },
+      tet: 603.1,
+      pcd: 16.9,
+      tcd: 398.5,
+      rotationalSpeed: 3600.0,
+      vibrationVelocity: 4.018,
+      eoh: 19200,
+      fuelMassFlow: 9.734,
       powerOutput: 225.3,
-      tempAlert: true,
+      pressureRatio: 18.5,
+      tetSpread: 36.7,
+      tetAlert: true,
       vibrationAlert: true,
       alert: 'Elevated exhaust temperature (603°C) and vibration trending up. Inspection within 72 h advised.',
-      metricHistory: generateAllHistories({ exhaustTemp: 603, shaftSpeed: 3600, vibration: 4.0, powerOutput: 225, fuelFlow: 9.7 }),
+      metricHistory: generateAllHistories({ tet: 603, rotationalSpeed: 3600, vibrationVelocity: 4.0, powerOutput: 225, fuelMassFlow: 9.7, pcd: 17.2, tcd: 400, pressureRatio: 18.8, tetSpread: 36 }),
       documentation: [
         { title: 'Alert Summary', content: 'Exhaust temperature 23°C above warning threshold. Vibration on bearing #4 trending: 2.8→4.0 mm/s over 14 days.' },
         { title: 'Maintenance Record', content: 'Last combustion inspection: 2025-06-18 at 16,800 hrs. Fuel nozzles cleaned, liners in good condition.' },
@@ -655,20 +720,24 @@ export function createFleetData() {
       description: '32.8 MW mechanical drive and power generation',
       location: 'Plant Iota — Abu Dhabi, AE',
       imageUrl: makeEquipmentImage('SGT-700', '#2dd4bf', 8),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-700.html',
+      manualUrl: '#manual/GT-07',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 524, vibration: 1.0, shaftSpeed: 7700, powerOutput: 31, fuelFlow: 2.2 },
-      exhaustTemp: 522.4,
-      shaftSpeed: 7700.0,
-      vibration: 0.983,
-      hoursSinceOverhaul: 11200,
-      fuelFlow: 2.198,
+      telemetryBaseline: { tet: 524, vibrationVelocity: 1.0, rotationalSpeed: 7700, powerOutput: 31, fuelMassFlow: 2.2, pcd: 14.8, tcd: 370, pressureRatio: 18.5, tetSpread: 16 },
+      tet: 522.4,
+      pcd: 14.9,
+      tcd: 371.2,
+      rotationalSpeed: 7700.0,
+      vibrationVelocity: 0.983,
+      eoh: 11200,
+      fuelMassFlow: 2.198,
       powerOutput: 31.05,
-      tempAlert: false,
+      pressureRatio: 18.6,
+      tetSpread: 16.4,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 522, shaftSpeed: 7700, vibration: 1.0, powerOutput: 31, fuelFlow: 2.2 }),
+      metricHistory: generateAllHistories({ tet: 522, rotationalSpeed: 7700, vibrationVelocity: 1.0, powerOutput: 31, fuelMassFlow: 2.2, pcd: 14.8, tcd: 370, pressureRatio: 18.5, tetSpread: 16 }),
       documentation: [
         { title: 'Operational Profile', content: 'Driving a natural gas pipeline compressor. Continuous baseload duty at 95% rated speed. Fuel: pipeline quality gas.' },
         { title: 'Last Inspection', content: '2025-08-12 at 8,000 hrs. All hot gas path components within tolerance. Blades show minimal wear.' },
@@ -685,20 +754,24 @@ export function createFleetData() {
       description: '24.8 MW twin-shaft industrial gas turbine',
       location: 'Plant Kappa — Kuala Lumpur, MY',
       imageUrl: makeEquipmentImage('SGT-600', '#2dd4bf', 9),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-600.html',
+      manualUrl: '#manual/GT-08',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 516, vibration: 1.3, shaftSpeed: 8500, powerOutput: 24, fuelFlow: 1.7 },
-      exhaustTemp: 514.8,
-      shaftSpeed: 8500.0,
-      vibration: 1.287,
-      hoursSinceOverhaul: 7800,
-      fuelFlow: 1.698,
+      telemetryBaseline: { tet: 516, vibrationVelocity: 1.3, rotationalSpeed: 8500, powerOutput: 24, fuelMassFlow: 1.7, pcd: 12.5, tcd: 355, pressureRatio: 14.0, tetSpread: 14 },
+      tet: 514.8,
+      pcd: 12.6,
+      tcd: 356.1,
+      rotationalSpeed: 8500.0,
+      vibrationVelocity: 1.287,
+      eoh: 7800,
+      fuelMassFlow: 1.698,
       powerOutput: 24.31,
-      tempAlert: false,
+      pressureRatio: 14.2,
+      tetSpread: 14.3,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 514, shaftSpeed: 8500, vibration: 1.3, powerOutput: 24, fuelFlow: 1.7 }),
+      metricHistory: generateAllHistories({ tet: 514, rotationalSpeed: 8500, vibrationVelocity: 1.3, powerOutput: 24, fuelMassFlow: 1.7, pcd: 12.5, tcd: 355, pressureRatio: 14.0, tetSpread: 14 }),
       documentation: [
         { title: 'Application', content: 'Power generation for industrial complex. Operates in combined heat and power (CHP) mode. Steam recovered for process use.' },
         { title: 'Air Filtration', content: 'High-humidity tropical environment. Coalescing pre-filter + HEPA installed. Differential pressure nominal at 18 mbar.' },
@@ -715,20 +788,24 @@ export function createFleetData() {
       description: '13.4 MW compact industrial gas turbine',
       location: 'Plant Lambda — Oslo, NO',
       imageUrl: makeEquipmentImage('SGT-400', '#2dd4bf', 10),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-400.html',
+      manualUrl: '#manual/GT-09',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 505, vibration: 0.8, shaftSpeed: 14700, powerOutput: 13, fuelFlow: 0.92 },
-      exhaustTemp: 504.1,
-      shaftSpeed: 14700.0,
-      vibration: 0.814,
-      hoursSinceOverhaul: 3400,
-      fuelFlow: 0.921,
+      telemetryBaseline: { tet: 505, vibrationVelocity: 0.8, rotationalSpeed: 14700, powerOutput: 13, fuelMassFlow: 0.92, pcd: 14.0, tcd: 360, pressureRatio: 16.0, tetSpread: 12 },
+      tet: 504.1,
+      pcd: 14.1,
+      tcd: 361.4,
+      rotationalSpeed: 14700.0,
+      vibrationVelocity: 0.814,
+      eoh: 3400,
+      fuelMassFlow: 0.921,
       powerOutput: 13.08,
-      tempAlert: false,
+      pressureRatio: 16.2,
+      tetSpread: 12.1,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 504, shaftSpeed: 14700, vibration: 0.8, powerOutput: 13, fuelFlow: 0.92 }),
+      metricHistory: generateAllHistories({ tet: 504, rotationalSpeed: 14700, vibrationVelocity: 0.8, powerOutput: 13, fuelMassFlow: 0.92, pcd: 14.0, tcd: 360, pressureRatio: 16.0, tetSpread: 12 }),
       documentation: [
         { title: 'Application', content: 'Offshore platform power generation. Classified for hazardous area (Zone 2). Dual-fuel capable: natural gas + diesel backup.' },
         { title: 'Recent Service', content: 'Combustion inspection completed 2025-11-20 at 2,800 hrs. All fuel nozzles cleaned. Cross-fire tubes replaced.' },
@@ -745,20 +822,24 @@ export function createFleetData() {
       description: '250 MW high-pressure steam turbine',
       location: 'Plant Mu — Singapore, SG',
       imageUrl: makeEquipmentImage('SST-800', '#2dd4bf', 11),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sst-800.html',
+      manualUrl: '#manual/ST-03',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 480, vibration: 1.6, shaftSpeed: 3000, powerOutput: 245, fuelFlow: 8.9 },
-      exhaustTemp: 478.5,
-      shaftSpeed: 3000.0,
-      vibration: 1.612,
-      hoursSinceOverhaul: 12400,
-      fuelFlow: 8.876,
+      telemetryBaseline: { tet: 480, vibrationVelocity: 1.6, rotationalSpeed: 3000, powerOutput: 245, fuelMassFlow: 8.9, pcd: 165, tcd: 565, pressureRatio: 0, tetSpread: 0 },
+      tet: 478.5,
+      pcd: 164.2,
+      tcd: 564.1,
+      rotationalSpeed: 3000.0,
+      vibrationVelocity: 1.612,
+      eoh: 12400,
+      fuelMassFlow: 8.876,
       powerOutput: 245.8,
-      tempAlert: false,
+      pressureRatio: 0,
+      tetSpread: 0,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 478, shaftSpeed: 3000, vibration: 1.6, powerOutput: 245, fuelFlow: 8.9 }),
+      metricHistory: generateAllHistories({ tet: 478, rotationalSpeed: 3000, vibrationVelocity: 1.6, powerOutput: 245, fuelMassFlow: 8.9, pcd: 165, tcd: 565, pressureRatio: 0, tetSpread: 0 }),
       documentation: [
         { title: 'Plant Configuration', content: 'Part of a 750 MW combined cycle plant. HP turbine inlet: 165 bar / 565°C. Reheated steam: 40 bar / 565°C.' },
         { title: 'Blade Inspection', content: 'Last blade inspection at 10,000 hrs (2025-07-30). Stage 1-3 blades within creep limits. Erosion shields intact.' },
@@ -767,34 +848,39 @@ export function createFleetData() {
       aiSuggestion: '',
       maintenanceHistory: getMaintenanceHistory('ST-03'),
     },
-    // ── 13. SST-300 ───────────────────────────────────────────────────────────
+    // ── 13. SGT5-9000HL ───────────────────────────────────────────────────────
     {
-      id: 'ST-04',
-      name: 'SST-300',
-      type: 'Industrial Steam Turbine',
-      description: '50 MW backpressure steam turbine for CHP',
-      location: 'Plant Nu — Mumbai, IN',
-      imageUrl: makeEquipmentImage('SST-300', '#fbbf24', 12),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sst-300.html',
+      id: 'GT-13',
+      name: 'SGT5-9000HL',
+      type: 'HL-class Heavy-Duty Gas Turbine',
+      description: '593 MW HL-class flagship for large combined cycle',
+      location: 'Keadby 2 — Scunthorpe, UK',
+      imageUrl: makeEquipmentImage('SGT5-9000HL', '#fbbf24', 12),
+      manualUrl: '#manual/GT-13',
       status: 'RISK',
       currentStatus: 'RISK',
-      telemetryBaseline: { exhaustTemp: 430, vibration: 3.1, shaftSpeed: 5500, powerOutput: 47, fuelFlow: 3.8 },
-      exhaustTemp: 596.4,
-      shaftSpeed: 5500.0,
-      vibration: 3.142,
-      hoursSinceOverhaul: 22500,
-      fuelFlow: 3.812,
-      powerOutput: 47.23,
-      tempAlert: true,
+      telemetryBaseline: { tet: 580, vibrationVelocity: 3.1, rotationalSpeed: 3000, powerOutput: 580, fuelMassFlow: 15.8, pcd: 22, tcd: 445, pressureRatio: 23.0, tetSpread: 38 },
+      tet: 596.4,
+      pcd: 21.6,
+      tcd: 443.2,
+      rotationalSpeed: 3000.0,
+      vibrationVelocity: 3.142,
+      eoh: 22500,
+      fuelMassFlow: 15.812,
+      powerOutput: 578.4,
+      pressureRatio: 22.8,
+      tetSpread: 42.3,
+      tetAlert: true,
       vibrationAlert: false,
-      alert: 'Steam inlet temperature elevated at 596°C. Review boiler controls and steam quality.',
-      metricHistory: generateAllHistories({ exhaustTemp: 596, shaftSpeed: 5500, vibration: 3.1, powerOutput: 47, fuelFlow: 3.8 }),
+      alert: 'Exhaust temperature elevated at 596°C. Review combustion system and TET spread trending.',
+      metricHistory: generateAllHistories({ tet: 596, rotationalSpeed: 3000, vibrationVelocity: 3.1, powerOutput: 578, fuelMassFlow: 15.8, pcd: 22, tcd: 445, pressureRatio: 23.0, tetSpread: 42 }),
       documentation: [
-        { title: 'Alert — Steam Temperature', content: 'Steam inlet temperature 16°C above normal operating range. Boiler superheat control valve position deviation detected.' },
-        { title: 'Last Service', content: 'Overhaul completed 2023-09-10 at 18,000 hrs. All blades replaced. Seals and bearings renewed.' },
-        { title: 'Process Integration', content: 'Backpressure steam (10 bar) supplies refinery process heat. Any trip would impact production output.' },
+        { title: 'Alert — TET Elevated', content: 'Exhaust temperature 16°C above baseline. HL-class combustion system check recommended. TET spread trending upward.' },
+        { title: 'Last Service', content: 'Combustion inspection completed at 18,000 hrs. All 16 combustion cans inspected. Unit returned to service in 28 days.' },
+        { title: 'Plant Configuration', content: '593 MW HL-class in combined cycle at Keadby 2. >43% simple cycle efficiency. Mass flow: 1,050 kg/s. 50 Hz grid connection.' },
       ],
-      aiSuggestion: 'Steam inlet temperature elevated. Verify boiler superheat control valve and check steam quality parameters. Monitor for further increase.',
+      aiSuggestion: 'Exhaust temperature elevated on HL-class unit. Verify combustion system and monitor TET spread. Schedule inspection if trend continues.',
+      // Maintenance history kept under original asset key (ST-04) to preserve records
       maintenanceHistory: getMaintenanceHistory('ST-04'),
     },
     // ── 14. SGen-1000A ────────────────────────────────────────────────────────
@@ -805,20 +891,24 @@ export function createFleetData() {
       description: '1,500 MVA air/hydrogen cooled generator',
       location: 'Plant Xi — São Paulo, BR',
       imageUrl: makeEquipmentImage('SGen-1000A', '#2dd4bf', 13),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgen-1000a.html',
+      manualUrl: '#manual/GEN-01',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 75, vibration: 0.6, shaftSpeed: 3600, powerOutput: 1420, fuelFlow: 0.1 },
-      exhaustTemp: 74.3,
-      shaftSpeed: 3600.0,
-      vibration: 0.612,
-      hoursSinceOverhaul: 18600,
-      fuelFlow: 0.09,
+      telemetryBaseline: { tet: 75, vibrationVelocity: 0.6, rotationalSpeed: 3600, powerOutput: 1420, fuelMassFlow: 0.1, pcd: 0, tcd: 0, pressureRatio: 0, tetSpread: 0 },
+      tet: 74.3,
+      pcd: 0,
+      tcd: 0,
+      rotationalSpeed: 3600.0,
+      vibrationVelocity: 0.612,
+      eoh: 18600,
+      fuelMassFlow: 0.09,
       powerOutput: 1418.5,
-      tempAlert: false,
+      pressureRatio: 0,
+      tetSpread: 0,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 74, shaftSpeed: 3600, vibration: 0.6, powerOutput: 1418, fuelFlow: 0.09 }),
+      metricHistory: generateAllHistories({ tet: 74, rotationalSpeed: 3600, vibrationVelocity: 0.6, powerOutput: 1418, fuelMassFlow: 0.09, pcd: 0, tcd: 0, pressureRatio: 0, tetSpread: 0 }),
       documentation: [
         { title: 'Operating Parameters', content: 'Hydrogen pressure: 3.5 bar. Purity: 99.8%. Stator cooling water temperature: 40°C. Field current: 4,200 A.' },
         { title: 'Insulation', content: 'Stator winding insulation resistance: 1,200 MΩ (limit: 200 MΩ). Polarization index: 2.8. No partial discharge activity.' },
@@ -835,20 +925,24 @@ export function createFleetData() {
       description: '5.1 MW compact single-shaft gas turbine',
       location: 'Plant Omicron — Cairo, EG',
       imageUrl: makeEquipmentImage('SGT-100', '#2dd4bf', 14),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-100.html',
+      manualUrl: '#manual/GT-10',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 495, vibration: 0.7, shaftSpeed: 17400, powerOutput: 5.0, fuelFlow: 0.36 },
-      exhaustTemp: 493.8,
-      shaftSpeed: 17400.0,
-      vibration: 0.689,
-      hoursSinceOverhaul: 2100,
-      fuelFlow: 0.358,
+      telemetryBaseline: { tet: 495, vibrationVelocity: 0.7, rotationalSpeed: 17400, powerOutput: 5.0, fuelMassFlow: 0.36, pcd: 8.2, tcd: 340, pressureRatio: 12.5, tetSpread: 13 },
+      tet: 493.8,
+      pcd: 8.3,
+      tcd: 341.2,
+      rotationalSpeed: 17400.0,
+      vibrationVelocity: 0.689,
+      eoh: 2100,
+      fuelMassFlow: 0.358,
       powerOutput: 5.02,
-      tempAlert: false,
+      pressureRatio: 12.6,
+      tetSpread: 13.1,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 493, shaftSpeed: 17400, vibration: 0.7, powerOutput: 5.0, fuelFlow: 0.36 }),
+      metricHistory: generateAllHistories({ tet: 493, rotationalSpeed: 17400, vibrationVelocity: 0.7, powerOutput: 5.0, fuelMassFlow: 0.36, pcd: 8.2, tcd: 340, pressureRatio: 12.5, tetSpread: 13 }),
       documentation: [
         { title: 'Application', content: 'Remote power generation for water treatment facility. Operated at ISO rated conditions 24/7. No grid connection.' },
         { title: 'Fuel', content: 'Natural gas from pipeline. Wobbe index: 52.4 MJ/m³ (spec: 48–53 MJ/m³). Gas quality trending stable.' },
@@ -857,31 +951,35 @@ export function createFleetData() {
       aiSuggestion: '',
       maintenanceHistory: getMaintenanceHistory('GT-10'),
     },
-    // ── 16. SGT-300 ───────────────────────────────────────────────────────────
+    // ── 16. SGT6-9000HL ───────────────────────────────────────────────────────
     {
       id: 'GT-11',
-      name: 'SGT-300',
-      type: 'Small Industrial Gas Turbine',
-      description: '8.9 MW twin-shaft industrial gas turbine',
-      location: 'Plant Pi — Nairobi, KE',
-      imageUrl: makeEquipmentImage('SGT-300', '#2dd4bf', 15),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt-300.html',
+      name: 'SGT6-9000HL',
+      type: 'HL-class Gas Turbine (60 Hz)',
+      description: '~405 MW 60 Hz HL-class gas turbine',
+      location: 'Long Ridge — Hannibal, OH',
+      imageUrl: makeEquipmentImage('SGT6-9000HL', '#2dd4bf', 15),
+      manualUrl: '#manual/GT-11',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 501, vibration: 0.9, shaftSpeed: 11500, powerOutput: 8.7, fuelFlow: 0.62 },
-      exhaustTemp: 499.6,
-      shaftSpeed: 11500.0,
-      vibration: 0.876,
-      hoursSinceOverhaul: 4700,
-      fuelFlow: 0.618,
-      powerOutput: 8.72,
-      tempAlert: false,
+      telemetryBaseline: { tet: 555, vibrationVelocity: 0.9, rotationalSpeed: 3600, powerOutput: 400, fuelMassFlow: 13.2, pcd: 21.0, tcd: 440, pressureRatio: 22.0, tetSpread: 15 },
+      tet: 552.4,
+      pcd: 21.3,
+      tcd: 441.6,
+      rotationalSpeed: 3600.0,
+      vibrationVelocity: 0.876,
+      eoh: 4700,
+      fuelMassFlow: 13.18,
+      powerOutput: 398.5,
+      pressureRatio: 22.2,
+      tetSpread: 15.4,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 499, shaftSpeed: 11500, vibration: 0.9, powerOutput: 8.7, fuelFlow: 0.62 }),
+      metricHistory: generateAllHistories({ tet: 552, rotationalSpeed: 3600, vibrationVelocity: 0.9, powerOutput: 398, fuelMassFlow: 13.2, pcd: 21.0, tcd: 440, pressureRatio: 22.0, tetSpread: 15 }),
       documentation: [
-        { title: 'Application', content: 'Hospital campus power backup and peak shaving. Dual-fuel: natural gas primary, LPG backup. Auto-start tested monthly.' },
-        { title: 'Generator Connection', content: 'Direct-coupled synchronous generator, 50 Hz, 11 kV. Power factor: 0.85 lagging. Excitation system: brushless.' },
+        { title: 'Application', content: '60 Hz HL-class gas turbine in combined cycle configuration. ~405 MW class. High efficiency advanced air-cooled technology.' },
+        { title: 'Generator Connection', content: 'Direct-coupled synchronous generator, 60 Hz, 18 kV. Power factor: 0.85 lagging. 3,600 RPM rated speed.' },
         { title: 'Service History', content: 'Commissioned 2024-02-15. First combustion inspection due at 6,000 hrs (1,300 hrs remaining). No faults logged.' },
       ],
       aiSuggestion: '',
@@ -892,27 +990,31 @@ export function createFleetData() {
       id: 'GT-12',
       name: 'SGT6-8000H',
       type: 'H-class Gas Turbine (60 Hz)',
-      description: '274 MW 60 Hz H-class flagship unit',
-      location: 'Plant Rho — Atlanta, GA',
+      description: '310 MW 60 Hz H-class combined cycle',
+      location: 'Andong CCPP — Andong, KR',
       imageUrl: makeEquipmentImage('SGT6-8000H', '#f87171', 16),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt6-8000h.html',
+      manualUrl: '#manual/GT-12',
       status: 'NOK',
       currentStatus: 'NOK',
-      telemetryBaseline: { exhaustTemp: 555, vibration: 1.4, shaftSpeed: 3600, powerOutput: 268, fuelFlow: 11.4 },
-      exhaustTemp: 641.8,
-      shaftSpeed: 3600.0,
-      vibration: 7.891,
-      hoursSinceOverhaul: 29800,
-      fuelFlow: 11.348,
-      powerOutput: 260.4,
-      tempAlert: true,
+      telemetryBaseline: { tet: 555, vibrationVelocity: 1.4, rotationalSpeed: 3600, powerOutput: 310, fuelMassFlow: 11.4, pcd: 19.0, tcd: 425, pressureRatio: 20.0, tetSpread: 58 },
+      tet: 641.8,
+      pcd: 18.4,
+      tcd: 422.1,
+      rotationalSpeed: 3600.0,
+      vibrationVelocity: 7.891,
+      eoh: 29800,
+      fuelMassFlow: 11.348,
+      powerOutput: 305.2,
+      pressureRatio: 19.6,
+      tetSpread: 58.7,
+      tetAlert: true,
       vibrationAlert: true,
       alert: 'CRITICAL: Vibration 7.9 mm/s & exhaust temp 642°C — immediate shutdown required.',
-      metricHistory: generateAllHistories({ exhaustTemp: 641, shaftSpeed: 3600, vibration: 7.9, powerOutput: 260, fuelFlow: 11.3 }),
+      metricHistory: generateAllHistories({ tet: 641, rotationalSpeed: 3600, vibrationVelocity: 7.9, powerOutput: 305, fuelMassFlow: 11.3, pcd: 19.0, tcd: 425, pressureRatio: 20.0, tetSpread: 58 }),
       documentation: [
         { title: 'CRITICAL — Dual Exceedance', content: 'Both vibration (7.9 mm/s on bearing #1) and exhaust temp (642°C) at critical levels simultaneously. Root cause: suspected hot-section distress.' },
         { title: 'Overhaul Status', content: 'Unit at 29,800 hrs approaching 30,000 hr major overhaul. Hot gas path components showing end-of-life thermal fatigue patterns.' },
-        { title: 'Grid Impact', content: 'Unit provides 250 MW to SERC grid. Controlled shutdown coordinated with grid operator. Backup capacity arranged from GT-05.' },
+        { title: 'Grid Impact', content: 'Unit provides 310 MW to Korean grid. Controlled shutdown coordinated with grid operator. Backup capacity arranged.' },
       ],
       aiSuggestion: 'URGENT: Simultaneous critical vibration (7.9 mm/s) and exhaust temperature (642°C) exceedance. Execute immediate controlled shutdown per SOP-GT12-001. Initiate emergency hot-section inspection.',
       maintenanceHistory: getMaintenanceHistory('GT-12'),
@@ -925,20 +1027,24 @@ export function createFleetData() {
       description: '130 MVA air-cooled two-pole generator',
       location: 'Plant Sigma — Paris, FR',
       imageUrl: makeEquipmentImage('SGen-100A', '#2dd4bf', 17),
-      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgen-100a.html',
+      manualUrl: '#manual/GEN-02',
       status: 'OK',
       currentStatus: 'OK',
-      telemetryBaseline: { exhaustTemp: 82, vibration: 0.5, shaftSpeed: 3000, powerOutput: 121, fuelFlow: 0.05 },
-      exhaustTemp: 81.7,
-      shaftSpeed: 3000.0,
-      vibration: 0.498,
-      hoursSinceOverhaul: 9200,
-      fuelFlow: 0.048,
+      telemetryBaseline: { tet: 82, vibrationVelocity: 0.5, rotationalSpeed: 3000, powerOutput: 121, fuelMassFlow: 0.05, pcd: 0, tcd: 0, pressureRatio: 0, tetSpread: 0 },
+      tet: 81.7,
+      pcd: 0,
+      tcd: 0,
+      rotationalSpeed: 3000.0,
+      vibrationVelocity: 0.498,
+      eoh: 9200,
+      fuelMassFlow: 0.048,
       powerOutput: 121.4,
-      tempAlert: false,
+      pressureRatio: 0,
+      tetSpread: 0,
+      tetAlert: false,
       vibrationAlert: false,
       alert: null,
-      metricHistory: generateAllHistories({ exhaustTemp: 81, shaftSpeed: 3000, vibration: 0.5, powerOutput: 121, fuelFlow: 0.05 }),
+      metricHistory: generateAllHistories({ tet: 81, rotationalSpeed: 3000, vibrationVelocity: 0.5, powerOutput: 121, fuelMassFlow: 0.05, pcd: 0, tcd: 0, pressureRatio: 0, tetSpread: 0 }),
       documentation: [
         { title: 'Design Data', content: 'Rating: 130 MVA, 50 Hz, 15.75 kV. Power factor: 0.85. Short-circuit ratio: 0.62. Insulation class: F.' },
         { title: 'Bearing Condition', content: 'Drive-end bearing: vibration 0.45 mm/s. Non-drive-end: 0.51 mm/s. Lube oil temperature: 55°C. All within limits.' },
@@ -952,34 +1058,46 @@ export function createFleetData() {
 
 // ── Generate Mock Diagnostic Action Plan (Simulated RAG) ──────────────────────
 export function generateActionPlan(turbine) {
-  const isVibrationCritical = turbine.vibration > thresholds.vibration.critical
-  const isExhaustCritical = turbine.exhaustTemp > thresholds.exhaustTemp.critical
+  const isVibrationCritical = turbine.vibrationVelocity > thresholds.vibrationVelocity.critical
+  const isTetCritical = turbine.tet > thresholds.tet.critical
+  const isTetSpreadCritical = turbine.tetSpread > thresholds.tetSpread.critical
 
   if (isVibrationCritical) {
     return [
       `1. Initiate controlled load reduction on ${turbine.name} ${turbine.type} #${turbine.id}`,
-      `2. Verify bearing temperatures and oil pressure on all journal bearings`,
-      `3. Cross-reference vibration spectrum data with baseline from last overhaul at ${Math.floor(turbine.hoursSinceOverhaul).toLocaleString()}h`,
-      `4. If vibration exceeds 8.0 mm/s, execute emergency shutdown per SOP-${turbine.id}-001`,
+      `2. Vibration velocity at ${turbine.vibrationVelocity.toFixed(1)} mm/s RMS — ISO 10816-4 Zone D (>11.2 mm/s). Verify bearing temps and lube oil pressure`,
+      `3. Cross-reference vibration spectrum with baseline from last overhaul at ${Math.floor(turbine.eoh).toLocaleString()} EOH`,
+      `4. If vibration exceeds 11.2 mm/s, execute emergency shutdown per SOP-${turbine.id}-001`,
       `5. Schedule emergency bearing inspection and rotor balance check within 24 hours`,
       `6. Notify plant operations manager and prepare maintenance crew for potential outage`,
     ]
   }
 
-  if (isExhaustCritical) {
+  if (isTetSpreadCritical) {
+    return [
+      `1. TET Spread at ${turbine.tetSpread.toFixed(0)}°C exceeds 50°C critical threshold on ${turbine.name} #${turbine.id}`,
+      `2. Inspect individual burner cans for combustion asymmetry — check fuel nozzle spray patterns`,
+      `3. Verify PCD (currently ${(turbine.pcd ?? 0).toFixed(1)} bar) for compressor degradation indication`,
+      `4. Cross-reference with TET trending — current TET: ${turbine.tet.toFixed(0)}°C`,
+      `5. Schedule combustion inspection within 48 hours per maintenance manual`,
+      `6. Review fuel gas quality and Wobbe index for recent changes`,
+    ]
+  }
+
+  if (isTetCritical) {
     return [
       `1. Reduce load on ${turbine.name} ${turbine.type} #${turbine.id} to 75% rated capacity immediately`,
-      `2. Verify combustion liner temperatures across all cans`,
-      `3. Check fuel nozzle spray patterns and fuel gas quality parameters`,
-      `4. If temperature continues rising above ${thresholds.exhaustTemp.critical}°C, initiate controlled shutdown`,
+      `2. TET at ${turbine.tet.toFixed(0)}°C — verify combustion liner temperatures across all cans`,
+      `3. Check PCD (${(turbine.pcd ?? 0).toFixed(1)} bar) and TCD for compressor health indicators`,
+      `4. If TET continues rising above ${thresholds.tet.critical}°C, initiate controlled shutdown`,
       `5. Schedule combustion inspection within 48 hours per maintenance manual Section 9`,
-      `6. Review compressor wash schedule — last performed may indicate fouling trend`,
+      `6. Review compressor wash schedule — PCD drop may indicate fouling trend`,
     ]
   }
 
   return [
     `1. Continue monitoring ${turbine.name} ${turbine.type} #${turbine.id} telemetry at elevated frequency`,
-    `2. Review trending data for the last 72 hours to identify degradation patterns`,
-    `3. Schedule preventive maintenance review within 7 days`,
+    `2. All parameters within ISO 10816-4 Zone A/B. Review trending data for the last 72 hours`,
+    `3. Next maintenance milestone: EOH ${Math.floor(turbine.eoh).toLocaleString()} h. Schedule preventive review within 7 days`,
   ]
 }

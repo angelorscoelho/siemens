@@ -105,8 +105,8 @@
                       <p class="text-xs text-red-200/80 leading-relaxed">{{ t.alert || 'Critical condition — parameters exceed safe operating limits.' }}</p>
                       <div class="flex flex-wrap gap-3 mt-2 text-[11px] text-gray-400">
                         <span>Vibration: <strong class="text-red-300">{{ t.vibration?.toFixed(1) }} mm/s</strong></span>
-                        <span>Exhaust: <strong class="text-red-300">{{ t.exhaustTemp?.toFixed(0) }}°C</strong></span>
-                        <span>Hours: <strong class="text-gray-300">{{ Math.floor(t.hoursSinceOverhaul).toLocaleString() }}h</strong></span>
+                        <span>TET: <strong class="text-red-300">{{ t.tet?.toFixed(0) }}°C</strong></span>
+                        <span>EOH: <strong class="text-gray-300">{{ Math.floor(t.eoh).toLocaleString() }}h</strong></span>
                       </div>
                     </div>
                   </div>
@@ -136,8 +136,8 @@
                       <p class="text-xs text-yellow-200/80 leading-relaxed">{{ t.alert || 'Elevated readings — schedule preventive review.' }}</p>
                       <div class="flex flex-wrap gap-3 mt-2 text-[11px] text-gray-400">
                         <span>Vibration: <strong :class="t.vibrationAlert ? 'text-yellow-300' : 'text-gray-300'">{{ t.vibration?.toFixed(1) }} mm/s</strong></span>
-                        <span>Exhaust: <strong :class="t.tempAlert ? 'text-yellow-300' : 'text-gray-300'">{{ t.exhaustTemp?.toFixed(0) }}°C</strong></span>
-                        <span>Hours: <strong class="text-gray-300">{{ Math.floor(t.hoursSinceOverhaul).toLocaleString() }}h</strong></span>
+                        <span>TET: <strong :class="t.tetAlert ? 'text-yellow-300' : 'text-gray-300'">{{ t.tet?.toFixed(0) }}°C</strong></span>
+                        <span>EOH: <strong class="text-gray-300">{{ Math.floor(t.eoh).toLocaleString() }}h</strong></span>
                       </div>
                     </div>
                   </div>
@@ -167,8 +167,8 @@
                         </div>
                         <div class="flex flex-wrap gap-3 mt-1 text-[11px] text-gray-500">
                           <span>Vib: {{ t.vibration?.toFixed(1) }} mm/s</span>
-                          <span>Exh: {{ t.exhaustTemp?.toFixed(0) }}°C</span>
-                          <span>{{ Math.floor(t.hoursSinceOverhaul).toLocaleString() }}h since overhaul</span>
+                          <span>TET: {{ t.tet?.toFixed(0) }}°C</span>
+                          <span>{{ Math.floor(t.eoh).toLocaleString() }}h EOH</span>
                         </div>
                       </div>
                       <span class="shrink-0 px-2 py-0.5 text-[10px] font-bold rounded-full bg-teal-900/60 text-teal-400 border border-teal-800">OK</span>
