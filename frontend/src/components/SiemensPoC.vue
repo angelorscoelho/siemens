@@ -53,11 +53,6 @@
           <div v-if="demoMode" class="flex items-center gap-1.5 px-2 py-1 bg-gray-800 border border-gray-600 rounded-lg">
             <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse"></span>
             <span class="text-[10px] text-gray-400">Demo Mode Active</span>
-            <button @click="toggleDemoMode()"
-              class="ml-1 px-1.5 py-0.5 text-[10px] rounded bg-gray-700 text-gray-300 hover:bg-gray-600 cursor-pointer"
-              :title="demoPaused ? 'Resume demo' : 'Pause demo'">
-              {{ demoPaused ? '▶' : '⏸' }}
-            </button>
           </div>
           <button @click="openFleetOverviewModal()"
             class="px-3 py-1.5 text-xs font-semibold bg-teal-900/60 border border-teal-700 rounded-lg text-teal-300 hover:bg-teal-800/80 hover:border-teal-500 hover:text-teal-200 transition-colors cursor-pointer flex items-center gap-1.5"
@@ -1409,17 +1404,12 @@ const DEMO_TARGET_RISK = 4
 const DEMO_INITIAL_NOK = 1
 const DEMO_INITIAL_RISK = 1
 const demoMode = ref(true)
-const demoPaused = ref(false)
 let demoStartTime = 0
 let demoNextFlipIdx = 0
 let demoInterval = null
 
 // ── Notification Spam Prevention ──────────────────────────────────────────────
 let lastNotifiedId = null
-
-function toggleDemoMode() {
-  demoPaused.value = !demoPaused.value
-}
 
 // ── Architecture Modal ────────────────────────────────────────────────────────
 const archOpen = ref(false)
@@ -2458,7 +2448,6 @@ async function scrollToBottom() {
 // At each scheduled flip time, one OK card transitions to RISK or NOK.
 // Target distribution: 12 OK, 4 RISK, 2 NOK.
 function demoFlipTick() {
-  if (demoPaused.value) return
   if (demoNextFlipIdx >= DEMO_FLIP_TIMES.length) return
 
   const elapsed = (Date.now() - demoStartTime) / 1000
