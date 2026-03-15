@@ -28,7 +28,37 @@
             <p class="text-xs text-teal-400 leading-tight">PoC · Distributed AI Factory · Industrial RAG</p>
           </div>
         </div>
+
+        <!-- ── Centered Fleet Status Summary (live counters) ── -->
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 bg-teal-400 rounded-full"></span>
+            <span class="text-lg font-bold text-white">OK</span>
+            <span class="text-lg font-bold text-teal-400">{{ okCount }}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-pulse"></span>
+            <span class="text-lg font-bold text-white">RISK</span>
+            <span class="text-lg font-bold text-yellow-400">{{ warningCount }}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
+            <span class="text-lg font-bold text-white">NOK</span>
+            <span class="text-lg font-bold text-red-400">{{ criticalCount }}</span>
+          </div>
+        </div>
+
         <div class="ml-auto flex items-center gap-2">
+          <!-- Demo Mode Badge -->
+          <div v-if="demoMode" class="flex items-center gap-1.5 px-2 py-1 bg-gray-800 border border-gray-600 rounded-lg">
+            <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse"></span>
+            <span class="text-[10px] text-gray-400">Demo Mode Active</span>
+            <button @click="toggleDemoMode()"
+              class="ml-1 px-1.5 py-0.5 text-[10px] rounded bg-gray-700 text-gray-300 hover:bg-gray-600 cursor-pointer"
+              :title="demoPaused ? 'Resume demo' : 'Pause demo'">
+              {{ demoPaused ? '▶' : '⏸' }}
+            </button>
+          </div>
           <button @click="openFleetOverviewModal()"
             class="px-3 py-1.5 text-xs font-semibold bg-teal-900/60 border border-teal-700 rounded-lg text-teal-300 hover:bg-teal-800/80 hover:border-teal-500 hover:text-teal-200 transition-colors cursor-pointer flex items-center gap-1.5"
             title="Open fleet general assessment">
@@ -70,20 +100,17 @@
           <p class="text-xs text-teal-400 leading-tight">Siemens Energy · PoC</p>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
-          <span v-if="criticalCount > 0"
-            class="flex items-center gap-1 px-1.5 py-0.5 bg-red-900 text-red-300 text-xs rounded-full font-bold">
-            <span class="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse"></span>
-            {{ criticalCount }}
+          <span class="flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold">
+            <span class="w-1.5 h-1.5 bg-teal-400 rounded-full"></span>
+            <span class="text-teal-400">{{ okCount }}</span>
           </span>
-          <span v-if="warningCount > 0"
-            class="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-900 text-yellow-300 text-xs rounded-full font-bold">
-            <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></span>
-            {{ warningCount }}
+          <span class="flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold">
+            <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full" :class="{ 'animate-pulse': warningCount > 0 }"></span>
+            <span class="text-yellow-400">{{ warningCount }}</span>
           </span>
-          <span v-if="criticalCount === 0 && warningCount === 0"
-            class="flex items-center gap-1 px-1.5 py-0.5 bg-teal-900 text-teal-300 text-xs rounded-full font-bold">
-            <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse"></span>
-            OK
+          <span class="flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold">
+            <span class="w-1.5 h-1.5 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
+            <span class="text-red-400">{{ criticalCount }}</span>
           </span>
           <button @click="openFleetOverviewModal()"
             class="p-1.5 rounded-lg bg-teal-900/60 border border-teal-700 text-teal-300 hover:bg-teal-800/80 hover:text-teal-200 transition-colors cursor-pointer relative"
@@ -177,13 +204,11 @@
                 <h3 class="text-base md:text-xl font-bold text-white mt-1 leading-tight">{{ selectedTurbine.name }} / Unit {{ selectedTurbine.id }}</h3>
                 <p class="text-xs md:text-sm text-gray-400 mt-1 leading-snug">{{ selectedTurbine.type }} — {{ selectedTurbine.description }}</p>
               </div>
-              <!-- Manual link icon -->
-              <a
+              <!-- Manual link icon (opens Siemens Energy product page in new tab) -->
+              <button
                 v-if="selectedTurbine.manualUrl"
-                :href="selectedTurbine.manualUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="shrink-0 mt-0.5 p-1.5 rounded-lg bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
+                @click.stop.prevent="openManual(selectedTurbine)"
+                class="shrink-0 mt-0.5 p-1.5 rounded-lg bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors cursor-pointer"
                 title="Equipment Manual"
                 :aria-label="`Open the ${selectedTurbine.name} equipment manual`"
               >
@@ -191,7 +216,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-              </a>
+              </button>
               <!-- Maintenance History icon -->
               <button
                 @click="openHistoryModal(selectedTurbine)"
@@ -213,7 +238,7 @@
 
             <!-- Detailed Metrics (clickable to change trend chart) -->
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
-              <div v-for="param in metricParams" :key="param.key"
+              <div v-for="param in detailVisibleMetricParams" :key="param.key"
                 @click="selectDetailMetric(param.key)"
                 @keydown.enter.prevent="selectDetailMetric(param.key)"
                 @keydown.space.prevent="selectDetailMetric(param.key)"
@@ -1350,7 +1375,7 @@ import {
 import {
   metricParams, thresholds, createFleetData, randomWalk,
   historyMetricKeys, getMostCriticalMetricKey, getMaintenanceHistory,
-  makeFallbackSvg,
+  makeFallbackSvg, openManual, isGasTurbine,
 } from '../fleetStore.js'
 import EquipmentCard from './EquipmentCard.vue'
 import OverviewDialog from './OverviewDialog.vue'
@@ -1374,6 +1399,27 @@ const historyModalTurbine = ref(null)
 const historyModalLoading = ref(false)
 const historyModalData = ref([])
 const alertCooldown = {}
+
+// ── Demo Mode ─────────────────────────────────────────────────────────────────
+// Exponential flip schedule: cumulative seconds from page load at which
+// one OK card flips to RISK or NOK, progressing towards target 12/4/2.
+const DEMO_FLIP_TIMES = [10, 50, 90, 160, 250, 370, 520, 710, 950]
+const DEMO_TARGET_NOK = 2
+const DEMO_TARGET_RISK = 4
+const DEMO_INITIAL_NOK = 1
+const DEMO_INITIAL_RISK = 1
+const demoMode = ref(true)
+const demoPaused = ref(false)
+let demoStartTime = 0
+let demoNextFlipIdx = 0
+let demoInterval = null
+
+// ── Notification Spam Prevention ──────────────────────────────────────────────
+let lastNotifiedId = null
+
+function toggleDemoMode() {
+  demoPaused.value = !demoPaused.value
+}
 
 // ── Architecture Modal ────────────────────────────────────────────────────────
 const archOpen = ref(false)
@@ -1604,6 +1650,13 @@ const warningCount = computed(() => turbines.filter(t => t.status === 'RISK').le
 // ── Detail View Metric Drill-In ───────────────────────────────────────────────
 const detailMetricKey = ref(null)
 
+// Gas-only fields hidden for steam turbines (SST-*) and generators (SGen-*)
+const GAS_ONLY_KEYS = new Set(['tet', 'pcd', 'tcd', 'pressureRatio', 'tetSpread', 'fuelMassFlow'])
+const detailVisibleMetricParams = computed(() => {
+  if (!selectedTurbine.value || isGasTurbine(selectedTurbine.value)) return metricParams
+  return metricParams.filter(p => !GAS_ONLY_KEYS.has(p.key))
+})
+
 const detailActiveMetricKey = computed(() => {
   if (detailMetricKey.value) return detailMetricKey.value
   return selectedTurbine.value ? getMostCriticalMetricKey(selectedTurbine.value) : 'tet'
@@ -1745,22 +1798,35 @@ function updateTelemetry() {
   enforceStatusDistribution()
 
   // Now trigger alert balloon only for turbines whose escalation survived enforcement
+  // Skip lastNotifiedId to prevent consecutive notification spam for the same card
   const now = Date.now()
   for (const t of escalated) {
     if (t.status !== 'NOK' && t.status !== 'RISK') continue // downgraded by enforcement
+    if (t.id === lastNotifiedId) continue // prevent consecutive same-card notification
     const cooldownKey = t.id + t.status
     if (!alertCooldown[cooldownKey] || now - alertCooldown[cooldownKey] > 12000) {
       alertCooldown[cooldownKey] = now
+      lastNotifiedId = t.id
       showAlertBalloon(t)
     }
   }
 }
 
-// ── Status Distribution Cap (max 10% NOK, max 20% RISK) ──────────────────────
+// ── Status Distribution Cap ────────────────────────────────────────────────────
+// During Demo Mode, limits track the demo's scheduled target so the natural
+// random walk doesn't exceed the demo schedule's intended counts.
 function enforceStatusDistribution() {
-  const total = turbines.length
-  const maxNOK = Math.max(1, Math.floor(total * 0.15))
-  const maxRISK = Math.max(1, Math.floor(total * 0.25))
+  let maxNOK, maxRISK
+  if (demoMode.value && demoNextFlipIdx < DEMO_FLIP_TIMES.length) {
+    // Demo target: start 1 NOK / 1 RISK, ramp to 2 NOK / 4 RISK
+    const flipsCompleted = demoNextFlipIdx
+    maxNOK = Math.min(DEMO_TARGET_NOK, DEMO_INITIAL_NOK + Math.floor(flipsCompleted / 3))
+    maxRISK = Math.min(DEMO_TARGET_RISK, DEMO_INITIAL_RISK + flipsCompleted)
+  } else {
+    const total = turbines.length
+    maxNOK = Math.max(1, Math.floor(total * 0.15))
+    maxRISK = Math.max(1, Math.floor(total * 0.25))
+  }
 
   // Get NOK turbines sorted by how far above critical threshold they are (least critical first)
   const nokTurbines = turbines
@@ -1843,8 +1909,8 @@ function triggerRandomAnomaly() {
   const goNOK = canNOK && (!canRISK || Math.random() < 0.4)
 
   if (goNOK) {
-    // Create NOK anomaly from OK or RISK assets
-    const candidates = turbines.filter(t => t.status === 'OK' || t.status === 'RISK')
+    // Create NOK anomaly from OK or RISK assets (exclude lastNotifiedId)
+    const candidates = turbines.filter(t => (t.status === 'OK' || t.status === 'RISK') && t.id !== lastNotifiedId)
     if (candidates.length === 0) return
     const target = candidates[Math.floor(Math.random() * candidates.length)]
 
@@ -1854,8 +1920,8 @@ function triggerRandomAnomaly() {
       target.tet = thresholds.tet.critical + 5 + Math.random() * 20
     }
   } else {
-    // Create RISK anomaly from OK assets
-    const healthyAssets = turbines.filter(t => t.status === 'OK')
+    // Create RISK anomaly from OK assets (exclude lastNotifiedId)
+    const healthyAssets = turbines.filter(t => t.status === 'OK' && t.id !== lastNotifiedId)
     if (healthyAssets.length === 0) return
     const target = healthyAssets[Math.floor(Math.random() * healthyAssets.length)]
 
@@ -2388,25 +2454,92 @@ async function scrollToBottom() {
   if (mobileChatScrollRef.value) mobileChatScrollRef.value.scrollTop = mobileChatScrollRef.value.scrollHeight
 }
 
+// ── Demo Mode Flip Logic ──────────────────────────────────────────────────────
+// At each scheduled flip time, one OK card transitions to RISK or NOK.
+// Target distribution: 12 OK, 4 RISK, 2 NOK.
+function demoFlipTick() {
+  if (demoPaused.value) return
+  if (demoNextFlipIdx >= DEMO_FLIP_TIMES.length) return
+
+  const elapsed = (Date.now() - demoStartTime) / 1000
+  if (elapsed < DEMO_FLIP_TIMES[demoNextFlipIdx]) return
+
+  // Determine target: first 2 extra flips go to NOK, rest to RISK
+  // Starting from 16 OK, 1 RISK, 1 NOK → target 12 OK, 4 RISK, 2 NOK
+  // That means 1 more NOK flip + 3 RISK flips = 4 total flips from the 9 scheduled
+  const currentNOK = turbines.filter(t => t.status === 'NOK').length
+  const currentRISK = turbines.filter(t => t.status === 'RISK').length
+  const needNOK = currentNOK < DEMO_TARGET_NOK
+  const needRISK = currentRISK < DEMO_TARGET_RISK
+
+  if (!needNOK && !needRISK) {
+    demoNextFlipIdx = DEMO_FLIP_TIMES.length // stop
+    return
+  }
+
+  // Select a candidate OK turbine to flip (exclude lastNotifiedId and maximized card)
+  const candidates = turbines.filter(t =>
+    t.status === 'OK' &&
+    t.id !== lastNotifiedId &&
+    t.id !== selectedTurbine.value?.id
+  )
+  if (candidates.length === 0) {
+    demoNextFlipIdx++
+    return
+  }
+
+  const target = candidates[Math.floor(Math.random() * candidates.length)]
+
+  if (needNOK) {
+    // Flip to NOK
+    if (Math.random() < 0.5) {
+      target.vibrationVelocity = thresholds.vibrationVelocity.critical + 0.5 + Math.random() * 1.5
+    } else {
+      target.tet = thresholds.tet.critical + 5 + Math.random() * 20
+    }
+  } else {
+    // Flip to RISK
+    if (Math.random() < 0.5) {
+      target.vibrationVelocity = thresholds.vibrationVelocity.warning + 0.2 + Math.random() * (thresholds.vibrationVelocity.critical - thresholds.vibrationVelocity.warning - 0.3)
+    } else {
+      target.tet = thresholds.tet.warning + 2 + Math.random() * (thresholds.tet.critical - thresholds.tet.warning - 3)
+    }
+  }
+
+  lastNotifiedId = target.id
+  demoNextFlipIdx++
+}
+
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
-  // Seed initial RISK/NOK states for a lively dashboard from the start
-  // Target: ~15% NOK, ~25% RISK immediately
-  const total = turbines.length
-  const initialNOK = Math.max(1, Math.floor(total * 0.10))
-  const initialRISK = Math.max(2, Math.floor(total * 0.20))
-  const shuffled = [...turbines].sort(() => Math.random() - 0.5)
-  let idx = 0
-  for (let i = 0; i < initialNOK && idx < shuffled.length; i++, idx++) {
-    const t = shuffled[idx]
+  // Demo Mode: Reset ALL units to OK baseline first, then seed exactly 1 RISK + 1 NOK
+  // This ensures t=0 shows: "OK 16 RISK 1 NOK 1"
+  turbines.forEach(t => {
+    Object.assign(t, t.telemetryBaseline, {
+      status: 'OK',
+      currentStatus: 'OK',
+      tetAlert: false,
+      vibrationAlert: false,
+      alert: null,
+      aiSuggestion: '',
+    })
+  })
+
+  // Seed exactly 1 NOK and 1 RISK (pick random gas turbines for realism)
+  const gasTurbines = turbines.filter(t => isGasTurbine(t))
+  const shuffled = [...gasTurbines].sort(() => Math.random() - 0.5)
+  // First card → NOK
+  if (shuffled.length > 0) {
+    const t = shuffled[0]
     if (Math.random() < 0.5) {
       t.vibrationVelocity = thresholds.vibrationVelocity.critical + 0.3 + Math.random() * 1.0
     } else {
       t.tet = thresholds.tet.critical + 3 + Math.random() * 15
     }
   }
-  for (let i = 0; i < initialRISK && idx < shuffled.length; i++, idx++) {
-    const t = shuffled[idx]
+  // Second card → RISK
+  if (shuffled.length > 1) {
+    const t = shuffled[1]
     if (Math.random() < 0.5) {
       t.vibrationVelocity = thresholds.vibrationVelocity.warning + 0.2 + Math.random() * (thresholds.vibrationVelocity.critical - thresholds.vibrationVelocity.warning - 0.3)
     } else {
@@ -2416,8 +2549,13 @@ onMounted(() => {
   // Run one telemetry tick to set statuses based on seeded values
   updateTelemetry()
 
+  // Start telemetry simulation (2s interval)
   updateInterval = setInterval(updateTelemetry, 2000)
-  anomalyInterval = setInterval(triggerRandomAnomaly, 5000)
+
+  // Start Demo Mode exponential flip schedule (checks every second)
+  demoStartTime = Date.now()
+  demoNextFlipIdx = 0
+  demoInterval = setInterval(demoFlipTick, 1000)
 
   // Load fleet overview once on mount
   loadFleetOverview()
@@ -2432,6 +2570,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (updateInterval) clearInterval(updateInterval)
   if (anomalyInterval) clearInterval(anomalyInterval)
+  if (demoInterval) clearInterval(demoInterval)
   if (loadingMsgInterval) clearInterval(loadingMsgInterval)
   destroyDetailChart()
   window.removeEventListener('popstate', applyHash)
