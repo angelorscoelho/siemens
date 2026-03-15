@@ -368,7 +368,6 @@ export function makeFallbackSvg(name, type, color) {
 // Keeps the green banner text short — these cards need minimal attention.
 // The seed ensures each turbine gets a stable, deterministic message.
 export function getOkCardInsight(turbine) {
-  const hours = Math.floor(turbine.eoh)
   const seed = turbine.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
 
   // Seeded pseudo-random: primes 7/13 spread values, mod 45 gives 1–45 day range
