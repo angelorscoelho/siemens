@@ -106,7 +106,7 @@
         <button
           v-if="!assistantOpen"
           @click="assistantOpen = true"
-          class="hidden md:flex fixed right-4 top-4 p-3 bg-teal-700 hover:bg-teal-600 text-white rounded-full shadow-2xl transition-all cursor-pointer z-30 items-center justify-center"
+          class="hidden md:flex fixed right-4 top-[60px] p-3 bg-teal-700 hover:bg-teal-600 text-white rounded-full shadow-2xl transition-all cursor-pointer z-30 items-center justify-center"
           title="Show AI Maintenance Assistant sidebar"
           aria-label="Show AI Maintenance Assistant sidebar"
         >
@@ -429,7 +429,7 @@
                   {{ msg.content }}
                 </div>
               </div>
-              <div v-else-if="msg.role === 'user'" class="flex justify-end">
+              <div v-else-if="msg.role === 'user'" class="flex justify-end" data-role="user">
                 <div class="max-w-[85%] bg-teal-800 text-white rounded-2xl rounded-tr-sm px-3 py-2 text-xs shadow whitespace-pre-wrap">
                   {{ msg.content }}
                 </div>
@@ -550,7 +550,7 @@
                 {{ msg.content }}
               </div>
             </div>
-            <div v-else-if="msg.role === 'user'" class="flex justify-end">
+            <div v-else-if="msg.role === 'user'" class="flex justify-end" data-role="user">
               <div class="max-w-[80%] bg-teal-800 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm shadow whitespace-pre-wrap">
                 {{ msg.content }}
               </div>
@@ -1979,10 +1979,17 @@ function focusAlertCard() {
   const turbine = turbines.find(t => t.id === turbineId)
   alertBalloon.value = null
 
-  // If filters are active and the turbine would be hidden, clear status filters
+  // If filters are active and the turbine would be hidden, include its status filter
   if (anyFilterActive.value && turbine && !statusFilters[turbine.status]) {
-    clearFilters()
+    statusFilters[turbine.status] = true
   }
+
+  // Close all open dialogs so the focused card is visible
+  archOpen.value = false
+  howToUseOpen.value = false
+  historyModalTurbine.value = null
+  historyModalData.value = []
+  fleetOverviewOpen.value = false
 
   // Clear any previous focus, then set the new one
   focusedCardId.value = null
@@ -2414,7 +2421,7 @@ async function sendMessage() {
     }
     loadingMessage.value = LOADING_MESSAGES[shuffledQueue.shift()]
   }, 3500)
-  await scrollToBottom()
+  await scrollToUserMessage()
 
   // Build turbine context payload if we have a current turbine in focus
   const turbineContextPayload = ctxTurbine ? {
@@ -2454,7 +2461,6 @@ async function sendMessage() {
     loading.value = false
     clearInterval(loadingMsgInterval)
     loadingMessage.value = LOADING_MESSAGES_GENERIC[0]
-    await scrollToBottom()
   }
 }
 
@@ -2462,6 +2468,17 @@ async function scrollToBottom() {
   await nextTick()
   if (chatScrollRef.value) chatScrollRef.value.scrollTop = chatScrollRef.value.scrollHeight
   if (mobileChatScrollRef.value) mobileChatScrollRef.value.scrollTop = mobileChatScrollRef.value.scrollHeight
+}
+
+async function scrollToUserMessage() {
+  await nextTick()
+  for (const container of [chatScrollRef.value, mobileChatScrollRef.value]) {
+    if (!container) continue
+    // Find the last user message bubble and scroll it to the top of the chat area
+    const userBubbles = container.querySelectorAll('[data-role="user"]')
+    if (userBubbles.length === 0) continue
+    userBubbles[userBubbles.length - 1].scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }
 }
 
 // ── Demo Mode Flip Logic ──────────────────────────────────────────────────────
@@ -2515,7 +2532,6 @@ function demoFlipTick() {
     }
   }
 
-  lastNotifiedId = target.id
   demoNextFlipIdx++
 }
 
