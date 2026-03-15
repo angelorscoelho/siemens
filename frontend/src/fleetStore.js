@@ -436,6 +436,52 @@ export function getMostCriticalMetricKey(turbine) {
   return 'tet'
 }
 
+// ── Manual URL Map — Real Siemens Energy Product Pages ─────────────────────────
+// Sources: Official Siemens Energy product catalogue + GT Portfolio Brochure 2024
+const MANUAL_URLS = {
+  'SGT5-9000HL': 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt5-9000hl.html',
+  'SGT6-9000HL': 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt6-9000hl-heavy-duty-gas-turbine.html',
+  'SGT6-8000H':  'https://www.siemens-energy.com/global/en/home/products-services/product/sgt6-8000h.html',
+  'SGT5-8000H':  'https://www.siemens-energy.com/global/en/home/products-services/product/sgt5-8000h.html',
+  'SGT5-8000HL': 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt5-8000h.html',
+}
+const MANUAL_FALLBACK_URL = 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html'
+
+/**
+ * Open the official Siemens Energy product page for the given equipment model.
+ * Falls back to the general gas turbine portfolio page if no exact match.
+ */
+export function openManual(equipment) {
+  const url = MANUAL_URLS[equipment.name] || MANUAL_FALLBACK_URL
+  window.open(url, '_blank')
+  if (!MANUAL_URLS[equipment.name]) {
+    console.warn(`[openManual] No exact manual URL for model "${equipment.name}" — opened fallback.`)
+  }
+}
+
+/**
+ * Get the manual URL for the given equipment (for use in href attributes).
+ */
+export function getManualUrl(equipment) {
+  return MANUAL_URLS[equipment.name] || MANUAL_FALLBACK_URL
+}
+
+// ── Equipment Category Helpers ────────────────────────────────────────────────
+/** Returns true for gas turbines (Brayton cycle — have TET, PCD, TCD, etc.) */
+export function isGasTurbine(equipment) {
+  return equipment.name.startsWith('SGT')
+}
+
+/** Returns true for steam turbines (Rankine cycle only — no Brayton parameters) */
+export function isSteamTurbine(equipment) {
+  return equipment.name.startsWith('SST')
+}
+
+/** Returns true for generators (no thermodynamic cycle parameters) */
+export function isGenerator(equipment) {
+  return equipment.name.startsWith('SGen')
+}
+
 // ── Fleet Data — 18 Distinct Real-World Assets ────────────────────────────────
 export function createFleetData() {
   return [
@@ -447,7 +493,7 @@ export function createFleetData() {
       description: '450 MW combined cycle H-class',
       location: 'Irsching 4 — Vohburg an der Donau, DE',
       imageUrl: makeEquipmentImage('SGT5-8000H', '#2dd4bf', 0),
-      manualUrl: '#manual/GT-01',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt5-8000h.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 560, vibrationVelocity: 1.2, rotationalSpeed: 3000, powerOutput: 450, fuelMassFlow: 14.8, pcd: 19.5, tcd: 430, pressureRatio: 21.0, tetSpread: 18 },
@@ -481,7 +527,7 @@ export function createFleetData() {
       description: '65 MW mechanical drive & power generation steam turbine',
       location: 'Plant Beta — Houston, TX',
       imageUrl: makeEquipmentImage('SST-400', '#fbbf24', 1),
-      manualUrl: '#manual/ST-01',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'RISK',
       currentStatus: 'RISK',
       telemetryBaseline: { tet: 520, vibrationVelocity: 2.0, rotationalSpeed: 3600, powerOutput: 198, fuelMassFlow: 11.4, pcd: 65, tcd: 480, pressureRatio: 0, tetSpread: 42 },
@@ -515,7 +561,7 @@ export function createFleetData() {
       description: '53 MW high-efficiency mid-range unit',
       location: 'Plant Gamma — Riyadh, SA',
       imageUrl: makeEquipmentImage('SGT-800', '#2dd4bf', 2),
-      manualUrl: '#manual/GT-02',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 540, vibrationVelocity: 0.9, rotationalSpeed: 6608, powerOutput: 48, fuelMassFlow: 3.6, pcd: 19.2, tcd: 395, pressureRatio: 21.5, tetSpread: 15 },
@@ -550,7 +596,7 @@ export function createFleetData() {
       description: 'Up to 1,200 MW reheat steam turbine for large combined cycle',
       location: 'Plant Delta — Boxberg, DE',
       imageUrl: makeEquipmentImage('SST-6000', '#2dd4bf', 3),
-      manualUrl: '#manual/ST-02',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 460, vibrationVelocity: 1.5, rotationalSpeed: 3000, powerOutput: 900, fuelMassFlow: 2.9, pcd: 165, tcd: 565, pressureRatio: 0, tetSpread: 0 },
@@ -584,7 +630,7 @@ export function createFleetData() {
       description: '37 MW fast-start peaker unit',
       location: 'Plant Epsilon — Lagos, NG',
       imageUrl: makeEquipmentImage('SGT-750', '#fbbf24', 4),
-      manualUrl: '#manual/GT-03',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'RISK',
       currentStatus: 'RISK',
       telemetryBaseline: { tet: 530, vibrationVelocity: 1.8, rotationalSpeed: 9500, powerOutput: 12, fuelMassFlow: 1.6, pcd: 18.5, tcd: 400, pressureRatio: 20.8, tetSpread: 38 },
@@ -618,7 +664,7 @@ export function createFleetData() {
       description: '67 MW fast-response grid stabilization',
       location: 'Plant Zeta — Yokohama, JP',
       imageUrl: makeEquipmentImage('SGT-A65', '#f87171', 5),
-      manualUrl: '#manual/GT-04',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'NOK',
       currentStatus: 'NOK',
       telemetryBaseline: { tet: 550, vibrationVelocity: 1.5, rotationalSpeed: 3600, powerOutput: 58, fuelMassFlow: 5.4, pcd: 30, tcd: 445, pressureRatio: 32, tetSpread: 55 },
@@ -652,7 +698,7 @@ export function createFleetData() {
       description: '292 MW advanced F-class gas turbine',
       location: 'Plant Eta — Madrid, ES',
       imageUrl: makeEquipmentImage('SGT5-4000F', '#2dd4bf', 6),
-      manualUrl: '#manual/GT-05',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 545, vibrationVelocity: 1.1, rotationalSpeed: 3000, powerOutput: 288, fuelMassFlow: 12.1, pcd: 16.5, tcd: 395, pressureRatio: 18.2, tetSpread: 14 },
@@ -686,7 +732,7 @@ export function createFleetData() {
       description: '232 MW 60 Hz grid-connected gas turbine',
       location: 'Plant Theta — Chicago, IL',
       imageUrl: makeEquipmentImage('SGT6-5000F', '#fbbf24', 7),
-      manualUrl: '#manual/GT-06',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'RISK',
       currentStatus: 'RISK',
       telemetryBaseline: { tet: 538, vibrationVelocity: 2.2, rotationalSpeed: 3600, powerOutput: 228, fuelMassFlow: 9.8, pcd: 17.2, tcd: 400, pressureRatio: 18.8, tetSpread: 36 },
@@ -720,7 +766,7 @@ export function createFleetData() {
       description: '32.8 MW mechanical drive and power generation',
       location: 'Plant Iota — Abu Dhabi, AE',
       imageUrl: makeEquipmentImage('SGT-700', '#2dd4bf', 8),
-      manualUrl: '#manual/GT-07',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 524, vibrationVelocity: 1.0, rotationalSpeed: 7700, powerOutput: 31, fuelMassFlow: 2.2, pcd: 14.8, tcd: 370, pressureRatio: 18.5, tetSpread: 16 },
@@ -754,7 +800,7 @@ export function createFleetData() {
       description: '24.8 MW twin-shaft industrial gas turbine',
       location: 'Plant Kappa — Kuala Lumpur, MY',
       imageUrl: makeEquipmentImage('SGT-600', '#2dd4bf', 9),
-      manualUrl: '#manual/GT-08',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 516, vibrationVelocity: 1.3, rotationalSpeed: 8500, powerOutput: 24, fuelMassFlow: 1.7, pcd: 12.5, tcd: 355, pressureRatio: 14.0, tetSpread: 14 },
@@ -788,7 +834,7 @@ export function createFleetData() {
       description: '13.4 MW compact industrial gas turbine',
       location: 'Plant Lambda — Oslo, NO',
       imageUrl: makeEquipmentImage('SGT-400', '#2dd4bf', 10),
-      manualUrl: '#manual/GT-09',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 505, vibrationVelocity: 0.8, rotationalSpeed: 14700, powerOutput: 13, fuelMassFlow: 0.92, pcd: 14.0, tcd: 360, pressureRatio: 16.0, tetSpread: 12 },
@@ -822,7 +868,7 @@ export function createFleetData() {
       description: '250 MW high-pressure steam turbine',
       location: 'Plant Mu — Singapore, SG',
       imageUrl: makeEquipmentImage('SST-800', '#2dd4bf', 11),
-      manualUrl: '#manual/ST-03',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 480, vibrationVelocity: 1.6, rotationalSpeed: 3000, powerOutput: 245, fuelMassFlow: 8.9, pcd: 165, tcd: 565, pressureRatio: 0, tetSpread: 0 },
@@ -856,7 +902,7 @@ export function createFleetData() {
       description: '593 MW HL-class flagship for large combined cycle',
       location: 'Keadby 2 — Scunthorpe, UK',
       imageUrl: makeEquipmentImage('SGT5-9000HL', '#fbbf24', 12),
-      manualUrl: '#manual/GT-13',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt5-9000hl.html',
       status: 'RISK',
       currentStatus: 'RISK',
       telemetryBaseline: { tet: 580, vibrationVelocity: 3.1, rotationalSpeed: 3000, powerOutput: 580, fuelMassFlow: 15.8, pcd: 22, tcd: 445, pressureRatio: 23.0, tetSpread: 38 },
@@ -891,7 +937,7 @@ export function createFleetData() {
       description: '1,500 MVA air/hydrogen cooled generator',
       location: 'Plant Xi — São Paulo, BR',
       imageUrl: makeEquipmentImage('SGen-1000A', '#2dd4bf', 13),
-      manualUrl: '#manual/GEN-01',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 75, vibrationVelocity: 0.6, rotationalSpeed: 3600, powerOutput: 1420, fuelMassFlow: 0.1, pcd: 0, tcd: 0, pressureRatio: 0, tetSpread: 0 },
@@ -925,7 +971,7 @@ export function createFleetData() {
       description: '5.1 MW compact single-shaft gas turbine',
       location: 'Plant Omicron — Cairo, EG',
       imageUrl: makeEquipmentImage('SGT-100', '#2dd4bf', 14),
-      manualUrl: '#manual/GT-10',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 495, vibrationVelocity: 0.7, rotationalSpeed: 17400, powerOutput: 5.0, fuelMassFlow: 0.36, pcd: 8.2, tcd: 340, pressureRatio: 12.5, tetSpread: 13 },
@@ -959,7 +1005,7 @@ export function createFleetData() {
       description: '~405 MW 60 Hz HL-class gas turbine',
       location: 'Long Ridge — Hannibal, OH',
       imageUrl: makeEquipmentImage('SGT6-9000HL', '#2dd4bf', 15),
-      manualUrl: '#manual/GT-11',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt6-9000hl-heavy-duty-gas-turbine.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 555, vibrationVelocity: 0.9, rotationalSpeed: 3600, powerOutput: 400, fuelMassFlow: 13.2, pcd: 21.0, tcd: 440, pressureRatio: 22.0, tetSpread: 15 },
@@ -993,7 +1039,7 @@ export function createFleetData() {
       description: '310 MW 60 Hz H-class combined cycle',
       location: 'Andong CCPP — Andong, KR',
       imageUrl: makeEquipmentImage('SGT6-8000H', '#f87171', 16),
-      manualUrl: '#manual/GT-12',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product/sgt6-8000h.html',
       status: 'NOK',
       currentStatus: 'NOK',
       telemetryBaseline: { tet: 555, vibrationVelocity: 1.4, rotationalSpeed: 3600, powerOutput: 310, fuelMassFlow: 11.4, pcd: 19.0, tcd: 425, pressureRatio: 20.0, tetSpread: 58 },
@@ -1027,7 +1073,7 @@ export function createFleetData() {
       description: '130 MVA air-cooled two-pole generator',
       location: 'Plant Sigma — Paris, FR',
       imageUrl: makeEquipmentImage('SGen-100A', '#2dd4bf', 17),
-      manualUrl: '#manual/GEN-02',
+      manualUrl: 'https://www.siemens-energy.com/global/en/home/products-services/product-offerings/gas-turbines.html',
       status: 'OK',
       currentStatus: 'OK',
       telemetryBaseline: { tet: 82, vibrationVelocity: 0.5, rotationalSpeed: 3000, powerOutput: 121, fuelMassFlow: 0.05, pcd: 0, tcd: 0, pressureRatio: 0, tetSpread: 0 },
