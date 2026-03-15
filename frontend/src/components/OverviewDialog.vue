@@ -239,6 +239,7 @@ const props = defineProps({
   stateChanges: { type: Number, default: 0 },
   renderedSummary: { type: String, default: '' },
   turbines: { type: Array, default: () => [] },
+  isMobile: { type: Boolean, default: false },
 })
 
 defineEmits(['close', 'refresh', 'open-turbine'])
@@ -261,17 +262,10 @@ const nokTurbines = computed(() => props.turbines.filter(t => t.status === 'NOK'
 const riskTurbines = computed(() => props.turbines.filter(t => t.status === 'RISK'))
 const okTurbines = computed(() => props.turbines.filter(t => t.status === 'OK'))
 
-// Detect mobile viewport
-const isMobile = ref(false)
-function checkMobile() {
-  isMobile.value = window.innerWidth < 768
-}
-
 watch(() => props.open, async (val) => {
   if (val) {
-    checkMobile()
     // On mobile, start with all sections collapsed so user can see AI Fleet Assessment
-    if (isMobile.value) {
+    if (props.isMobile) {
       nokCollapsed.value = true
       riskCollapsed.value = true
       okCollapsed.value = true

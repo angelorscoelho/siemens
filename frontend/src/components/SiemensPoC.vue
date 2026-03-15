@@ -303,7 +303,11 @@
 
             <!-- Maintenance Documentation -->
             <div class="bg-gray-800 border border-gray-600 rounded-xl p-4 md:cursor-default cursor-pointer"
-              @click="isMobileScreen && openHistoryModal(selectedTurbine)">
+              :role="isMobileScreen ? 'button' : undefined"
+              :tabindex="isMobileScreen ? 0 : undefined"
+              @click="isMobileScreen && openHistoryModal(selectedTurbine)"
+              @keydown.enter="isMobileScreen && openHistoryModal(selectedTurbine)"
+              @keydown.space.prevent="isMobileScreen && openHistoryModal(selectedTurbine)">
               <h4 class="text-xs font-semibold text-teal-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1370,6 +1374,7 @@
       :state-changes="stateChangesSinceLastOverview"
       :rendered-summary="fleetOverview.aiSummary ? renderMarkdown(fleetOverview.aiSummary) : ''"
       :turbines="turbines"
+      :is-mobile="isMobileScreen"
       @close="closeFleetOverviewModal"
       @open-turbine="onOpenTurbineFromOverview"
       @refresh="loadFleetOverview"
@@ -1381,6 +1386,7 @@
     <NotificationIndicator
       :balloon="alertBalloon"
       :assistant-open="assistantOpen"
+      :is-mobile="isMobileScreen"
       @focus="focusAlertCard"
       @dismiss="alertBalloon = null"
     />
@@ -1674,7 +1680,7 @@ const criticalCount = computed(() => turbines.filter(t => t.status === 'NOK').le
 const warningCount = computed(() => turbines.filter(t => t.status === 'RISK').length)
 
 // ── Mobile Detection ──────────────────────────────────────────────────────────
-const isMobileScreen = ref(window.innerWidth < 768)
+const isMobileScreen = ref(false)
 function onResizeCheck() { isMobileScreen.value = window.innerWidth < 768 }
 
 // ── Detail View Metric Drill-In ───────────────────────────────────────────────
@@ -2629,6 +2635,9 @@ onMounted(() => {
 
   // Restore view from URL hash (sharable links)
   if (location.hash) applyHash()
+
+  // Initialize mobile detection
+  onResizeCheck()
 
   // Sync view when the user navigates with browser back/forward
   window.addEventListener('popstate', applyHash)

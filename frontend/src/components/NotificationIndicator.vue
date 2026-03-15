@@ -37,6 +37,7 @@ import { computed } from 'vue'
 const props = defineProps({
   balloon: { type: Object, default: null },
   assistantOpen: { type: Boolean, default: false },
+  isMobile: { type: Boolean, default: false },
 })
 
 defineEmits(['focus', 'dismiss'])
@@ -50,7 +51,7 @@ const balloonClass = computed(() => {
 // On desktop (md+), position shifts left when assistant sidebar is open
 // On mobile, the right-3 class handles it (always top-right)
 const mdStyle = computed(() => {
-  if (typeof window !== 'undefined' && window.innerWidth < 768) return {}
+  if (props.isMobile) return {}
   return { right: props.assistantOpen ? 'calc(clamp(300px, 25%, 400px) + 1.5rem)' : '1.5rem' }
 })
 </script>
