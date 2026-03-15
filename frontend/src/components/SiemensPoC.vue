@@ -130,6 +130,7 @@
 
       <!-- ── Fleet / Detail panel ── -->
       <div
+        ref="fleetPanelRef"
         class="flex-1 overflow-y-auto pb-2 md:pb-0"
         :class="[
           'px-4 py-4 md:px-6 md:py-6',
@@ -140,11 +141,11 @@
         <div v-if="selectedTurbine">
           <button
             @click="clearTurbineSelection"
-            class="mb-4 flex items-center gap-2 text-sm text-gray-400 hover:text-teal-400 transition-colors cursor-pointer">
+            class="sticky top-0 z-10 mb-4 flex items-center gap-2 text-sm text-gray-400 hover:text-teal-400 transition-colors cursor-pointer bg-gray-950 py-2 -mt-4 -mx-4 px-4 md:-mx-6 md:px-6 md:-mt-6 md:pt-6 md:pb-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Fleet Assessment
+            Back to Fleet Overview
           </button>
 
           <div class="bg-gray-900 border rounded-xl p-4 md:p-6 shadow-md" :class="statusBorderClass(selectedTurbine)">
@@ -402,8 +403,8 @@
               AI Maintenance Assistant
               <span class="text-xs text-gray-500 font-normal">(Real RAG · S3 + Gemini)</span>
             </h2>
-            <button @click="assistantOpen = false" class="text-gray-500 hover:text-gray-300 cursor-pointer">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button @click="assistantOpen = false" class="text-gray-500 hover:text-gray-300 cursor-pointer p-2">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -701,7 +702,7 @@
     <Teleport to="body">
       <transition name="history-slide">
         <div v-if="historyModalTurbine"
-          class="fixed z-40 bg-gray-950 border-r border-gray-800 flex flex-col overflow-hidden shadow-2xl"
+          class="fixed z-40 bg-gray-950 border-r border-gray-800 flex flex-col overflow-hidden shadow-2xl history-modal"
           :style="historyModalStyle"
         >
           <!-- Modal Header -->
@@ -722,10 +723,10 @@
             </span>
             <button
               @click="closeHistoryModal"
-              class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer shrink-0 p-1"
+              class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer shrink-0 p-2"
               aria-label="Close maintenance history"
             >
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -880,10 +881,10 @@
               </div>
               <button
                 @click="closeHowToUse()"
-                class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer p-1 rounded-lg hover:bg-gray-800"
+                class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer p-2 rounded-lg hover:bg-gray-800"
                 aria-label="Close guide"
               >
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -1127,10 +1128,10 @@
               </div>
               <button
                 @click="closeArchModal()"
-                class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer p-1 rounded-lg hover:bg-gray-800"
+                class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer p-2 rounded-lg hover:bg-gray-800"
                 aria-label="Close architecture diagram"
               >
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -1394,6 +1395,7 @@ const assistantOpen = ref(true)
 const alertBalloon = ref(null)
 const focusedCardId = ref(null)
 const headerRef = ref(null)
+const fleetPanelRef = ref(null)
 let updateInterval = null
 let anomalyInterval = null
 
@@ -2052,6 +2054,7 @@ function openTurbineSession(turbine, metricKey = null) {
   mobileView.value = 'detail'
   const paramStr = metricKey ? `/param=${metricKey}` : ''
   pushHash(`#equipment=${turbine.id}${paramStr}`)
+  nextTick(() => { if (fleetPanelRef.value) fleetPanelRef.value.scrollTop = 0 })
 }
 
 function clearTurbineSelection() {
@@ -2743,5 +2746,13 @@ onUnmounted(() => {
 /* First child should have no top margin */
 .ai-message :deep(> *:first-child) {
   margin-top: 0;
+}
+
+/* ── Maintenance History modal: full-screen on mobile ────────────────────── */
+@media (max-width: 767px) {
+  .history-modal {
+    top: 0 !important;
+    right: 0 !important;
+  }
 }
 </style>
