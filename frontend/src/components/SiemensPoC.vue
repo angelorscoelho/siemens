@@ -4,7 +4,7 @@
     <!-- ═══════════════════════════════════════════════════════════════
          HEADER — Compact
     ═══════════════════════════════════════════════════════════════ -->
-    <header class="bg-gray-900 border-b border-teal-700 shadow-lg shrink-0 z-30">
+    <header ref="headerRef" class="bg-gray-900 border-b border-teal-700 shadow-lg shrink-0 z-30">
 
       <!-- Desktop header — compact -->
       <div class="hidden md:flex max-w-full mx-auto px-4 py-2.5 items-center gap-3">
@@ -29,31 +29,7 @@
           </div>
         </div>
 
-        <!-- ── Centered Fleet Status Summary (live counters) ── -->
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 bg-teal-400 rounded-full"></span>
-            <span class="text-lg font-bold text-white">OK</span>
-            <span class="text-lg font-bold text-teal-400">{{ okCount }}</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-pulse"></span>
-            <span class="text-lg font-bold text-white">RISK</span>
-            <span class="text-lg font-bold text-yellow-400">{{ warningCount }}</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
-            <span class="text-lg font-bold text-white">NOK</span>
-            <span class="text-lg font-bold text-red-400">{{ criticalCount }}</span>
-          </div>
-        </div>
-
         <div class="ml-auto flex items-center gap-2">
-          <!-- Demo Mode Badge -->
-          <div v-if="demoMode" class="flex items-center gap-1.5 px-2 py-1 bg-gray-800 border border-gray-600 rounded-lg">
-            <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse"></span>
-            <span class="text-[10px] text-gray-400">Demo Mode Active</span>
-          </div>
           <button @click="openFleetOverviewModal()"
             class="px-3 py-1.5 text-xs font-semibold bg-teal-900/60 border border-teal-700 rounded-lg text-teal-300 hover:bg-teal-800/80 hover:border-teal-500 hover:text-teal-200 transition-colors cursor-pointer flex items-center gap-1.5"
             title="Open fleet general assessment">
@@ -95,18 +71,6 @@
           <p class="text-xs text-teal-400 leading-tight">Siemens Energy · PoC</p>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
-          <span class="flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold">
-            <span class="w-1.5 h-1.5 bg-teal-400 rounded-full"></span>
-            <span class="text-teal-400">{{ okCount }}</span>
-          </span>
-          <span class="flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold">
-            <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full" :class="{ 'animate-pulse': warningCount > 0 }"></span>
-            <span class="text-yellow-400">{{ warningCount }}</span>
-          </span>
-          <span class="flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold">
-            <span class="w-1.5 h-1.5 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
-            <span class="text-red-400">{{ criticalCount }}</span>
-          </span>
           <button @click="openFleetOverviewModal()"
             class="p-1.5 rounded-lg bg-teal-900/60 border border-teal-700 text-teal-300 hover:bg-teal-800/80 hover:text-teal-200 transition-colors cursor-pointer relative"
             title="Fleet Assessment">
@@ -337,33 +301,59 @@
 
         <!-- ── Fleet Overview ── -->
         <section v-else>
-          <!-- Mobile: compact summary strip -->
+          <!-- Mobile: compact summary strip with filter chips -->
           <div class="md:hidden flex gap-2 mb-4 overflow-x-auto pb-1 -mx-4 px-4">
             <div class="flex-none flex items-center gap-1.5 bg-gray-800 rounded-lg px-3 py-2 text-xs">
               <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
               <span class="text-gray-400 font-medium">{{ turbines.length }} Units</span>
             </div>
-            <div v-if="criticalCount > 0" class="flex-none flex items-center gap-1.5 bg-red-900/60 border border-red-700 rounded-lg px-3 py-2 text-xs text-red-300 font-semibold">
-              <span class="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
-              {{ criticalCount }} NOK
-            </div>
-            <div v-if="warningCount > 0" class="flex-none flex items-center gap-1.5 bg-yellow-900/60 border border-yellow-700 rounded-lg px-3 py-2 text-xs text-yellow-300 font-semibold">
-              <span class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
-              {{ warningCount }} RISK
-            </div>
-            <div class="flex-none flex items-center gap-1.5 bg-teal-900/40 border border-teal-800 rounded-lg px-3 py-2 text-xs text-teal-300 font-semibold">
-              <span class="w-2 h-2 bg-teal-400 rounded-full animate-pulse"></span>
-              Live · 2s
-            </div>
+            <button @click="toggleFilter('OK')" class="flex-none flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer transition-all border"
+              :class="statusFilters.OK ? 'bg-teal-800 border-teal-500 text-teal-200 ring-1 ring-teal-400' : 'bg-teal-900/40 border-teal-800 text-teal-300'">
+              <span class="w-2 h-2 bg-teal-400 rounded-full"></span>
+              OK {{ okCount }}
+            </button>
+            <button @click="toggleFilter('RISK')" class="flex-none flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer transition-all border"
+              :class="statusFilters.RISK ? 'bg-yellow-800 border-yellow-500 text-yellow-200 ring-1 ring-yellow-400' : 'bg-yellow-900/60 border-yellow-700 text-yellow-300'">
+              <span class="w-2 h-2 bg-yellow-400 rounded-full" :class="{ 'animate-pulse': warningCount > 0 }"></span>
+              RISK {{ warningCount }}
+            </button>
+            <button @click="toggleFilter('NOK')" class="flex-none flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer transition-all border"
+              :class="statusFilters.NOK ? 'bg-red-800 border-red-500 text-red-200 ring-1 ring-red-400' : 'bg-red-900/60 border-red-700 text-red-300'">
+              <span class="w-2 h-2 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
+              NOK {{ criticalCount }}
+            </button>
           </div>
 
-          <!-- Desktop fleet header -->
-          <div class="hidden md:flex text-lg font-semibold text-teal-300 mb-4 items-center gap-2">
+          <!-- Desktop fleet header with filter chips -->
+          <div class="hidden md:flex text-lg font-semibold text-teal-300 mb-4 items-center justify-center gap-3">
             <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             Fleet Overview
+            <!-- Status filter chips -->
+            <button @click="toggleFilter('OK')"
+              class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
+              :class="statusFilters.OK ? 'bg-teal-800 border-teal-500 text-teal-200 ring-1 ring-teal-400' : 'bg-teal-900/30 border-teal-800/60 text-teal-300 hover:border-teal-600'">
+              <span class="w-2 h-2 bg-teal-400 rounded-full"></span>
+              OK {{ okCount }}
+            </button>
+            <button @click="toggleFilter('RISK')"
+              class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
+              :class="statusFilters.RISK ? 'bg-yellow-800 border-yellow-500 text-yellow-200 ring-1 ring-yellow-400' : 'bg-yellow-900/30 border-yellow-800/60 text-yellow-300 hover:border-yellow-600'">
+              <span class="w-2 h-2 bg-yellow-400 rounded-full" :class="{ 'animate-pulse': warningCount > 0 }"></span>
+              RISK {{ warningCount }}
+            </button>
+            <button @click="toggleFilter('NOK')"
+              class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
+              :class="statusFilters.NOK ? 'bg-red-800 border-red-500 text-red-200 ring-1 ring-red-400' : 'bg-red-900/30 border-red-800/60 text-red-300 hover:border-red-600'">
+              <span class="w-2 h-2 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
+              NOK {{ criticalCount }}
+            </button>
+            <button v-if="anyFilterActive" @click="clearFilters"
+              class="text-[10px] text-gray-500 hover:text-gray-300 cursor-pointer underline">
+              Clear
+            </button>
           </div>
 
           <!-- Equipment Card Grid -->
@@ -1357,6 +1347,16 @@
       @refresh="loadFleetOverview"
     />
 
+    <!-- ═══════════════════════════════════════════════════════════════
+         NOTIFICATION BALLOON (status change alerts)
+    ═══════════════════════════════════════════════════════════════ -->
+    <NotificationIndicator
+      :balloon="alertBalloon"
+      :assistant-open="assistantOpen"
+      @focus="focusAlertCard"
+      @dismiss="alertBalloon = null"
+    />
+
   </div>
 </template>
 
@@ -1386,6 +1386,7 @@ const selectedTurbine = ref(null)
 const assistantOpen = ref(true)
 const alertBalloon = ref(null)
 const focusedCardId = ref(null)
+const headerRef = ref(null)
 let updateInterval = null
 let anomalyInterval = null
 
@@ -1691,18 +1692,28 @@ watch(selectedTurbine, async (newVal) => {
 
 // ── Maintenance History Modal Style ───────────────────────────────────────────
 // Positions the modal within the left content panel so it never overlaps
-// the right-side AI assistant sidebar.
-const historyModalStyle = computed(() => ({
-  top: '0',
-  bottom: '0',
-  left: '0',
-  // When the AI assistant is open on desktop it takes clamp(300px, 25%, 400px)
-  right: assistantOpen.value ? 'clamp(300px, 25%, 400px)' : '0',
-}))
+// the right-side AI assistant sidebar or the top header bar.
+const historyModalStyle = computed(() => {
+  const headerH = headerRef.value ? headerRef.value.offsetHeight : 52
+  return {
+    top: `${headerH}px`,
+    bottom: '0',
+    left: '0',
+    // When the AI assistant is open on desktop it takes clamp(300px, 25%, 400px)
+    right: assistantOpen.value ? 'clamp(300px, 25%, 400px)' : '0',
+  }
+})
 
 // ── Telemetry Simulation ──────────────────────────────────────────────────────
 function updateTelemetry() {
   const escalated = []
+  // Save previous statuses BEFORE any changes so we can count transitions
+  // after enforceStatusDistribution() to avoid counting reverted changes
+  const prevStatuses = {}
+  turbines.forEach((t) => {
+    prevStatuses[t.id] = t.status
+  })
+
   turbines.forEach((t) => {
     if (t.status === 'Offline') return
 
@@ -1739,11 +1750,6 @@ function updateTelemetry() {
       t.status = 'RISK'
     } else {
       t.status = 'OK'
-    }
-
-    // Track state changes for overview refresh
-    if (t.status !== prevStatus) {
-      stateChangesSinceLastOverview.value++
     }
 
     // Generate dynamic alerts using OEM terminology
@@ -1786,6 +1792,13 @@ function updateTelemetry() {
 
   // Enforce max 10% NOK and 20% RISK to keep dashboard realistic
   enforceStatusDistribution()
+
+  // Track state transitions AFTER enforcement so reverted changes are not counted
+  turbines.forEach((t) => {
+    if (t.status !== prevStatuses[t.id]) {
+      stateChangesSinceLastOverview.value++
+    }
+  })
 
   // Now trigger alert balloon only for turbines whose escalation survived enforcement
   // Skip lastNotifiedId to prevent consecutive notification spam for the same card
