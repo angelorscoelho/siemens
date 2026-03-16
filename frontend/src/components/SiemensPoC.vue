@@ -321,7 +321,10 @@
                 <button @click="askAboutTurbineMobile(selectedTurbine)"
                   class="shrink-0 px-2.5 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer text-center leading-tight">
                   <span class="hidden md:inline">Ask Assistant for Detailed Analysis</span>
-                  <span class="md:hidden">Ask AI<br>Analysis</span>
+                  <span class="md:hidden flex flex-col items-center">
+                    <span>Ask AI</span>
+                    <span>Analysis</span>
+                  </span>
                 </button>
               </div>
             </div>
