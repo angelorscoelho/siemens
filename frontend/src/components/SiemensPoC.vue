@@ -101,7 +101,7 @@
       </div>
     </header>
 
-    <!-- ── Floating "Show AI" button — appears when assistant sidebar is closed ── -->
+    <!-- ── Floating "Show AI" button — Desktop: appears when assistant sidebar is closed ── -->
     <Teleport to="body">
       <transition name="balloon">
         <button
@@ -112,6 +112,29 @@
           aria-label="Show AI Maintenance Assistant sidebar"
         >
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="8" width="18" height="12" rx="2"/>
+            <path d="M12 2v4"/>
+            <circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/>
+            <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+            <path d="M9 17h6"/>
+            <path d="M3 12H1m22 0h-2"/>
+          </svg>
+        </button>
+      </transition>
+    </Teleport>
+
+    <!-- ── Floating "Show AI" FAB — Mobile: bottom-right above nav bar ── -->
+    <Teleport to="body">
+      <transition name="balloon">
+        <button
+          v-if="isMobileScreen && mobileView !== 'chat'"
+          @click="setMobileChat()"
+          class="md:hidden fixed right-4 bottom-20 p-3.5 bg-teal-700 hover:bg-teal-600 text-white rounded-full shadow-2xl transition-all cursor-pointer z-30 flex items-center justify-center"
+          title="Open AI Assistant"
+          aria-label="Open AI Assistant"
+        >
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="8" width="18" height="12" rx="2"/>
             <path d="M12 2v4"/>
             <circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/>
@@ -296,8 +319,12 @@
               <div class="flex items-start gap-3">
                 <p class="flex-1 text-xs md:text-sm text-yellow-200">{{ selectedTurbine.aiSuggestion }}</p>
                 <button @click="askAboutTurbineMobile(selectedTurbine)"
-                  class="shrink-0 px-4 py-2 text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer whitespace-nowrap">
-                  Ask Assistant for Detailed Analysis
+                  class="shrink-0 px-2.5 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer text-center leading-tight">
+                  <span class="hidden md:inline">Ask Assistant for Detailed Analysis</span>
+                  <span class="md:hidden flex flex-col items-center">
+                    <span>Ask AI</span>
+                    <span>Analysis</span>
+                  </span>
                 </button>
               </div>
             </div>
@@ -780,12 +807,12 @@
           </div>
 
           <!-- Timeline -->
-          <div v-else class="flex-1 overflow-y-auto px-4 py-4 space-y-0">
+          <div v-else class="flex-1 overflow-y-auto px-2 md:px-4 py-4 space-y-0">
             <div v-for="(record, idx) in historyModalData" :key="record.orderNumber || idx"
-              class="relative flex gap-4 pb-6 last:pb-0">
+              class="relative flex gap-2 md:gap-4 pb-6 last:pb-0">
 
               <!-- Timeline vertical line -->
-              <div class="flex flex-col items-center shrink-0" style="width: 2.5rem;">
+              <div class="flex flex-col items-center shrink-0 w-6 md:w-10">
                 <!-- Dot -->
                 <div class="w-3 h-3 rounded-full mt-1 shrink-0 ring-2 ring-gray-950 z-10"
                   :class="record.result === 'COMPLETED' ? 'bg-teal-400' : record.result === 'COMPLETED_WITH_FINDINGS' ? 'bg-yellow-400' : 'bg-red-400'">
@@ -794,8 +821,8 @@
                 <div v-if="idx < historyModalData.length - 1" class="w-px flex-1 bg-gray-700 mt-1"></div>
               </div>
 
-              <!-- Timestamp label (left of content) -->
-              <div class="shrink-0 text-right" style="width: 7rem;">
+              <!-- Timestamp label (hidden on mobile, shown inline in card instead) -->
+              <div class="hidden md:block shrink-0 text-right" style="width: 7rem;">
                 <p class="text-[10px] text-gray-500 font-mono leading-tight">
                   {{ record.timestamp ? record.timestamp.slice(0, 10) : '' }}
                 </p>
@@ -808,16 +835,23 @@
               </div>
 
               <!-- Content card -->
-              <div class="flex-1 min-w-0 bg-gray-900 border rounded-xl p-3 relative"
+              <div class="flex-1 min-w-0 bg-gray-900 border rounded-xl p-2.5 md:p-3 relative"
                 :class="record.result === 'COMPLETED' ? 'border-gray-700' : record.result === 'COMPLETED_WITH_FINDINGS' ? 'border-yellow-800' : 'border-red-800'">
 
+                <!-- Mobile-only timestamp row -->
+                <p class="md:hidden text-[10px] text-gray-500 font-mono mb-1.5">
+                  {{ record.timestamp ? record.timestamp.slice(0, 10) : '' }}
+                  · {{ record.timestamp ? record.timestamp.slice(11, 16) : '' }} UTC
+                  <span v-if="record.hoursAtService !== undefined"> · {{ record.hoursAtService?.toLocaleString() }} h</span>
+                </p>
+
                 <!-- Top row: type + result badge + Investigate button -->
-                <div class="flex items-start justify-between gap-2 mb-2">
+                <div class="flex flex-wrap items-start justify-between gap-1.5 md:gap-2 mb-2">
                   <div class="flex-1 min-w-0">
                     <p class="text-xs font-bold text-white leading-snug">{{ record.type }}</p>
                     <p class="text-[10px] text-gray-500 mt-0.5">{{ record.orderNumber }}</p>
                   </div>
-                  <div class="flex items-center gap-1.5 shrink-0">
+                  <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
                     <span class="px-1.5 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap"
                       :class="record.result === 'COMPLETED' ? 'bg-teal-900 text-teal-300' : record.result === 'COMPLETED_WITH_FINDINGS' ? 'bg-yellow-900 text-yellow-300' : 'bg-red-900 text-red-300'">
                       {{ record.result === 'COMPLETED_WITH_FINDINGS' ? 'FINDINGS' : record.result }}
@@ -1434,6 +1468,15 @@ const historyModalLoading = ref(false)
 const historyModalData = ref([])
 const alertCooldown = {}
 
+// ── Notification Timing ──────────────────────────────────────────────────────
+// Grace period: suppress all notification balloons for the first 15 seconds
+// after app mount so the user can absorb the interface without distractions.
+const NOTIFICATION_GRACE_MS = 15000
+// Global cooldown between any two notifications (regardless of turbine/status)
+const NOTIFICATION_MIN_INTERVAL_MS = 30000
+let appStartTime = 0
+let lastNotificationTime = 0
+
 // ── Demo Mode ─────────────────────────────────────────────────────────────────
 // Exponential flip schedule: cumulative seconds from page load at which
 // one OK card flips to RISK or NOK, progressing towards target 12/4/2.
@@ -1742,12 +1785,14 @@ watch(selectedTurbine, async (newVal) => {
 // the right-side AI assistant sidebar or the top header bar.
 const historyModalStyle = computed(() => {
   const headerHeight = headerRef.value ? headerRef.value.offsetHeight : 52
+  // On mobile, always full width; on desktop, respect assistant sidebar
+  const rightOffset = isMobileScreen.value ? '0' :
+    (assistantOpen.value ? 'clamp(300px, 25%, 400px)' : '0')
   return {
-    top: `${headerHeight}px`,
+    top: isMobileScreen.value ? '0' : `${headerHeight}px`,
     bottom: '0',
     left: '0',
-    // When the AI assistant is open on desktop it takes clamp(300px, 25%, 400px)
-    right: assistantOpen.value ? 'clamp(300px, 25%, 400px)' : '0',
+    right: rightOffset,
   }
 })
 
@@ -1844,15 +1889,21 @@ function updateTelemetry() {
   // Skip lastNotifiedId to prevent consecutive notification spam for the same card
   // Track state changes ONLY when a balloon is actually shown (matches visible notifications)
   const now = Date.now()
+  // Suppress all notifications during the initial grace period
+  if (now - appStartTime < NOTIFICATION_GRACE_MS) return
+  // Global cooldown: only one notification every NOTIFICATION_MIN_INTERVAL_MS
+  if (now - lastNotificationTime < NOTIFICATION_MIN_INTERVAL_MS) return
   for (const t of escalated) {
     if (t.status !== 'NOK' && t.status !== 'RISK') continue // downgraded by enforcement
     if (t.id === lastNotifiedId) continue // prevent consecutive same-card notification
     const cooldownKey = t.id + t.status
-    if (!alertCooldown[cooldownKey] || now - alertCooldown[cooldownKey] > 12000) {
+    if (!alertCooldown[cooldownKey] || now - alertCooldown[cooldownKey] > 45000) {
       alertCooldown[cooldownKey] = now
       lastNotifiedId = t.id
+      lastNotificationTime = now
       stateChangesSinceLastOverview.value++
       showAlertBalloon(t)
+      break // only one notification per tick
     }
   }
 }
@@ -2630,6 +2681,7 @@ onMounted(() => {
 
   // Start Demo Mode exponential flip schedule (checks every second)
   demoStartTime = Date.now()
+  appStartTime = Date.now()
   demoNextFlipIdx = 0
   demoInterval = setInterval(demoFlipTick, 1000)
 
