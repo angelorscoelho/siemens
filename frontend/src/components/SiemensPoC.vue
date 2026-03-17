@@ -165,7 +165,7 @@
         <div v-if="selectedTurbine">
           <button
             @click="clearTurbineSelection"
-            class="sticky top-0 z-10 mb-4 flex items-center gap-2 text-sm text-gray-400 hover:text-teal-400 transition-colors cursor-pointer bg-gray-950 py-2 -mt-4 -mx-4 px-4 md:-mx-6 md:px-6 md:-mt-6 md:pt-6 md:pb-2">
+            class="sticky top-0 z-10 mb-6 flex items-center gap-2 text-sm text-gray-400 hover:text-teal-400 transition-colors cursor-pointer bg-gray-950 py-2 -mt-4 -mx-4 px-4 md:-mx-6 md:px-6 md:-mt-6 md:pt-6 md:pb-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
@@ -2416,7 +2416,7 @@ const detailActiveHistory = computed(() =>
   selectedTurbine.value?.metricHistory?.[detailActiveMetricKey.value] || []
 )
 
-watch(detailActiveHistory, () => { updateDetailChart() })
+watch(detailActiveHistory, () => { updateDetailChart() }, { deep: true })
 watch(detailActiveMetricKey, () => { updateDetailChart() })
 
 // ── Metric Min/Max Helpers (full view cards) ──────────────────────────────────
