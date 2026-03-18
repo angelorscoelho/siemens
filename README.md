@@ -1,3 +1,15 @@
+Copyright 2026 Ângelo Coelho — PROPRIETARY / NON-COMMERCIAL USE ONLY
+
+> **PROPRIETARY / NON-COMMERCIAL USE ONLY**
+>
+> This repository is source-available strictly for review. Recruiters and tech leads may read the code to evaluate skills and architecture. Companies and for-profit entities are prohibited from using, copying, or integrating this code for commercial gain.
+> If your company wishes to commercialize or incorporate this work, you must hire or license it from Ângelo Coelho — contact: https://angelorscoelho.dev
+Copyright 2026 Ângelo Coelho — PROPRIETARY / NON-COMMERCIAL USE ONLY
+
+> **PROPRIETARY / NON-COMMERCIAL USE ONLY**
+>
+> This repository is source-available strictly for review. Recruiters and tech leads may read the code to evaluate skills and architecture. Companies and for-profit entities are prohibited from using, copying, or integrating this code for commercial gain.
+> If your company wishes to commercialize or incorporate this work, you must hire or license it from Ângelo Coelho — contact: https://angelorscoelho.dev
 # Siemens Energy — Gas Turbine AI Maintenance Assistant (PoC)
 
 A **production-grade proof of concept** for the **Siemens Energy Distributed AI Factory**, demonstrating a real-world industrial RAG (Retrieval-Augmented Generation) pipeline for intelligent gas turbine maintenance.
@@ -856,4 +868,3 @@ This is a personal project, but feedback and suggestions are welcome. Feel free 
 ---
 
 *Last updated: March 13, 2026*
-
