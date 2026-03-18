@@ -52,7 +52,7 @@ This project demonstrates **senior-level engineering decisions** for production 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                         FRONTEND (Vercel)                                       │
-│                          Vue 3 SPA + Tailwind                                  │
+│                          Vue 3 SPA + Tailwind                                   │
 │        • Fleet Dashboard (equipment status + health metrics)                    │
 │        • AI Assistant Chat (cost-aware retrieval queries)                       │
 │        • Live Architecture Diagram Modal                                        │
@@ -63,36 +63,36 @@ This project demonstrates **senior-level engineering decisions** for production 
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                      BACKEND (AWS Lambda)                                       │
 │                                                                                 │
-│  ┌─────────────────────────────────────────────────────────────────────────┐  │
-│  │ Lambda Handler (Python 3.11)                                            │  │
-│  │                                                                         │  │
-│  │  1. Query Embedding                                                    │  │
-│  │     └─▶ Google text-embedding-004 (REST) → 768-dim vector              │  │
-│  │                                                                         │  │
-│  │  2. Retrieval (Real RAG)                                               │  │
-│  │     └─▶ Download embeddings.json from S3 (with /tmp caching)           │  │
-│  │     └─▶ Cosine similarity scoring (pure Python)                        │  │
-│  │     └─▶ Return top-3 semantically relevant chunks                      │  │
-│  │                                                                         │  │
-│  │  3. Grounding                                                          │  │
-│  │     └─▶ Inject retrieved context into system prompt                    │  │
-│  │                                                                         │  │
-│  │  4. Generation                                                         │  │
-│  │     └─▶ Google Gemini 2.5 Pro (REST) → answer with citations          │  │
-│  │                                                                         │  │
-│  └─────────────────────────────────────────────────────────────────────────┘  │
-│                         ├─ Source Attribution ◀──────────┐                    │
-│                         ├─ Retrieval Scores              │                    │
-│                         ├─ Model Metadata                │                    │
-│                         ├─ Timing Diagnostics            │                    │
-│                         └─▶ JSON Response                 │                    │
-│                                                          │                    │
-│  ┌──────────────────────────────────────────────────────┘                     │
-│  │                                                                         │  │
-│  └─▶ S3 Bucket (Knowledge Base)                                          │  │
-│      └─ chunks/embeddings.json                                           │  │
-│         [{"id": "chunk_001", "text": "...", "embedding": [...], ...}, ...] │  │
-│                                                                             │  │
+│  ┌─────────────────────────────────────────────────────────────────────────┐    │
+│  │ Lambda Handler (Python 3.11)                                            │    │
+│  │                                                                         │    │
+│  │  1. Query Embedding                                                     │    │
+│  │     └─▶ Google text-embedding-004 (REST) → 768-dim vector              │     │
+│  │                                                                         │    │
+│  │  2. Retrieval (Real RAG)                                                │    │
+│  │     └─▶ Download embeddings.json from S3 (with /tmp caching)           │     │
+│  │     └─▶ Cosine similarity scoring (pure Python)                        │     │
+│  │     └─▶ Return top-3 semantically relevant chunks                      │     │
+│  │                                                                         │     │
+│  │  3. Grounding                                                           │     │
+│  │     └─▶ Inject retrieved context into system prompt                     │    │
+│  │                                                                         │     │
+│  │  4. Generation                                                          │     │
+│  │     └─▶ Google Gemini 2.5 Pro (REST) → answer with citations            │    │
+│  │                                                                         │     │
+│  └─────────────────────────────────────────────────────────────────────────┘     │
+│                         ├─ Source Attribution ◀──────────┐                      │
+│                         ├─ Retrieval Scores              │                       │
+│                         ├─ Model Metadata                │                       │
+│                         ├─ Timing Diagnostics            │                       │
+│                         └─▶ JSON Response                 │                     │
+│                                                          │                       │
+│  ┌──────────────────────────────────────────────────────┘                        │
+│  │                                                                          │    │
+│  └─▶ S3 Bucket (Knowledge Base)                                            │    │
+│      └─ chunks/embeddings.json                                              │    │
+│         [{"id": "chunk_001", "text": "...", "embedding": [...], ...}, ...]  │    │
+│                                                                             │    │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
