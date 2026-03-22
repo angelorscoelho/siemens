@@ -45,7 +45,7 @@
           </div>
 
           <!-- Scrollable content — two-column layout -->
-          <div class="flex-1 overflow-y-auto">
+          <div class="flex-1 overflow-y-hidden">
             <div class="flex flex-col lg:flex-row gap-0 h-full">
 
               <!-- ── LEFT: Equipment Status Summaries ── -->

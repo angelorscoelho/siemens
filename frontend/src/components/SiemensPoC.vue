@@ -4,7 +4,7 @@
     <!-- ═══════════════════════════════════════════════════════════════
          HEADER — Compact
     ═══════════════════════════════════════════════════════════════ -->
-    <header ref="headerRef" class="bg-gray-900 border-b border-teal-700 shadow-lg shrink-0 z-30">
+    <header class="bg-gray-900 border-b border-teal-700 shadow-lg shrink-0 z-30">
 
       <!-- Desktop header — compact -->
       <div class="hidden md:flex max-w-full mx-auto px-4 py-2.5 items-center gap-3">
@@ -16,18 +16,18 @@
           </svg>
           angelorscoelho.dev
         </a>
-        <a href="/siemens/" class="flex items-center gap-2 hover:opacity-80 transition-opacity" @click.prevent="goHome">
+        <div class="flex items-center gap-2">
           <svg class="w-6 h-6 text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
           <div>
-            <span class="text-base font-bold tracking-tight text-white leading-tight hover:text-teal-400 transition-colors block">
+            <a href="https://www.angelorscoelho.dev/siemens"
+               class="text-base font-bold tracking-tight text-white leading-tight hover:text-teal-400 transition-colors">
               Siemens Energy — AI Maintenance Dashboard
-            </span>
+            </a>
             <p class="text-xs text-teal-400 leading-tight">PoC · Distributed AI Factory · Industrial RAG</p>
           </div>
-        </a>
-
+        </div>
         <div class="ml-auto flex items-center gap-2">
           <button @click="openFleetOverviewModal()"
             class="px-3 py-1.5 text-xs font-semibold bg-teal-900/60 border border-teal-700 rounded-lg text-teal-300 hover:bg-teal-800/80 hover:border-teal-500 hover:text-teal-200 transition-colors cursor-pointer flex items-center gap-1.5"
@@ -62,16 +62,29 @@
 
       <!-- Mobile header -->
       <div class="md:hidden px-4 py-2.5 flex items-center gap-3">
-        <a href="/siemens/" class="flex items-center gap-3 flex-1 min-w-0" @click.prevent="goHome">
-          <svg class="w-6 h-6 text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <div class="flex-1 min-w-0">
-            <h1 class="text-sm font-bold text-white leading-tight truncate">GT AI Maintenance</h1>
-            <p class="text-xs text-teal-400 leading-tight">Siemens Energy · PoC</p>
-          </div>
-        </a>
+        <svg class="w-6 h-6 text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <div class="flex-1 min-w-0">
+          <h1 class="text-sm font-bold text-white leading-tight truncate">GT AI Maintenance</h1>
+          <p class="text-xs text-teal-400 leading-tight">Siemens Energy · PoC</p>
+        </div>
         <div class="flex items-center gap-1.5 shrink-0">
+          <span v-if="criticalCount > 0"
+            class="flex items-center gap-1 px-1.5 py-0.5 bg-red-900 text-red-300 text-xs rounded-full font-bold">
+            <span class="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse"></span>
+            {{ criticalCount }}
+          </span>
+          <span v-if="warningCount > 0"
+            class="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-900 text-yellow-300 text-xs rounded-full font-bold">
+            <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></span>
+            {{ warningCount }}
+          </span>
+          <span v-if="criticalCount === 0 && warningCount === 0"
+            class="flex items-center gap-1 px-1.5 py-0.5 bg-teal-900 text-teal-300 text-xs rounded-full font-bold">
+            <span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse"></span>
+            OK
+          </span>
           <button @click="openFleetOverviewModal()"
             class="p-1.5 rounded-lg bg-teal-900/60 border border-teal-700 text-teal-300 hover:bg-teal-800/80 hover:text-teal-200 transition-colors cursor-pointer relative"
             title="Fleet Assessment">
@@ -101,13 +114,13 @@
       </div>
     </header>
 
-    <!-- ── Floating "Show AI" button — Desktop: appears when assistant sidebar is closed ── -->
+    <!-- ── Floating "Show AI" button — appears when assistant sidebar is closed ── -->
     <Teleport to="body">
       <transition name="balloon">
         <button
           v-if="!assistantOpen"
           @click="assistantOpen = true"
-          class="hidden md:flex fixed right-4 top-[60px] p-3 bg-teal-700 hover:bg-teal-600 text-white rounded-full shadow-2xl transition-all cursor-pointer z-30 items-center justify-center"
+          class="hidden md:flex fixed right-4 top-4 p-3 bg-teal-700 hover:bg-teal-600 text-white rounded-full shadow-2xl transition-all cursor-pointer z-30 items-center justify-center"
           title="Show AI Maintenance Assistant sidebar"
           aria-label="Show AI Maintenance Assistant sidebar"
         >
@@ -124,28 +137,15 @@
       </transition>
     </Teleport>
 
-    <!-- ── Floating "Show AI" FAB — Mobile: bottom-right above nav bar ── -->
-    <Teleport to="body">
-      <transition name="balloon">
-        <button
-          v-if="isMobileScreen && mobileView !== 'chat'"
-          @click="setMobileChat()"
-          class="md:hidden fixed right-4 bottom-20 p-3.5 bg-teal-700 hover:bg-teal-600 text-white rounded-full shadow-2xl transition-all cursor-pointer z-30 flex items-center justify-center"
-          title="Open AI Assistant"
-          aria-label="Open AI Assistant"
-        >
-          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="8" width="18" height="12" rx="2"/>
-            <path d="M12 2v4"/>
-            <circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/>
-            <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/>
-            <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
-            <path d="M9 17h6"/>
-            <path d="M3 12H1m22 0h-2"/>
-          </svg>
-        </button>
-      </transition>
-    </Teleport>
+    <!-- ═══════════════════════════════════════════════════════════════
+         ALERT BALLOON — clickable, focuses the card
+    ═══════════════════════════════════════════════════════════════ -->
+    <NotificationIndicator
+      :balloon="alertBalloon"
+      :assistant-open="assistantOpen"
+      @focus="focusAlertCard"
+      @dismiss="alertBalloon = null"
+    />
 
     <!-- ═══════════════════════════════════════════════════════════════
          MAIN CONTENT AREA
@@ -154,7 +154,6 @@
 
       <!-- ── Fleet / Detail panel ── -->
       <div
-        ref="fleetPanelRef"
         class="flex-1 overflow-y-auto pb-2 md:pb-0"
         :class="[
           'px-4 py-4 md:px-6 md:py-6',
@@ -165,11 +164,11 @@
         <div v-if="selectedTurbine">
           <button
             @click="clearTurbineSelection"
-            class="sticky top-0 z-10 mb-6 flex items-center gap-2 text-sm text-gray-400 hover:text-teal-400 transition-colors cursor-pointer bg-gray-950 py-2 -mt-4 -mx-4 px-4 md:-mx-6 md:px-6 md:-mt-6 md:pt-6 md:pb-2">
+            class="mb-4 flex items-center gap-2 text-sm text-gray-400 hover:text-teal-400 transition-colors cursor-pointer">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Fleet Overview
+            Back to Fleet Assessment
           </button>
 
           <div class="bg-gray-900 border rounded-xl p-4 md:p-6 shadow-md" :class="statusBorderClass(selectedTurbine)">
@@ -188,11 +187,13 @@
                 <h3 class="text-base md:text-xl font-bold text-white mt-1 leading-tight">{{ selectedTurbine.name }} / Unit {{ selectedTurbine.id }}</h3>
                 <p class="text-xs md:text-sm text-gray-400 mt-1 leading-snug">{{ selectedTurbine.type }} — {{ selectedTurbine.description }}</p>
               </div>
-              <!-- Manual link icon (opens Siemens Energy product page in new tab) -->
-              <button
+              <!-- Manual link icon -->
+              <a
                 v-if="selectedTurbine.manualUrl"
-                @click.stop.prevent="openManual(selectedTurbine)"
-                class="shrink-0 mt-0.5 p-1.5 rounded-lg bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors cursor-pointer"
+                :href="selectedTurbine.manualUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="shrink-0 mt-0.5 p-1.5 rounded-lg bg-gray-800 hover:bg-teal-900/60 text-gray-500 hover:text-teal-400 transition-colors"
                 title="Equipment Manual"
                 :aria-label="`Open the ${selectedTurbine.name} equipment manual`"
               >
@@ -200,7 +201,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-              </button>
+              </a>
               <!-- Maintenance History icon -->
               <button
                 @click="openHistoryModal(selectedTurbine)"
@@ -221,8 +222,8 @@
             </div>
 
             <!-- Detailed Metrics (clickable to change trend chart) -->
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-              <div v-for="param in detailVisibleMetricParams" :key="param.key"
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
+              <div v-for="param in metricParams" :key="param.key"
                 @click="selectDetailMetric(param.key)"
                 @keydown.enter.prevent="selectDetailMetric(param.key)"
                 @keydown.space.prevent="selectDetailMetric(param.key)"
@@ -230,7 +231,7 @@
                 role="button"
                 :aria-pressed="detailActiveMetricKey === param.key"
                 :aria-label="`Show ${param.label} trend`"
-                class="rounded-lg px-2.5 py-1.5 cursor-pointer transition-all"
+                class="rounded-lg p-3 cursor-pointer transition-all"
                 :class="[
                   detailActiveMetricKey === param.key
                     ? 'bg-gray-700 ring-2 ' + (selectedTurbine.status === 'NOK' ? 'ring-red-600' : selectedTurbine.status === 'RISK' ? 'ring-yellow-600' : 'ring-teal-600')
@@ -238,16 +239,16 @@
                 ]"
                 :title="`Show ${param.label} trend`"
               >
-                <p class="text-[11px] text-gray-400 leading-tight flex items-center gap-1">
+                <p class="text-xs text-gray-400 mb-1 leading-tight flex items-center gap-1">
                   {{ param.label }}
                   <span v-if="detailActiveMetricKey === param.key" class="text-teal-400 text-[9px] font-bold uppercase tracking-wide">● shown</span>
                 </p>
-                <p class="text-sm font-mono font-bold leading-tight"
+                <p class="text-base md:text-lg font-mono font-bold leading-tight"
                   :class="getMetricColorClass(selectedTurbine, param.key)">
                   {{ formatValue(selectedTurbine[param.key], param.decimals) }}
-                  <span class="text-[10px] font-normal text-gray-400">{{ param.unit }}</span>
+                  <span class="text-xs font-normal text-gray-400">{{ param.unit }}</span>
                 </p>
-                <div class="flex items-center justify-between text-[10px] text-gray-500">
+                <div class="flex items-center justify-between mt-1.5 text-[10px] text-gray-500">
                   <span title="Minimum over last 60 readings">↓ {{ getParamMin(param) }}</span>
                   <span title="Maximum over last 60 readings">↑ {{ getParamMax(param) }}</span>
                 </div>
@@ -255,7 +256,7 @@
             </div>
 
             <!-- Dynamic Metric Sparkline (drill-in) -->
-            <div class="bg-gray-800 rounded-lg p-3 mb-3">
+            <div class="bg-gray-800 rounded-lg p-3 mb-5">
               <div class="flex items-center justify-between mb-2">
                 <p class="text-xs font-semibold uppercase tracking-wider" :style="{ color: detailSparklineColor }">
                   {{ detailActiveParam.label }} Trend
@@ -284,26 +285,8 @@
               <p class="text-[10px] text-gray-600 text-center mt-1">Click any metric above to change chart ↑</p>
             </div>
 
-            <!-- OK card insight banner (matches mini-card banner) -->
-            <CardFooterBanner
-              v-if="selectedTurbine.status === 'OK'"
-              variant="ok"
-              status="OK"
-              :title="detailOkInsight.stableStr"
-              click-title="Click for equipment overview"
-              @click="askAboutTurbineOverview(selectedTurbine)"
-            >
-              <template #action>
-                <AIActionButton
-                  status="OK"
-                  title="Ask Assistant for Equipment Overview"
-                  @click="askAboutTurbineOverview(selectedTurbine)"
-                />
-              </template>
-            </CardFooterBanner>
-
             <!-- AI Maintenance Suggestion -->
-            <div v-if="selectedTurbine.status !== 'OK'" class="mt-3 bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-xl p-4">
+            <div v-if="selectedTurbine.status !== 'OK'" class="mt-4 bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-xl p-4">
               <p class="text-xs text-yellow-400 font-semibold mb-2 flex items-center gap-1.5">
                 <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="8" width="18" height="12" rx="2"/>
@@ -316,33 +299,21 @@
                 </svg>
                 AI Maintenance Suggestion
               </p>
-              <div class="flex items-start gap-3">
-                <p class="flex-1 text-xs md:text-sm text-yellow-200">{{ selectedTurbine.aiSuggestion }}</p>
-                <button @click="askAboutTurbineMobile(selectedTurbine)"
-                  class="shrink-0 px-2.5 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer text-center leading-tight">
-                  <span class="hidden md:inline">Ask Assistant for Detailed Analysis</span>
-                  <span class="md:hidden flex flex-col items-center">
-                    <span>Ask AI</span>
-                    <span>Analysis</span>
-                  </span>
-                </button>
-              </div>
+              <p class="text-xs md:text-sm text-yellow-200">{{ selectedTurbine.aiSuggestion }}</p>
+              <button @click="askAboutTurbineMobile(selectedTurbine)"
+                class="mt-3 px-4 py-2 text-xs bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors cursor-pointer">
+                Ask Assistant for Detailed Analysis
+              </button>
             </div>
 
             <!-- Maintenance Documentation -->
-            <div class="bg-gray-800 border border-gray-600 rounded-xl p-4 md:cursor-default cursor-pointer"
-              :role="isMobileScreen ? 'button' : undefined"
-              :tabindex="isMobileScreen ? 0 : undefined"
-              @click="isMobileScreen && openHistoryModal(selectedTurbine)"
-              @keydown.enter="isMobileScreen && openHistoryModal(selectedTurbine)"
-              @keydown.space.prevent="isMobileScreen && openHistoryModal(selectedTurbine)">
+            <div class="bg-gray-800 border border-gray-600 rounded-xl p-4">
               <h4 class="text-xs font-semibold text-teal-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Maintenance Documentation &amp; History
-                <span class="md:hidden text-[10px] text-gray-500 font-normal normal-case tracking-normal ml-auto">Tap to open ↗</span>
               </h4>
               <div class="space-y-3 text-sm text-gray-300">
                 <div v-for="doc in selectedTurbine.documentation" :key="doc.title" class="border-l-2 border-teal-700 pl-3">
@@ -356,62 +327,68 @@
 
         <!-- ── Fleet Overview ── -->
         <section v-else>
-          <!-- Mobile: compact summary strip with filter chips -->
+          <!-- Mobile: compact summary strip -->
           <div class="md:hidden flex gap-2 mb-4 overflow-x-auto pb-1 -mx-4 px-4">
             <div class="flex-none flex items-center gap-1.5 bg-gray-800 rounded-lg px-3 py-2 text-xs">
               <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
               <span class="text-gray-400 font-medium">{{ turbines.length }} Units</span>
             </div>
-            <button @click="toggleFilter('NOK')" class="flex-none flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer transition-all border"
-              :class="statusFilters.NOK ? 'bg-red-800 border-red-500 text-red-200 ring-1 ring-red-400' : 'bg-red-900/60 border-red-700 text-red-300'">
-              <span class="w-2 h-2 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
-              NOK {{ criticalCount }}
-            </button>
-            <button @click="toggleFilter('RISK')" class="flex-none flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer transition-all border"
-              :class="statusFilters.RISK ? 'bg-yellow-800 border-yellow-500 text-yellow-200 ring-1 ring-yellow-400' : 'bg-yellow-900/60 border-yellow-700 text-yellow-300'">
-              <span class="w-2 h-2 bg-yellow-400 rounded-full" :class="{ 'animate-pulse': warningCount > 0 }"></span>
-              RISK {{ warningCount }}
-            </button>
-            <button @click="toggleFilter('OK')" class="flex-none flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer transition-all border"
-              :class="statusFilters.OK ? 'bg-teal-800 border-teal-500 text-teal-200 ring-1 ring-teal-400' : 'bg-teal-900/40 border-teal-800 text-teal-300'">
-              <span class="w-2 h-2 bg-teal-400 rounded-full"></span>
-              OK {{ okCount }}
-            </button>
+            <div v-if="criticalCount > 0" class="flex-none flex items-center gap-1.5 bg-red-900/60 border border-red-700 rounded-lg px-3 py-2 text-xs text-red-300 font-semibold">
+              <span class="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
+              {{ criticalCount }} NOK
+            </div>
+            <div v-if="warningCount > 0" class="flex-none flex items-center gap-1.5 bg-yellow-900/60 border border-yellow-700 rounded-lg px-3 py-2 text-xs text-yellow-300 font-semibold">
+              <span class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+              {{ warningCount }} RISK
+            </div>
+            <div class="flex-none flex items-center gap-1.5 bg-teal-900/40 border border-teal-800 rounded-lg px-3 py-2 text-xs text-teal-300 font-semibold">
+              <span class="w-2 h-2 bg-teal-400 rounded-full animate-pulse"></span>
+              Live · 2s
+            </div>
           </div>
 
-          <!-- Desktop fleet header with filter chips -->
-          <div class="hidden md:flex mb-4 items-center relative">
-            <!-- Fleet Overview label on the left -->
-            <div class="flex items-center gap-2 text-lg font-semibold text-teal-300 shrink-0 relative z-10">
-              <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              Fleet Overview
-            </div>
-            <!-- Status filter chips centered (absolute so they ignore the label width) -->
-            <div class="absolute inset-0 flex items-center justify-center gap-3 pointer-events-none">
-              <button @click="toggleFilter('NOK')"
-                class="pointer-events-auto flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
-                :class="statusFilters.NOK ? 'bg-red-800 border-red-500 text-red-200 ring-1 ring-red-400' : 'bg-red-900/30 border-red-800/60 text-red-300 hover:border-red-600'">
-                <span class="w-2 h-2 bg-red-400 rounded-full" :class="{ 'animate-pulse': criticalCount > 0 }"></span>
-                NOK {{ criticalCount }}
+          <!-- Desktop fleet header with status filter chips -->
+          <div class="hidden md:flex text-lg font-semibold text-teal-300 mb-4 items-center gap-2 flex-wrap">
+            <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Fleet Overview
+            <span class="ml-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            <span class="text-xs text-gray-500 font-normal">{{ filteredTurbines.length }}/{{ turbines.length }} units · live 2s</span>
+
+            <!-- Status Filter Chips -->
+            <div class="ml-auto flex items-center gap-2">
+              <span class="text-xs text-gray-500 font-normal">Filter:</span>
+              <button
+                @click="toggleFilter('OK')"
+                class="flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full border transition-all cursor-pointer"
+                :class="statusFilters.OK
+                  ? 'bg-teal-900 text-teal-300 border-teal-600'
+                  : 'bg-gray-800 text-gray-500 border-gray-700 hover:border-teal-700 hover:text-teal-400'"
+              >
+                <span class="w-1.5 h-1.5 rounded-full" :class="statusFilters.OK ? 'bg-teal-400' : 'bg-gray-600'"></span>
+                OK <span class="bg-gray-900/50 px-1.5 py-0.5 rounded text-[10px] ml-0.5 font-mono">{{ okCount }}</span>
               </button>
-              <button @click="toggleFilter('RISK')"
-                class="pointer-events-auto flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
-                :class="statusFilters.RISK ? 'bg-yellow-800 border-yellow-500 text-yellow-200 ring-1 ring-yellow-400' : 'bg-yellow-900/30 border-yellow-800/60 text-yellow-300 hover:border-yellow-600'">
-                <span class="w-2 h-2 bg-yellow-400 rounded-full" :class="{ 'animate-pulse': warningCount > 0 }"></span>
-                RISK {{ warningCount }}
+              <button
+                @click="toggleFilter('RISK')"
+                class="flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full border transition-all cursor-pointer"
+                :class="statusFilters.RISK
+                  ? 'bg-yellow-900 text-yellow-300 border-yellow-600'
+                  : 'bg-gray-800 text-gray-500 border-gray-700 hover:border-yellow-700 hover:text-yellow-400'"
+              >
+                <span class="w-1.5 h-1.5 rounded-full" :class="statusFilters.RISK ? 'bg-yellow-400 animate-pulse' : 'bg-gray-600'"></span>
+                RISK <span class="bg-gray-900/50 px-1.5 py-0.5 rounded text-[10px] ml-0.5 font-mono">{{ warningCount }}</span>
               </button>
-              <button @click="toggleFilter('OK')"
-                class="pointer-events-auto flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all border"
-                :class="statusFilters.OK ? 'bg-teal-800 border-teal-500 text-teal-200 ring-1 ring-teal-400' : 'bg-teal-900/30 border-teal-800/60 text-teal-300 hover:border-teal-600'">
-                <span class="w-2 h-2 bg-teal-400 rounded-full"></span>
-                OK {{ okCount }}
-              </button>
-              <button v-if="anyFilterActive" @click="clearFilters"
-                class="pointer-events-auto text-[10px] text-gray-500 hover:text-gray-300 cursor-pointer underline">
-                Clear
+              <button
+                @click="toggleFilter('NOK')"
+                class="flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full border transition-all cursor-pointer"
+                :class="statusFilters.NOK
+                  ? 'bg-red-900 text-red-300 border-red-600'
+                  : 'bg-gray-800 text-gray-500 border-gray-700 hover:border-red-700 hover:text-red-400'"
+              >
+                <span class="w-1.5 h-1.5 rounded-full" :class="statusFilters.NOK ? 'bg-red-400 animate-pulse' : 'bg-gray-600'"></span>
+                NOK <span class="bg-gray-900/50 px-1.5 py-0.5 rounded text-[10px] ml-0.5 font-mono">{{ criticalCount }}</span>
               </button>
             </div>
           </div>
@@ -455,8 +432,8 @@
               AI Maintenance Assistant
               <span class="text-xs text-gray-500 font-normal">(Real RAG · S3 + Gemini)</span>
             </h2>
-            <button @click="assistantOpen = false" class="text-gray-500 hover:text-gray-300 cursor-pointer p-2">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button @click="assistantOpen = false" class="text-gray-500 hover:text-gray-300 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -482,7 +459,7 @@
                   {{ msg.content }}
                 </div>
               </div>
-              <div v-else-if="msg.role === 'user'" class="flex justify-end" data-role="user">
+              <div v-else-if="msg.role === 'user'" class="flex justify-end">
                 <div class="max-w-[85%] bg-teal-800 text-white rounded-2xl rounded-tr-sm px-3 py-2 text-xs shadow whitespace-pre-wrap">
                   {{ msg.content }}
                 </div>
@@ -603,7 +580,7 @@
                 {{ msg.content }}
               </div>
             </div>
-            <div v-else-if="msg.role === 'user'" class="flex justify-end" data-role="user">
+            <div v-else-if="msg.role === 'user'" class="flex justify-end">
               <div class="max-w-[80%] bg-teal-800 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm shadow whitespace-pre-wrap">
                 {{ msg.content }}
               </div>
@@ -754,7 +731,7 @@
     <Teleport to="body">
       <transition name="history-slide">
         <div v-if="historyModalTurbine"
-          class="fixed z-40 bg-gray-950 border-r border-gray-800 flex flex-col overflow-hidden shadow-2xl history-modal"
+          class="fixed z-40 bg-gray-950 border-r border-gray-800 flex flex-col overflow-hidden shadow-2xl"
           :style="historyModalStyle"
         >
           <!-- Modal Header -->
@@ -775,10 +752,10 @@
             </span>
             <button
               @click="closeHistoryModal"
-              class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer shrink-0 p-2"
+              class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer shrink-0 p-1"
               aria-label="Close maintenance history"
             >
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -807,12 +784,12 @@
           </div>
 
           <!-- Timeline -->
-          <div v-else class="flex-1 overflow-y-auto px-2 md:px-4 py-4 space-y-0">
+          <div v-else class="flex-1 overflow-y-auto px-4 py-4 space-y-0">
             <div v-for="(record, idx) in historyModalData" :key="record.orderNumber || idx"
-              class="relative flex gap-2 md:gap-4 pb-6 last:pb-0">
+              class="relative flex gap-4 pb-6 last:pb-0">
 
               <!-- Timeline vertical line -->
-              <div class="flex flex-col items-center shrink-0 w-6 md:w-10">
+              <div class="flex flex-col items-center shrink-0" style="width: 2.5rem;">
                 <!-- Dot -->
                 <div class="w-3 h-3 rounded-full mt-1 shrink-0 ring-2 ring-gray-950 z-10"
                   :class="record.result === 'COMPLETED' ? 'bg-teal-400' : record.result === 'COMPLETED_WITH_FINDINGS' ? 'bg-yellow-400' : 'bg-red-400'">
@@ -821,8 +798,8 @@
                 <div v-if="idx < historyModalData.length - 1" class="w-px flex-1 bg-gray-700 mt-1"></div>
               </div>
 
-              <!-- Timestamp label (hidden on mobile, shown inline in card instead) -->
-              <div class="hidden md:block shrink-0 text-right" style="width: 7rem;">
+              <!-- Timestamp label (left of content) -->
+              <div class="shrink-0 text-right" style="width: 7rem;">
                 <p class="text-[10px] text-gray-500 font-mono leading-tight">
                   {{ record.timestamp ? record.timestamp.slice(0, 10) : '' }}
                 </p>
@@ -835,23 +812,16 @@
               </div>
 
               <!-- Content card -->
-              <div class="flex-1 min-w-0 bg-gray-900 border rounded-xl p-2.5 md:p-3 relative"
+              <div class="flex-1 min-w-0 bg-gray-900 border rounded-xl p-3 relative"
                 :class="record.result === 'COMPLETED' ? 'border-gray-700' : record.result === 'COMPLETED_WITH_FINDINGS' ? 'border-yellow-800' : 'border-red-800'">
 
-                <!-- Mobile-only timestamp row -->
-                <p class="md:hidden text-[10px] text-gray-500 font-mono mb-1.5">
-                  {{ record.timestamp ? record.timestamp.slice(0, 10) : '' }}
-                  · {{ record.timestamp ? record.timestamp.slice(11, 16) : '' }} UTC
-                  <span v-if="record.hoursAtService !== undefined"> · {{ record.hoursAtService?.toLocaleString() }} h</span>
-                </p>
-
                 <!-- Top row: type + result badge + Investigate button -->
-                <div class="flex flex-wrap items-start justify-between gap-1.5 md:gap-2 mb-2">
+                <div class="flex items-start justify-between gap-2 mb-2">
                   <div class="flex-1 min-w-0">
                     <p class="text-xs font-bold text-white leading-snug">{{ record.type }}</p>
                     <p class="text-[10px] text-gray-500 mt-0.5">{{ record.orderNumber }}</p>
                   </div>
-                  <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+                  <div class="flex items-center gap-1.5 shrink-0">
                     <span class="px-1.5 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap"
                       :class="record.result === 'COMPLETED' ? 'bg-teal-900 text-teal-300' : record.result === 'COMPLETED_WITH_FINDINGS' ? 'bg-yellow-900 text-yellow-300' : 'bg-red-900 text-red-300'">
                       {{ record.result === 'COMPLETED_WITH_FINDINGS' ? 'FINDINGS' : record.result }}
@@ -940,10 +910,10 @@
               </div>
               <button
                 @click="closeHowToUse()"
-                class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer p-2 rounded-lg hover:bg-gray-800"
+                class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer p-1 rounded-lg hover:bg-gray-800"
                 aria-label="Close guide"
               >
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -961,7 +931,7 @@
                   Overview
                 </h3>
                 <p class="mb-3">
-                  The <span class="text-teal-400 font-semibold">Siemens Energy AI Maintenance Dashboard</span> is a proof-of-concept tool designed to help maintenance engineers and plant operators monitor industrial gas turbine fleets in real time. The dashboard presents live telemetry data—such as vibration velocity (ISO 10816-4), TET, PCD, TCD, TET Spread, power output, and EOH—across all fleet assets, highlights anomalies instantly, and provides AI-driven root-cause analysis and actionable maintenance plans.
+                  The <span class="text-teal-400 font-semibold">Siemens Energy AI Maintenance Dashboard</span> is a proof-of-concept tool designed to help maintenance engineers and plant operators monitor industrial gas turbine fleets in real time. The dashboard presents live telemetry data—such as vibration levels, exhaust temperatures, power output, and efficiency—across all fleet assets, highlights anomalies instantly, and provides AI-driven root-cause analysis and actionable maintenance plans.
                 </p>
               </section>
 
@@ -1187,10 +1157,10 @@
               </div>
               <button
                 @click="closeArchModal()"
-                class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer p-2 rounded-lg hover:bg-gray-800"
+                class="text-gray-500 hover:text-gray-200 transition-colors cursor-pointer p-1 rounded-lg hover:bg-gray-800"
                 aria-label="Close architecture diagram"
               >
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -1409,21 +1379,9 @@
       :state-changes="stateChangesSinceLastOverview"
       :rendered-summary="fleetOverview.aiSummary ? renderMarkdown(fleetOverview.aiSummary) : ''"
       :turbines="turbines"
-      :is-mobile="isMobileScreen"
       @close="closeFleetOverviewModal"
       @open-turbine="onOpenTurbineFromOverview"
       @refresh="loadFleetOverview"
-    />
-
-    <!-- ═══════════════════════════════════════════════════════════════
-         NOTIFICATION BALLOON (status change alerts)
-    ═══════════════════════════════════════════════════════════════ -->
-    <NotificationIndicator
-      :balloon="alertBalloon"
-      :assistant-open="assistantOpen"
-      :is-mobile="isMobileScreen"
-      @focus="focusAlertCard"
-      @dismiss="alertBalloon = null"
     />
 
   </div>
@@ -1439,13 +1397,11 @@ import {
 import {
   metricParams, thresholds, createFleetData, randomWalk,
   historyMetricKeys, getMostCriticalMetricKey, getMaintenanceHistory,
-  makeFallbackSvg, openManual, isGasTurbine, getOkCardInsight,
+  makeFallbackSvg,
 } from '../fleetStore.js'
 import EquipmentCard from './EquipmentCard.vue'
 import OverviewDialog from './OverviewDialog.vue'
 import NotificationIndicator from './NotificationIndicator.vue'
-import CardFooterBanner from './CardFooterBanner.vue'
-import AIActionButton from './AIActionButton.vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 
@@ -1457,8 +1413,6 @@ const selectedTurbine = ref(null)
 const assistantOpen = ref(true)
 const alertBalloon = ref(null)
 const focusedCardId = ref(null)
-const headerRef = ref(null)
-const fleetPanelRef = ref(null)
 let updateInterval = null
 let anomalyInterval = null
 
@@ -1467,31 +1421,6 @@ const historyModalTurbine = ref(null)
 const historyModalLoading = ref(false)
 const historyModalData = ref([])
 const alertCooldown = {}
-
-// ── Notification Timing ──────────────────────────────────────────────────────
-// Grace period: suppress all notification balloons for the first 15 seconds
-// after app mount so the user can absorb the interface without distractions.
-const NOTIFICATION_GRACE_MS = 15000
-// Global cooldown between any two notifications (regardless of turbine/status)
-const NOTIFICATION_MIN_INTERVAL_MS = 30000
-let appStartTime = 0
-let lastNotificationTime = 0
-
-// ── Demo Mode ─────────────────────────────────────────────────────────────────
-// Exponential flip schedule: cumulative seconds from page load at which
-// one OK card flips to RISK or NOK, progressing towards target 12/4/2.
-const DEMO_FLIP_TIMES = [10, 50, 90, 160, 250, 370, 520, 710, 950]
-const DEMO_TARGET_NOK = 2
-const DEMO_TARGET_RISK = 4
-const DEMO_INITIAL_NOK = 1
-const DEMO_INITIAL_RISK = 1
-const demoMode = ref(true)
-let demoStartTime = 0
-let demoNextFlipIdx = 0
-let demoInterval = null
-
-// ── Notification Spam Prevention ──────────────────────────────────────────────
-let lastNotifiedId = null
 
 // ── Architecture Modal ────────────────────────────────────────────────────────
 const archOpen = ref(false)
@@ -1714,33 +1643,17 @@ function onDetailImageError() {
   detailImageHasError.value = true
 }
 
-// ── Detail View OK Card Insight ───────────────────────────────────────────────
-const detailOkInsight = computed(() => {
-  return selectedTurbine.value ? getOkCardInsight(selectedTurbine.value) : { stableStr: '' }
-})
-
 // ── Fleet Status Computed ─────────────────────────────────────────────────────
 const okCount = computed(() => turbines.filter(t => t.status === 'OK').length)
 const criticalCount = computed(() => turbines.filter(t => t.status === 'NOK').length)
 const warningCount = computed(() => turbines.filter(t => t.status === 'RISK').length)
 
-// ── Mobile Detection ──────────────────────────────────────────────────────────
-const isMobileScreen = ref(false)
-function onResizeCheck() { isMobileScreen.value = window.innerWidth < 768 }
-
 // ── Detail View Metric Drill-In ───────────────────────────────────────────────
 const detailMetricKey = ref(null)
 
-// Gas-only fields hidden for steam turbines (SST-*) and generators (SGen-*)
-const GAS_ONLY_KEYS = new Set(['tet', 'pcd', 'tcd', 'pressureRatio', 'tetSpread', 'fuelMassFlow'])
-const detailVisibleMetricParams = computed(() => {
-  if (!selectedTurbine.value || isGasTurbine(selectedTurbine.value)) return metricParams
-  return metricParams.filter(p => !GAS_ONLY_KEYS.has(p.key))
-})
-
 const detailActiveMetricKey = computed(() => {
   if (detailMetricKey.value) return detailMetricKey.value
-  return selectedTurbine.value ? getMostCriticalMetricKey(selectedTurbine.value) : 'tet'
+  return selectedTurbine.value ? getMostCriticalMetricKey(selectedTurbine.value) : 'exhaustTemp'
 })
 
 const detailActiveParam = computed(() => {
@@ -1751,8 +1664,8 @@ const detailSparklineColor = computed(() => {
   if (!selectedTurbine.value) return '#2dd4bf'
   if (selectedTurbine.value.status === 'NOK') return '#f87171'
   const key = detailActiveMetricKey.value
-  if (key === 'vibrationVelocity' && selectedTurbine.value.vibrationAlert) return '#fbbf24'
-  if (key === 'tet' && selectedTurbine.value.tetAlert) return '#fbbf24'
+  if (key === 'vibration' && selectedTurbine.value.vibrationAlert) return '#fbbf24'
+  if (key === 'exhaustTemp' && selectedTurbine.value.tempAlert) return '#fbbf24'
   return '#2dd4bf'
 })
 
@@ -1782,44 +1695,28 @@ watch(selectedTurbine, async (newVal) => {
 
 // ── Maintenance History Modal Style ───────────────────────────────────────────
 // Positions the modal within the left content panel so it never overlaps
-// the right-side AI assistant sidebar or the top header bar.
-const historyModalStyle = computed(() => {
-  const headerHeight = headerRef.value ? headerRef.value.offsetHeight : 52
-  // On mobile, always full width; on desktop, respect assistant sidebar
-  const rightOffset = isMobileScreen.value ? '0' :
-    (assistantOpen.value ? 'clamp(300px, 25%, 400px)' : '0')
-  return {
-    top: isMobileScreen.value ? '0' : `${headerHeight}px`,
-    bottom: '0',
-    left: '0',
-    right: rightOffset,
-  }
-})
+// the right-side AI assistant sidebar.
+const historyModalStyle = computed(() => ({
+  top: '0',
+  bottom: '0',
+  left: '0',
+  // When the AI assistant is open on desktop it takes clamp(300px, 25%, 400px)
+  right: assistantOpen.value ? 'clamp(300px, 25%, 400px)' : '0',
+}))
 
 // ── Telemetry Simulation ──────────────────────────────────────────────────────
 function updateTelemetry() {
   const escalated = []
-  // Capture previous statuses BEFORE any changes to accurately count
-  // transitions after enforceStatusDistribution() excludes reverted changes
-  const prevStatuses = {}
-  turbines.forEach((t) => {
-    prevStatuses[t.id] = t.status
-  })
-
   turbines.forEach((t) => {
     if (t.status === 'Offline') return
 
-    t.tet = randomWalk(t.tet, 1.2, 420, 670)
+    t.exhaustTemp = randomWalk(t.exhaustTemp, 1.2, 420, 670)
     // Each turbine has different shaft speed range; use a wide but realistic bound
-    t.rotationalSpeed = randomWalk(t.rotationalSpeed, 5.0, 2800, 20000)
-    t.vibrationVelocity = randomWalk(t.vibrationVelocity, 0.08, 0.3, 12.0)
-    t.fuelMassFlow = randomWalk(t.fuelMassFlow, 0.02, 0.05, 16.0)
+    t.shaftSpeed = randomWalk(t.shaftSpeed, 5.0, 2800, 20000)
+    t.vibration = randomWalk(t.vibration, 0.08, 0.3, 9.0)
+    t.fuelFlow = randomWalk(t.fuelFlow, 0.02, 0.05, 16.0)
     t.powerOutput = randomWalk(t.powerOutput, 0.5, 1.0, 1500.0)
-    t.pcd = randomWalk(t.pcd ?? 18, 0.15, 5, 45)
-    t.tcd = randomWalk(t.tcd ?? 420, 1.5, 300, 500)
-    t.pressureRatio = randomWalk(t.pressureRatio ?? 20, 0.1, 10, 35)
-    t.tetSpread = randomWalk(t.tetSpread ?? 15, 0.8, 2, 80)
-    t.eoh += 0.000556
+    t.hoursSinceOverhaul += 0.000556
 
     // Update all metric histories
     historyMetricKeys.forEach(key => {
@@ -1829,48 +1726,51 @@ function updateTelemetry() {
       if (t.metricHistory[key].length > 60) t.metricHistory[key].shift()
     })
 
-    t.tetAlert = t.tet > thresholds.tet.warning
-    t.vibrationAlert = t.vibrationVelocity > thresholds.vibrationVelocity.warning
-    const tetSpreadAlert = t.tetSpread > thresholds.tetSpread.warning
+    t.tempAlert = t.exhaustTemp > thresholds.exhaustTemp.warning
+    t.vibrationAlert = t.vibration > thresholds.vibration.warning
 
     const prevStatus = t.status
-    // ISO 10816-4: Zone D (>11.2 mm/s) = NOK, Zone C (7.1–11.2) = RISK
-    // TET Spread >50°C = critical warning indicator
-    if (t.vibrationVelocity > thresholds.vibrationVelocity.critical || t.tet > thresholds.tet.critical || t.tetSpread > thresholds.tetSpread.critical) {
+    if (t.vibration > thresholds.vibration.critical || t.exhaustTemp > thresholds.exhaustTemp.critical) {
       t.status = 'NOK'
-    } else if (t.vibrationAlert || t.tetAlert || tetSpreadAlert) {
+    } else if (t.vibrationAlert || t.tempAlert) {
       t.status = 'RISK'
     } else {
       t.status = 'OK'
     }
 
-    // Generate dynamic alerts using OEM terminology
+    // Track state transitions for overview refresh
+    if (
+      prevStatus !== t.status &&
+      ((prevStatus === 'OK' && t.status === 'RISK') ||
+       (prevStatus === 'RISK' && t.status === 'NOK') ||
+       (prevStatus === 'NOK' && t.status === 'OK') ||
+       (prevStatus === 'RISK' && t.status === 'OK') ||
+       (prevStatus === 'OK' && t.status === 'NOK') ||
+       (prevStatus === 'NOK' && t.status === 'RISK'))
+    ) {
+      stateChangesSinceLastOverview.value++
+    }
+
+    // Generate dynamic alerts
     if (t.status === 'NOK') {
-      const isVibrationCritical = t.vibrationVelocity > thresholds.vibrationVelocity.critical
-      const isTetSpreadCritical = t.tetSpread > thresholds.tetSpread.critical
-      if (isVibrationCritical) {
-        t.alert = `CRITICAL: Vibration velocity ${t.vibrationVelocity.toFixed(1)} mm/s RMS — ISO 10816-4 Zone D. Immediate shutdown required.`
-        t.aiSuggestion = `URGENT: Vibration velocity ${t.vibrationVelocity.toFixed(1)} mm/s in Zone D (>11.2 mm/s). Execute controlled shutdown per SOP. Emergency bearing inspection required.`
-      } else if (isTetSpreadCritical) {
-        t.alert = `CRITICAL: TET Spread ${t.tetSpread.toFixed(0)}°C exceeds 50°C threshold. Combustion anomaly suspected.`
-        t.aiSuggestion = `URGENT: TET Spread at ${t.tetSpread.toFixed(0)}°C indicates combustion asymmetry. Inspect individual burner cans and fuel nozzle spray patterns.`
-      } else {
-        t.alert = `CRITICAL: TET ${t.tet.toFixed(0)}°C exceeds critical threshold. Immediate load reduction required.`
-        t.aiSuggestion = `URGENT: TET at ${t.tet.toFixed(0)}°C exceeds limits. Reduce load and inspect combustion system per maintenance manual.`
-      }
+      const isVibrationCritical = t.vibration > thresholds.vibration.critical
+      t.alert = isVibrationCritical
+        ? `CRITICAL: Vibration at ${t.vibration.toFixed(1)} mm/s exceeds critical threshold. Immediate action required.`
+        : `CRITICAL: Exhaust temp at ${t.exhaustTemp.toFixed(0)}°C exceeds critical threshold. Immediate action required.`
+      t.aiSuggestion = isVibrationCritical
+        ? `URGENT: Vibration at ${t.vibration.toFixed(1)} mm/s approaching trip threshold. Initiate controlled shutdown and perform emergency bearing inspection.`
+        : `URGENT: Exhaust temperature at ${t.exhaustTemp.toFixed(0)}°C exceeds limits. Reduce load immediately and inspect combustion system.`
     } else if (t.status === 'RISK') {
-      if (t.vibrationAlert && t.tetAlert) {
-        t.alert = `Vibration ${t.vibrationVelocity.toFixed(1)} mm/s (ISO Zone C) and TET ${t.tet.toFixed(0)}°C elevated. Inspection within 72 h advised.`
+      if (t.vibrationAlert && t.tempAlert) {
+        t.alert = `High vibration (${t.vibration.toFixed(1)} mm/s) and elevated exhaust temp (${t.exhaustTemp.toFixed(0)}°C). Maintenance review recommended.`
       } else if (t.vibrationAlert) {
-        t.alert = `Vibration velocity ${t.vibrationVelocity.toFixed(1)} mm/s — ISO 10816-4 Zone C. Schedule bearing inspection.`
-      } else if (tetSpreadAlert) {
-        t.alert = `TET Spread ${t.tetSpread.toFixed(0)}°C approaching critical 50°C threshold. Monitor combustion dynamics.`
-      } else if (t.tetAlert) {
-        t.alert = `TET ${t.tet.toFixed(0)}°C above warning threshold. Combustion inspection advised.`
+        t.alert = `Vibration at ${t.vibration.toFixed(1)} mm/s exceeds warning threshold. Monitor closely.`
+      } else if (t.tempAlert) {
+        t.alert = `Exhaust temp at ${t.exhaustTemp.toFixed(0)}°C above normal range. Combustion check advised.`
       }
       t.aiSuggestion = t.vibrationAlert
-        ? `Vibration velocity trending at ${t.vibrationVelocity.toFixed(1)} mm/s (Zone C). Schedule vibration analysis and bearing inspection within 48 hours.`
-        : `TET elevated at ${t.tet.toFixed(0)}°C. Inspect combustion liners, fuel nozzles, and check PCD for compressor degradation.`
+        ? `Vibration trending at ${t.vibration.toFixed(1)} mm/s. Schedule vibration analysis and bearing inspection within 48 hours.`
+        : `Exhaust temperature elevated at ${t.exhaustTemp.toFixed(0)}°C. Inspect combustion liners and fuel nozzles.`
     } else {
       t.alert = null
       t.aiSuggestion = ''
@@ -1886,55 +1786,34 @@ function updateTelemetry() {
   enforceStatusDistribution()
 
   // Now trigger alert balloon only for turbines whose escalation survived enforcement
-  // Skip lastNotifiedId to prevent consecutive notification spam for the same card
-  // Track state changes ONLY when a balloon is actually shown (matches visible notifications)
   const now = Date.now()
-  // Suppress all notifications during the initial grace period
-  if (now - appStartTime < NOTIFICATION_GRACE_MS) return
-  // Global cooldown: only one notification every NOTIFICATION_MIN_INTERVAL_MS
-  if (now - lastNotificationTime < NOTIFICATION_MIN_INTERVAL_MS) return
   for (const t of escalated) {
     if (t.status !== 'NOK' && t.status !== 'RISK') continue // downgraded by enforcement
-    if (t.id === lastNotifiedId) continue // prevent consecutive same-card notification
     const cooldownKey = t.id + t.status
-    if (!alertCooldown[cooldownKey] || now - alertCooldown[cooldownKey] > 45000) {
+    if (!alertCooldown[cooldownKey] || now - alertCooldown[cooldownKey] > 12000) {
       alertCooldown[cooldownKey] = now
-      lastNotifiedId = t.id
-      lastNotificationTime = now
-      stateChangesSinceLastOverview.value++
       showAlertBalloon(t)
-      break // only one notification per tick
     }
   }
 }
 
-// ── Status Distribution Cap ────────────────────────────────────────────────────
-// During Demo Mode, limits track the demo's scheduled target so the natural
-// random walk doesn't exceed the demo schedule's intended counts.
+// ── Status Distribution Cap (max 10% NOK, max 20% RISK) ──────────────────────
 function enforceStatusDistribution() {
-  let maxNOK, maxRISK
-  if (demoMode.value && demoNextFlipIdx < DEMO_FLIP_TIMES.length) {
-    // Demo target: start 1 NOK / 1 RISK, ramp to 2 NOK / 4 RISK
-    const flipsCompleted = demoNextFlipIdx
-    maxNOK = Math.min(DEMO_TARGET_NOK, DEMO_INITIAL_NOK + Math.floor(flipsCompleted / 3))
-    maxRISK = Math.min(DEMO_TARGET_RISK, DEMO_INITIAL_RISK + flipsCompleted)
-  } else {
-    const total = turbines.length
-    maxNOK = Math.max(1, Math.floor(total * 0.15))
-    maxRISK = Math.max(1, Math.floor(total * 0.25))
-  }
+  const total = turbines.length
+  const maxNOK = Math.max(1, Math.floor(total * 0.15))
+  const maxRISK = Math.max(1, Math.floor(total * 0.25))
 
   // Get NOK turbines sorted by how far above critical threshold they are (least critical first)
   const nokTurbines = turbines
     .filter(t => t.status === 'NOK')
     .sort((a, b) => {
       const critA = Math.max(
-        (a.vibrationVelocity - thresholds.vibrationVelocity.critical) / thresholds.vibrationVelocity.critical,
-        (a.tet - thresholds.tet.critical) / thresholds.tet.critical,
+        (a.vibration - thresholds.vibration.critical) / thresholds.vibration.critical,
+        (a.exhaustTemp - thresholds.exhaustTemp.critical) / thresholds.exhaustTemp.critical,
       )
       const critB = Math.max(
-        (b.vibrationVelocity - thresholds.vibrationVelocity.critical) / thresholds.vibrationVelocity.critical,
-        (b.tet - thresholds.tet.critical) / thresholds.tet.critical,
+        (b.vibration - thresholds.vibration.critical) / thresholds.vibration.critical,
+        (b.exhaustTemp - thresholds.exhaustTemp.critical) / thresholds.exhaustTemp.critical,
       )
       return critA - critB
     })
@@ -1944,11 +1823,11 @@ function enforceStatusDistribution() {
     nokTurbines.slice(0, nokTurbines.length - maxNOK).forEach(t => {
       t.status = 'RISK'
       // Clamp values just below the critical threshold so they stay RISK
-      if (t.vibrationVelocity > thresholds.vibrationVelocity.critical) {
-        t.vibrationVelocity = thresholds.vibrationVelocity.critical - 0.1 - Math.random() * 0.2
+      if (t.vibration > thresholds.vibration.critical) {
+        t.vibration = thresholds.vibration.critical - 0.1 - Math.random() * 0.2
       }
-      if (t.tet > thresholds.tet.critical) {
-        t.tet = thresholds.tet.critical - 1 - Math.random() * 2
+      if (t.exhaustTemp > thresholds.exhaustTemp.critical) {
+        t.exhaustTemp = thresholds.exhaustTemp.critical - 1 - Math.random() * 2
       }
     })
   }
@@ -1958,12 +1837,12 @@ function enforceStatusDistribution() {
     .filter(t => t.status === 'RISK')
     .sort((a, b) => {
       const critA = Math.max(
-        (a.vibrationVelocity - thresholds.vibrationVelocity.warning) / thresholds.vibrationVelocity.warning,
-        (a.tet - thresholds.tet.warning) / thresholds.tet.warning,
+        (a.vibration - thresholds.vibration.warning) / thresholds.vibration.warning,
+        (a.exhaustTemp - thresholds.exhaustTemp.warning) / thresholds.exhaustTemp.warning,
       )
       const critB = Math.max(
-        (b.vibrationVelocity - thresholds.vibrationVelocity.warning) / thresholds.vibrationVelocity.warning,
-        (b.tet - thresholds.tet.warning) / thresholds.tet.warning,
+        (b.vibration - thresholds.vibration.warning) / thresholds.vibration.warning,
+        (b.exhaustTemp - thresholds.exhaustTemp.warning) / thresholds.exhaustTemp.warning,
       )
       return critA - critB
     })
@@ -1972,16 +1851,16 @@ function enforceStatusDistribution() {
   if (riskTurbines.length > maxRISK) {
     riskTurbines.slice(0, riskTurbines.length - maxRISK).forEach(t => {
       t.status = 'OK'
-      t.tetAlert = false
+      t.tempAlert = false
       t.vibrationAlert = false
       t.alert = null
       t.aiSuggestion = ''
       // Clamp values below warning thresholds
-      if (t.vibrationVelocity > thresholds.vibrationVelocity.warning) {
-        t.vibrationVelocity = thresholds.vibrationVelocity.warning - 0.1 - Math.random() * 0.3
+      if (t.vibration > thresholds.vibration.warning) {
+        t.vibration = thresholds.vibration.warning - 0.1 - Math.random() * 0.3
       }
-      if (t.tet > thresholds.tet.warning) {
-        t.tet = thresholds.tet.warning - 1 - Math.random() * 5
+      if (t.exhaustTemp > thresholds.exhaustTemp.warning) {
+        t.exhaustTemp = thresholds.exhaustTemp.warning - 1 - Math.random() * 5
       }
     })
   }
@@ -2005,26 +1884,26 @@ function triggerRandomAnomaly() {
   const goNOK = canNOK && (!canRISK || Math.random() < 0.4)
 
   if (goNOK) {
-    // Create NOK anomaly from OK or RISK assets (exclude lastNotifiedId)
-    const candidates = turbines.filter(t => (t.status === 'OK' || t.status === 'RISK') && t.id !== lastNotifiedId)
+    // Create NOK anomaly from OK or RISK assets
+    const candidates = turbines.filter(t => t.status === 'OK' || t.status === 'RISK')
     if (candidates.length === 0) return
     const target = candidates[Math.floor(Math.random() * candidates.length)]
 
     if (Math.random() < 0.5) {
-      target.vibrationVelocity = thresholds.vibrationVelocity.critical + 0.5 + Math.random() * 1.5
+      target.vibration = thresholds.vibration.critical + 0.5 + Math.random() * 1.5
     } else {
-      target.tet = thresholds.tet.critical + 5 + Math.random() * 20
+      target.exhaustTemp = thresholds.exhaustTemp.critical + 5 + Math.random() * 20
     }
   } else {
-    // Create RISK anomaly from OK assets (exclude lastNotifiedId)
-    const healthyAssets = turbines.filter(t => t.status === 'OK' && t.id !== lastNotifiedId)
+    // Create RISK anomaly from OK assets
+    const healthyAssets = turbines.filter(t => t.status === 'OK')
     if (healthyAssets.length === 0) return
     const target = healthyAssets[Math.floor(Math.random() * healthyAssets.length)]
 
     if (Math.random() < 0.5) {
-      target.vibrationVelocity = thresholds.vibrationVelocity.warning + 0.2 + Math.random() * (thresholds.vibrationVelocity.critical - thresholds.vibrationVelocity.warning - 0.3)
+      target.vibration = thresholds.vibration.warning + 0.2 + Math.random() * (thresholds.vibration.critical - thresholds.vibration.warning - 0.3)
     } else {
-      target.tet = thresholds.tet.warning + 2 + Math.random() * (thresholds.tet.critical - thresholds.tet.warning - 3)
+      target.exhaustTemp = thresholds.exhaustTemp.warning + 2 + Math.random() * (thresholds.exhaustTemp.critical - thresholds.exhaustTemp.warning - 3)
     }
   }
 }
@@ -2033,16 +1912,14 @@ function triggerRandomAnomaly() {
 function buildBalloonMessage(turbine) {
   const isCritical = turbine.status === 'NOK'
   if (isCritical) {
-    const detail = turbine.vibrationVelocity > thresholds.vibrationVelocity.critical
-      ? `vibration velocity ${turbine.vibrationVelocity.toFixed(1)} mm/s RMS (Zone D)`
-      : turbine.tetSpread > thresholds.tetSpread.critical
-        ? `TET Spread ${turbine.tetSpread.toFixed(0)}°C (>50°C critical)`
-        : `TET ${turbine.tet.toFixed(0)}°C exceeds critical threshold`
+    const detail = turbine.vibration > thresholds.vibration.critical
+      ? `vibration at ${turbine.vibration.toFixed(1)} mm/s`
+      : `exhaust temp at ${turbine.exhaustTemp.toFixed(0)}°C`
     return `Immediate attention required: ${detail}. Click card for details.`
   }
   const detail = turbine.vibrationAlert
-    ? `Vibration velocity ${turbine.vibrationVelocity.toFixed(1)} mm/s — ISO Zone C.`
-    : `TET elevated at ${turbine.tet.toFixed(0)}°C.`
+    ? `Vibration trending high at ${turbine.vibration.toFixed(1)} mm/s.`
+    : `Exhaust temp elevated at ${turbine.exhaustTemp.toFixed(0)}°C.`
   return `${detail} Review recommended.`
 }
 
@@ -2065,17 +1942,10 @@ function focusAlertCard() {
   const turbine = turbines.find(t => t.id === turbineId)
   alertBalloon.value = null
 
-  // If filters are active and the turbine would be hidden, include its status filter
+  // If filters are active and the turbine would be hidden, clear status filters
   if (anyFilterActive.value && turbine && !statusFilters[turbine.status]) {
-    statusFilters[turbine.status] = true
+    clearFilters()
   }
-
-  // Close all open dialogs so the focused card is visible
-  archOpen.value = false
-  howToUseOpen.value = false
-  historyModalTurbine.value = null
-  historyModalData.value = []
-  fleetOverviewOpen.value = false
 
   // Clear any previous focus, then set the new one
   focusedCardId.value = null
@@ -2126,29 +1996,18 @@ function statusBadgeClass(turbine) {
 }
 
 function getMetricColorClass(turbine, key) {
-  if (key === 'tet' && turbine.tetAlert) return 'text-yellow-400'
-  if (key === 'vibrationVelocity' && turbine.vibrationAlert) return 'text-red-400'
+  if (key === 'exhaustTemp' && turbine.tempAlert) return 'text-yellow-400'
+  if (key === 'vibration' && turbine.vibrationAlert) return 'text-red-400'
   return 'text-gray-100'
 }
 
 // ── Turbine Session ───────────────────────────────────────────────────────────
-function goHome() {
-  clearTurbineSelection()
-  fleetOverviewOpen.value = false
-  archOpen.value = false
-  howToUseOpen.value = false
-  historyModalTurbine.value = null
-  historyModalData.value = []
-  pushHash('')
-}
-
 function openTurbineSession(turbine, metricKey = null) {
   pendingMetricKey = metricKey
   selectedTurbine.value = turbine
   mobileView.value = 'detail'
   const paramStr = metricKey ? `/param=${metricKey}` : ''
   pushHash(`#equipment=${turbine.id}${paramStr}`)
-  nextTick(() => { if (fleetPanelRef.value) fleetPanelRef.value.scrollTop = 0 })
 }
 
 function clearTurbineSelection() {
@@ -2164,7 +2023,7 @@ function askAboutTurbine(turbine) {
     role: 'system',
     content: `Analyzing specific fault in Asset #${turbine.id} (${turbine.name} ${turbine.type})...`,
   })
-  const query = `Analyze the current status of ${turbine.name} ${turbine.type} (Unit ${turbine.id}): vibration velocity is ${turbine.vibrationVelocity.toFixed(3)} mm/s RMS, TET is ${turbine.tet.toFixed(1)}°C, PCD is ${(turbine.pcd ?? 0).toFixed(1)} bar, TET Spread is ${(turbine.tetSpread ?? 0).toFixed(1)}°C, and EOH is ${Math.floor(turbine.eoh).toLocaleString()} h. What maintenance actions should be taken per ISO 10816-4 and OEM guidelines?`
+  const query = `Analyze the current status of ${turbine.name} ${turbine.type} (Unit ${turbine.id}): vibration is ${turbine.vibration.toFixed(3)} mm/s, exhaust temperature is ${turbine.exhaustTemp.toFixed(1)}°C, and it has ${Math.floor(turbine.hoursSinceOverhaul).toLocaleString()} hours since last overhaul. What maintenance actions should be taken?`
   inputText.value = query
   nextTick(() => sendMessage())
 }
@@ -2178,7 +2037,7 @@ function askAboutTurbineMobile(turbine) {
     role: 'system',
     content: `Analyzing specific fault in Asset #${turbine.id} (${turbine.name} ${turbine.type})...`,
   })
-  const query = `Analyze the current status of ${turbine.name} ${turbine.type} (Unit ${turbine.id}): vibration velocity is ${turbine.vibrationVelocity.toFixed(3)} mm/s RMS, TET is ${turbine.tet.toFixed(1)}°C, PCD is ${(turbine.pcd ?? 0).toFixed(1)} bar, TET Spread is ${(turbine.tetSpread ?? 0).toFixed(1)}°C, and EOH is ${Math.floor(turbine.eoh).toLocaleString()} h. What maintenance actions should be taken per ISO 10816-4 and OEM guidelines?`
+  const query = `Analyze the current status of ${turbine.name} ${turbine.type} (Unit ${turbine.id}): vibration is ${turbine.vibration.toFixed(3)} mm/s, exhaust temperature is ${turbine.exhaustTemp.toFixed(1)}°C, and it has ${Math.floor(turbine.hoursSinceOverhaul).toLocaleString()} hours since last overhaul. What maintenance actions should be taken?`
   inputText.value = query
   nextTick(() => sendMessage())
 }
@@ -2197,11 +2056,10 @@ function askAboutTurbineOverview(turbine) {
   })
   const query =
     `Give a brief operational health overview for ${turbine.name} ${turbine.type} (Unit ${turbine.id}, ${turbine.location}). ` +
-    `Current telemetry: vibration velocity ${turbine.vibrationVelocity.toFixed(2)} mm/s RMS, TET ${turbine.tet.toFixed(0)}°C, ` +
-    `PCD ${(turbine.pcd ?? 0).toFixed(1)} bar, TET Spread ${(turbine.tetSpread ?? 0).toFixed(1)}°C, ` +
-    `power output ${turbine.powerOutput.toFixed(0)} MW-e, ` +
-    `EOH: ${Math.floor(turbine.eoh).toLocaleString()} h. ` +
-    `Status: OK (all parameters within ISO 10816-4 Zone A/B). Summarize the current health, any upcoming maintenance milestones, ` +
+    `Current readings: vibration ${turbine.vibration.toFixed(2)} mm/s, exhaust temp ${turbine.exhaustTemp.toFixed(0)}°C, ` +
+    `power output ${turbine.powerOutput.toFixed(0)} MW, ` +
+    `hours since overhaul: ${Math.floor(turbine.hoursSinceOverhaul).toLocaleString()} hrs. ` +
+    `Status: OK (all parameters within normal range). Summarize the current health, any upcoming maintenance milestones, ` +
     `efficiency notes, and general recommendations for this unit type. Keep it concise.`
   inputText.value = query
   nextTick(() => sendMessage())
@@ -2416,7 +2274,7 @@ const detailActiveHistory = computed(() =>
   selectedTurbine.value?.metricHistory?.[detailActiveMetricKey.value] || []
 )
 
-watch(detailActiveHistory, () => { updateDetailChart() }, { deep: true })
+watch(detailActiveHistory, () => { updateDetailChart() })
 watch(detailActiveMetricKey, () => { updateDetailChart() })
 
 // ── Metric Min/Max Helpers (full view cards) ──────────────────────────────────
@@ -2469,10 +2327,10 @@ function renderMarkdown(text) {
 }
 
 const sampleQuestions = [
-  'What are the ISO 10816-4 vibration zones for gas turbine bearing monitoring?',
-  'How is EOH calculated and what are the fuel and start factors?',
-  'What does a TET Spread >50°C indicate for combustion health?',
-  'Describe the hot gas path inspection procedure for H-class turbines.',
+  'What are the vibration thresholds for bearing fault detection?',
+  'How often should combustion liners be inspected?',
+  'What causes high exhaust temperature readings?',
+  'Describe the hot gas path inspection procedure.',
 ]
 
 const API_URL = '/api'
@@ -2494,11 +2352,6 @@ function openHistoryModalById(turbineId) {
 async function sendMessage() {
   const query = inputText.value.trim()
   if (!query || loading.value) return
-
-  // Auto-open assistant panel so the user immediately sees the new message
-  if (!assistantOpen.value) {
-    assistantOpen.value = true
-  }
 
   error.value = ''
   messages.value.push({ role: 'user', content: query })
@@ -2523,7 +2376,7 @@ async function sendMessage() {
     }
     loadingMessage.value = LOADING_MESSAGES[shuffledQueue.shift()]
   }, 3500)
-  await scrollToUserMessage()
+  await scrollToBottom()
 
   // Build turbine context payload if we have a current turbine in focus
   const turbineContextPayload = ctxTurbine ? {
@@ -2563,6 +2416,7 @@ async function sendMessage() {
     loading.value = false
     clearInterval(loadingMsgInterval)
     loadingMessage.value = LOADING_MESSAGES_GENERIC[0]
+    await scrollToBottom()
   }
 }
 
@@ -2572,118 +2426,36 @@ async function scrollToBottom() {
   if (mobileChatScrollRef.value) mobileChatScrollRef.value.scrollTop = mobileChatScrollRef.value.scrollHeight
 }
 
-async function scrollToUserMessage() {
-  await nextTick()
-  for (const container of [chatScrollRef.value, mobileChatScrollRef.value]) {
-    if (!container) continue
-    // Find the last user message bubble and scroll it to the top of the chat area
-    const userBubbles = container.querySelectorAll('[data-role="user"]')
-    if (userBubbles.length === 0) continue
-    userBubbles[userBubbles.length - 1].scrollIntoView({ block: 'start', behavior: 'smooth' })
-  }
-}
-
-// ── Demo Mode Flip Logic ──────────────────────────────────────────────────────
-// At each scheduled flip time, one OK card transitions to RISK or NOK.
-// Target distribution: 12 OK, 4 RISK, 2 NOK.
-function demoFlipTick() {
-  if (demoNextFlipIdx >= DEMO_FLIP_TIMES.length) return
-
-  const elapsed = (Date.now() - demoStartTime) / 1000
-  if (elapsed < DEMO_FLIP_TIMES[demoNextFlipIdx]) return
-
-  // Determine target: first 2 extra flips go to NOK, rest to RISK
-  // Starting from 16 OK, 1 RISK, 1 NOK → target 12 OK, 4 RISK, 2 NOK
-  // That means 1 more NOK flip + 3 RISK flips = 4 total flips from the 9 scheduled
-  const currentNOK = turbines.filter(t => t.status === 'NOK').length
-  const currentRISK = turbines.filter(t => t.status === 'RISK').length
-  const needNOK = currentNOK < DEMO_TARGET_NOK
-  const needRISK = currentRISK < DEMO_TARGET_RISK
-
-  if (!needNOK && !needRISK) {
-    demoNextFlipIdx = DEMO_FLIP_TIMES.length // stop
-    return
-  }
-
-  // Select a candidate OK turbine to flip (exclude lastNotifiedId and maximized card)
-  const candidates = turbines.filter(t =>
-    t.status === 'OK' &&
-    t.id !== lastNotifiedId &&
-    t.id !== selectedTurbine.value?.id
-  )
-  if (candidates.length === 0) {
-    demoNextFlipIdx++
-    return
-  }
-
-  const target = candidates[Math.floor(Math.random() * candidates.length)]
-
-  if (needNOK) {
-    // Flip to NOK
-    if (Math.random() < 0.5) {
-      target.vibrationVelocity = thresholds.vibrationVelocity.critical + 0.5 + Math.random() * 1.5
-    } else {
-      target.tet = thresholds.tet.critical + 5 + Math.random() * 20
-    }
-  } else {
-    // Flip to RISK
-    if (Math.random() < 0.5) {
-      target.vibrationVelocity = thresholds.vibrationVelocity.warning + 0.2 + Math.random() * (thresholds.vibrationVelocity.critical - thresholds.vibrationVelocity.warning - 0.3)
-    } else {
-      target.tet = thresholds.tet.warning + 2 + Math.random() * (thresholds.tet.critical - thresholds.tet.warning - 3)
-    }
-  }
-
-  demoNextFlipIdx++
-}
-
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
-  // Demo Mode: Reset ALL units to OK baseline first, then seed exactly 1 RISK + 1 NOK
-  // This ensures t=0 shows: "OK 16 RISK 1 NOK 1"
-  turbines.forEach(t => {
-    Object.assign(t, t.telemetryBaseline, {
-      status: 'OK',
-      currentStatus: 'OK',
-      tetAlert: false,
-      vibrationAlert: false,
-      alert: null,
-      aiSuggestion: '',
-    })
-  })
-
-  // Seed exactly 1 NOK and 1 RISK (pick random gas turbines for realism)
-  const gasTurbines = turbines.filter(t => isGasTurbine(t))
-  const shuffled = [...gasTurbines].sort(() => Math.random() - 0.5)
-  // First card → NOK
-  if (shuffled.length > 0) {
-    const t = shuffled[0]
+  // Seed initial RISK/NOK states for a lively dashboard from the start
+  // Target: ~15% NOK, ~25% RISK immediately
+  const total = turbines.length
+  const initialNOK = Math.max(1, Math.floor(total * 0.10))
+  const initialRISK = Math.max(2, Math.floor(total * 0.20))
+  const shuffled = [...turbines].sort(() => Math.random() - 0.5)
+  let idx = 0
+  for (let i = 0; i < initialNOK && idx < shuffled.length; i++, idx++) {
+    const t = shuffled[idx]
     if (Math.random() < 0.5) {
-      t.vibrationVelocity = thresholds.vibrationVelocity.critical + 0.3 + Math.random() * 1.0
+      t.vibration = thresholds.vibration.critical + 0.3 + Math.random() * 1.0
     } else {
-      t.tet = thresholds.tet.critical + 3 + Math.random() * 15
+      t.exhaustTemp = thresholds.exhaustTemp.critical + 3 + Math.random() * 15
     }
   }
-  // Second card → RISK
-  if (shuffled.length > 1) {
-    const t = shuffled[1]
+  for (let i = 0; i < initialRISK && idx < shuffled.length; i++, idx++) {
+    const t = shuffled[idx]
     if (Math.random() < 0.5) {
-      t.vibrationVelocity = thresholds.vibrationVelocity.warning + 0.2 + Math.random() * (thresholds.vibrationVelocity.critical - thresholds.vibrationVelocity.warning - 0.3)
+      t.vibration = thresholds.vibration.warning + 0.2 + Math.random() * (thresholds.vibration.critical - thresholds.vibration.warning - 0.3)
     } else {
-      t.tet = thresholds.tet.warning + 2 + Math.random() * (thresholds.tet.critical - thresholds.tet.warning - 3)
+      t.exhaustTemp = thresholds.exhaustTemp.warning + 2 + Math.random() * (thresholds.exhaustTemp.critical - thresholds.exhaustTemp.warning - 3)
     }
   }
   // Run one telemetry tick to set statuses based on seeded values
   updateTelemetry()
 
-  // Start telemetry simulation (2s interval)
   updateInterval = setInterval(updateTelemetry, 2000)
-
-  // Start Demo Mode exponential flip schedule (checks every second)
-  demoStartTime = Date.now()
-  appStartTime = Date.now()
-  demoNextFlipIdx = 0
-  demoInterval = setInterval(demoFlipTick, 1000)
+  anomalyInterval = setInterval(triggerRandomAnomaly, 5000)
 
   // Load fleet overview once on mount
   loadFleetOverview()
@@ -2691,22 +2463,16 @@ onMounted(() => {
   // Restore view from URL hash (sharable links)
   if (location.hash) applyHash()
 
-  // Initialize mobile detection
-  onResizeCheck()
-
   // Sync view when the user navigates with browser back/forward
   window.addEventListener('popstate', applyHash)
-  window.addEventListener('resize', onResizeCheck)
 })
 
 onUnmounted(() => {
   if (updateInterval) clearInterval(updateInterval)
   if (anomalyInterval) clearInterval(anomalyInterval)
-  if (demoInterval) clearInterval(demoInterval)
   if (loadingMsgInterval) clearInterval(loadingMsgInterval)
   destroyDetailChart()
   window.removeEventListener('popstate', applyHash)
-  window.removeEventListener('resize', onResizeCheck)
 })
 </script>
 
@@ -2851,13 +2617,5 @@ onUnmounted(() => {
 /* First child should have no top margin */
 .ai-message :deep(> *:first-child) {
   margin-top: 0;
-}
-
-/* ── Maintenance History modal: full-screen on mobile ────────────────────── */
-@media (max-width: 767px) {
-  .history-modal {
-    top: 0 !important;
-    right: 0 !important;
-  }
 }
 </style>
